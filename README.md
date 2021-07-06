@@ -1,2 +1,9 @@
 # memgraph-d
-D-Lang bindings for the memgraph DB
+
+D bindings for the memgraph DB
+
+## Run
+
+docker pull memgraph/memgraph
+
+docker run -p 7687:7687 memgraph/memgraph
