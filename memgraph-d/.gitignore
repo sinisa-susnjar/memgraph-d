@@ -1,0 +1,15 @@
+.dub
+docs.json
+__dummy.html
+docs/
+/memgraph-d
+memgraph-d.so
+memgraph-d.dylib
+memgraph-d.dll
+memgraph-d.a
+memgraph-d.lib
+memgraph-d-test-*
+*.exe
+*.o
+*.obj
+*.lst
