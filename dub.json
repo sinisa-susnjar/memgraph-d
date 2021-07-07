@@ -24,7 +24,9 @@
 		{
 			"name": "memgraph-d-test-lib",
 			"mainSourceFile": "source/test.d",
-			"targetType": "executable"
+			"targetType": "executable",
+			"libs": [ "openssl" ],
+			"lflags": [ "mgclient/build/src/libmgclient.a" ]
 		}
 	],
 	"subPackages": [

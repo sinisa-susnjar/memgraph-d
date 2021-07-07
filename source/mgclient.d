@@ -259,3 +259,52 @@ extern (C) {
 	const (mg_list) *mg_result_row(const mg_result *result);
 	const (mg_map) *mg_result_summary(const mg_result *result);
 }
+
+/// Pull the latest memgraph docker image.
+unittest {
+	import std.process;
+	auto pull = execute(["docker", "pull", "memgraph/memgraph"]);
+	assert(pull.status == 0);
+}
+
+/// Start a memgraph container for unit testing.
+unittest {
+	import std.process;
+	auto run = execute(["docker", "run", "--name", "mg_unit_test_container", "-p", "7687:7687", "-d", "memgraph/memgraph"]);
+	assert(run.status == 0);
+
+	// Need to wait a while until the container is spun up, otherwise connecting will fail.
+	import core.thread.osthread;
+	import core.time;
+	Thread.sleep(dur!("msecs")(1000)); // TODO
+}
+
+unittest {
+	import std.string, std.conv;
+
+	assert(mg_init() == 0);
+
+	// auto params = mg_session_params_make();
+	mg_session_params *params = mg_session_params_make();
+	assert(params != null);
+
+	mg_session_params_set_host(params, toStringz("localhost"));
+	mg_session_params_set_port(params, to!ushort(7687));
+	mg_session_params_set_sslmode(params, mg_sslmode.MG_SSLMODE_DISABLE);
+
+	mg_session *session = null;
+	int status = mg_connect(params, &session);
+	mg_session_params_destroy(params);
+
+	assert(status == 0, fromStringz(mg_session_error(session)));
+
+	mg_session_destroy(session);
+	mg_finalize();
+}
+
+/// Stop the memgraph container again.
+unittest {
+	import std.process;
+	auto stop = execute(["docker", "rm", "-f", "mg_unit_test_container"]);
+	assert(stop.status == 0);
+}
