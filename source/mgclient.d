@@ -267,16 +267,21 @@ unittest {
 	assert(pull.status == 0);
 }
 
+version (unittest) {
+	string dockerContainer;
+}
+
 /// Start a memgraph container for unit testing.
 unittest {
 	import std.process;
-	auto run = execute(["docker", "run", "--name", "mg_unit_test_container", "-p", "7687:7687", "-d", "memgraph/memgraph"]);
+	auto run = execute(["docker", "run", "-p", "7687:7687", "-d", "memgraph/memgraph"]);
 	assert(run.status == 0);
+	dockerContainer = run.output;
 
 	// Need to wait a while until the container is spun up, otherwise connecting will fail.
 	import core.thread.osthread;
 	import core.time;
-	Thread.sleep(dur!("msecs")(1000)); // TODO
+	Thread.sleep(dur!("msecs")(1000));
 }
 
 unittest {
@@ -284,8 +289,7 @@ unittest {
 
 	assert(mg_init() == 0);
 
-	// auto params = mg_session_params_make();
-	mg_session_params *params = mg_session_params_make();
+	auto params = mg_session_params_make();
 	assert(params != null);
 
 	mg_session_params_set_host(params, toStringz("localhost"));
@@ -304,7 +308,8 @@ unittest {
 
 /// Stop the memgraph container again.
 unittest {
-	import std.process;
-	auto stop = execute(["docker", "rm", "-f", "mg_unit_test_container"]);
+	import std.process, std.string;
+	auto stop = execute(["docker", "rm", "-f", stripRight(dockerContainer)]);
 	assert(stop.status == 0);
+	assert(stop.output == dockerContainer);
 }
