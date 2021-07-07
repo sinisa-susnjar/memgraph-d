@@ -1,9 +1,43 @@
 {
-	"authors": [
-		"Sinisa Susnjar"
-	],
+	"authors": [ "Sinisa Susnjar" ],
 	"copyright": "Copyright © 2021, Sinisa Susnjar",
 	"description": "D bindings for the memgraph DB",
 	"license": "MIT",
-	"name": "memgraph-d"
+	"name": "memgraph-d",
+	"preGenerateCommands": [
+		"git pull --recurse-submodules",
+		"mkdir -p mgclient/build; cd mgclient/build; cmake ..; make"
+	],
+	"configurations": [
+		{
+			"name": "lib",
+			"excludedSourceFiles": ["source/test.d"],
+			"targetType": "staticLibrary",
+			"targetPath": "lib"
+		},
+		{
+			"name": "shared",
+			"excludedSourceFiles": ["source/test.d"],
+			"targetType": "dynamicLibrary",
+			"targetPath": "lib"
+		},
+		{
+			"name": "memgraph-d-test-lib",
+			"mainSourceFile": "source/test.d",
+			"targetType": "executable"
+		}
+	],
+	"subPackages": [
+		{
+			"name": "basic_c",
+			"targetType": "executable",
+			"dependencies": {
+				"memgraph-d": "*"
+			},
+			"libs": [ "openssl" ],
+			"lflags": [ "mgclient/build/src/libmgclient.a" ],
+			"sourcePaths": [ "examples/basic_c" ],
+			"importPaths": [ "examples/basic_c" ]
+		}
+	]
 }

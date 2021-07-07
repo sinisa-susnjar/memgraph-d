@@ -1,0 +1,12 @@
+{
+	"authors": [ "Sinisa Susnjar" ],
+	"copyright": "Copyright © 2021, Sinisa Susnjar",
+	"description": "Basic C interface example for memgraph-d",
+	"license": "MIT",
+	"name": "basic_c",
+	"dependencies": {
+		"memgraph-d": { "path": "../../" }
+	},
+	"libs": [ "openssl" ],
+	"lflags": [ "../../mgclient/build/src/libmgclient.a" ]
+}
