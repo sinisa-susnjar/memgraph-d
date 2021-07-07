@@ -273,7 +273,8 @@ version (unittest) {
 
 /// Start a memgraph container for unit testing.
 unittest {
-	import std.process;
+	import std.process, std.stdio;
+	writefln("mgclient.d: starting memgraph docker container...");
 	auto run = execute(["docker", "run", "-p", "7687:7687", "-d", "memgraph/memgraph"]);
 	assert(run.status == 0);
 	dockerContainer = run.output;
@@ -285,7 +286,9 @@ unittest {
 }
 
 unittest {
-	import std.string, std.conv;
+	import std.string, std.conv, std.stdio;
+
+	writefln("mgclient.d: connecting to memgraph docker container...");
 
 	assert(mg_init() == 0);
 
@@ -308,7 +311,8 @@ unittest {
 
 /// Stop the memgraph container again.
 unittest {
-	import std.process, std.string;
+	import std.process, std.string, std.stdio;
+	writefln("mgclient.d: stopping memgraph docker container...");
 	auto stop = execute(["docker", "rm", "-f", stripRight(dockerContainer)]);
 	assert(stop.status == 0);
 	assert(stop.output == dockerContainer);
