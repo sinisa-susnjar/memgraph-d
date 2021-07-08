@@ -282,7 +282,7 @@ struct Optional(V) {
 	auto hasValue() const {
 		return _hasValue;
 	}
-	auto value() const {
+	auto value() {
 		return _value;
 	}
 private:
@@ -333,7 +333,7 @@ struct Client {
 	/// data (execution results) are handled, i.e. until `FetchOne` method returns
 	/// `std::nullopt`. Even if the result set is empty, the fetching has to be
 	/// done/finished to be able to execute another statement.
-	bool Execute(const ref string statement) {
+	bool Execute(const string statement) {
 		int status = mg_session_run(session, toStringz(statement), null, null, null, null);
 		if (status < 0) {
 			return false;
@@ -355,7 +355,7 @@ struct Client {
 	/// After executing the statement, the method is blocked
 	/// until all incoming data (execution results) are handled, i.e. until
 	/// `FetchOne` method returns `std::nullopt`.
-	bool Execute(const ref string statement, const ref ConstMap params) {
+	bool Execute(const string statement, const ref ConstMap params) {
 		int status = mg_session_run(session, toStringz(statement), params._map, null, null, null);
 		if (status < 0) {
 			return false;
