@@ -4,8 +4,7 @@ import std.stdio, std.string, std.conv;
 
 // Example adapted from basic.c included in the mgclient git repo.
 
-int main(string[] args)
-{
+int main(string[] args) {
 	if (args.length != 4) {
 		writefln("Usage: %s [host] [port] [query]", args[0]);
 		return 1;
