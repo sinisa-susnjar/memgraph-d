@@ -285,6 +285,9 @@ struct Optional(V) {
 	auto value() {
 		return _value;
 	}
+	auto opDispatch(string name, T...)(T vals) {
+		return mixin("_value." ~ name)(vals);
+	}
 private:
 	bool _hasValue;
 	V _value;
