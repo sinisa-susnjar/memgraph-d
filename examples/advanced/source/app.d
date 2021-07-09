@@ -4,7 +4,7 @@ import std.stdio, std.string, std.conv;
 
 // Example adapted from advanced.cpp included in the mgclient git repo.
 
-void ClearDatabaseData(Client client) {
+void ClearDatabaseData(ref Optional!Client client) {
 	if (!client.Execute("MATCH (n) DETACH DELETE n;")) {
 		writefln("Failed to delete all data from the database.");
 		assert(0);
@@ -16,34 +16,6 @@ void ClearDatabaseData(Client client) {
 int main(int argc, char *argv[]) {
 
   {
-
-    if (!client->Execute("CREATE INDEX ON :Person(id);")) {
-      std::cerr << "Failed to create an index." << std::endl;
-      return 1;
-    }
-    client->DiscardAll();
-
-    if (!client->Execute(
-            "CREATE (:Person:Entrepreneur {id: 0, age: 40, name: 'John', "
-            "isStudent: false, score: 5.0});")) {
-      std::cerr << "Failed to add data." << std::endl;
-      return 1;
-    }
-    client->DiscardAll();
-
-    if (!client->Execute("MATCH (n) RETURN n;")) {
-      std::cerr << "Failed to read data." << std::endl;
-      return 1;
-    }
-    if (const auto maybe_data = client->FetchAll()) {
-      const auto data = *maybe_data;
-      std::cout << "Number of results: " << data.size() << std::endl;
-    }
-
-    if (!client->Execute("MATCH (n) RETURN n;")) {
-      std::cerr << "Failed to read data." << std::endl;
-      return 1;
-    }
     while (const auto maybe_result = client->FetchOne()) {
       const auto result = *maybe_result;
       if (result.size() < 1) {
@@ -110,7 +82,39 @@ int main(string[] args) {
 		return 1;
 	}
 
-	ClearDatabaseData(client.value);
+	ClearDatabaseData(client);
+
+	if (!client.Execute("CREATE INDEX ON :Person(id);")) {
+		writefln("Failed to create an index.");
+		return 1;
+	}
+	client.DiscardAll();
+
+	if (!client.Execute(
+				"CREATE (:Person:Entrepreneur {id: 0, age: 40, name: 'John', " ~
+				"isStudent: false, score: 5.0});")) {
+		writefln("Failed to add data.");
+		return 1;
+	}
+	client.DiscardAll();
+
+	if (!client.Execute("MATCH (n) RETURN n;")) {
+		writefln("Failed to read data.");
+		return 1;
+	}
+	auto maybeData = client.FetchAll();
+	if (maybeData.length) {
+		const auto data = maybeData[0];
+		writefln("Number of results: %s", data.length);
+	}
+	/*
+
+	writeln("before Execute");
+	if (!client.Execute("MATCH (n) RETURN n;")) {
+		writefln("Failed to read data.");
+		return 1;
+	}
+	*/
 
 	/*
 	mg_session_params *params = mg_session_params_make();

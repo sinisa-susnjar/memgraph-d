@@ -260,6 +260,7 @@ private:
 }
 
 struct Optional(V) {
+	this(ref return scope inout Optional!V rhs) inout { }
 	this(V value) {
 		_value = value;
 		_hasValue = true;
@@ -282,16 +283,16 @@ struct Optional(V) {
 	auto hasValue() const {
 		return _hasValue;
 	}
-	auto value() {
+	@property auto value() const {
 		return _value;
 	}
 	auto opDispatch(string name, T...)(T vals) {
 		return mixin("_value." ~ name)(vals);
 	}
 private:
+	alias value this;
 	bool _hasValue;
 	V _value;
-	alias _value this;
 }
 
 struct Client {
@@ -312,7 +313,10 @@ struct Client {
 	// Client &operator=(Client &&) = delete;
 	// ~Client();
 	~this() {
-		mg_session_destroy(session);
+		import std.stdio;
+		writefln("*** Client DTOR called: %s session: %s", &this, session);
+		if (session)
+			mg_session_destroy(session);
 	}
 
 	/// \brief Client software version.
@@ -338,14 +342,12 @@ struct Client {
 	/// done/finished to be able to execute another statement.
 	bool Execute(const string statement) {
 		int status = mg_session_run(session, toStringz(statement), null, null, null, null);
-		if (status < 0) {
+		if (status < 0)
 			return false;
-		}
 
 		status = mg_session_pull(session, null);
-		if (status < 0) {
+		if (status < 0)
 			return false;
-		}
 
 		return true;
 	}
@@ -376,18 +378,16 @@ struct Client {
 	/// If there is nothing to fetch, `std::nullopt` is returned.
 	Value[] FetchOne() {
 		mg_result *result;
-		int status = mg_session_fetch(session, &result);
-		if (status != 1) {
-			return null; // TODO ?
-		}
-
 		Value[] values;
+		int status = mg_session_fetch(session, &result);
+		if (status != 1)
+			return values;
+
 		const (mg_list) *list = mg_result_row(result);
 		const size_t list_length = mg_list_size(list);
 		values.length = list_length;
-		for (uint i = 0; i < list_length; ++i) {
-			values ~= Value(mg_list_at(list, i));
-		}
+		for (uint i = 0; i < list_length; ++i)
+			values[i] = Value(mg_list_at(list, i));
 		return values;
 	}
 
@@ -400,9 +400,8 @@ struct Client {
 	Value[][] FetchAll() {
 		Value[] maybeResult;
 		Value[][] data;
-		while ((maybeResult = FetchOne()).length > 0) {
+		while ((maybeResult = FetchOne()).length > 0)
 			data ~= maybeResult;
-		}
 		return data;
 	}
 
@@ -429,8 +428,11 @@ struct Client {
 		return mg_session_rollback_transaction(session, &result) == 0;
 	}
 
+	/// \brief Static method that creates a Memgraph client instance using default parameters localhost:7687
+	/// \return pointer to the created client instance.
+	/// Returns a `null` if the connection couldn't be established.
 	static Optional!Client Connect() {
-		Params params; // use default parameters: localhost:7687
+		Params params;
 		return Connect(params);
 	}
 
@@ -439,11 +441,9 @@ struct Client {
 	/// If the connection couldn't be established given the `params`, it returns
 	/// a `nullptr`.
 	static Optional!Client Connect(const ref Params params) {
-		Optional!Client ret;
 		mg_session_params *mg_params = mg_session_params_make();
-		if (!mg_params) {
-			return ret;
-		}
+		if (!mg_params)
+			return Optional!Client();
 		mg_session_params_set_host(mg_params, toStringz(params.host));
 		mg_session_params_set_port(mg_params, params.port);
 		if (params.username.length > 0) {
@@ -460,15 +460,28 @@ struct Client {
 		mg_session *session = null;
 		int status = mg_connect(mg_params, &session);
 		mg_session_params_destroy(mg_params);
-		if (status < 0) {
-			return ret;
-		}
+		if (status < 0)
+			return Optional!Client();
 
 		return Optional!Client(session);
 	}
 
+	this(ref return scope inout Client rhs) inout {
+		import std.stdio;
+		writefln("*** Client Copy CTOR lhs: %s rhs: %s", session, rhs.session);
+	}
+
+	/*
+	this(ref return scope const Client rhs) const {
+		import std.stdio;
+		writefln("*** Client const Copy CTOR lhs: %s rhs: %s", session, rhs.session);
+	}
+	*/
+
 private:
 	this(mg_session *session) {
+		import std.stdio;
+		writefln("*** Client CTOR called: %s session: %s", &this, session);
 		this.session = session;
 	}
 
