@@ -71,7 +71,7 @@ int main(string[] args) {
 		}
 		*/
 		const auto value = result; // [0];
-		if (value.type() == Value.Type.Node) {
+		if (value.type() == Type.Node) {
 			const auto node = to!Node(value);
 
 			auto labels = node.labels();
