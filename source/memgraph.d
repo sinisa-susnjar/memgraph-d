@@ -2,11 +2,19 @@ module memgraph;
 
 public import mgclient;
 
-import std.string;
+import std.string, std.conv;
+import std.typecons : Tuple;
+import std.exception, std.conv;
+import std.stdio;
 
 struct Detail {
+	static string ConvertString(const mg_string *str) {
+		const auto data = mg_string_data(str);
+		const auto len = mg_string_size(str);
+		return to!string(data[0..len]);
+	}
+
 	static Value.Type ConvertType(mg_value_type type) {
-		import std.exception, std.conv;
 		switch (type) {
 			case mg_value_type.MG_VALUE_TYPE_NULL:
 				return Value.Type.Null;
@@ -54,11 +62,617 @@ struct Detail {
 				assert(0, "unexpected type: " ~ to!string(type));
 		}
 	}
+
+	static bool AreValuesEqual(const mg_value *value1, const mg_value *value2) {
+		if (value1 == value2) {
+			return true;
+		}
+		if (mg_value_get_type(value1) != mg_value_get_type(value2)) {
+			return false;
+		}
+		switch (mg_value_get_type(value1)) {
+			case mg_value_type.MG_VALUE_TYPE_NULL:
+				return true;
+			case mg_value_type.MG_VALUE_TYPE_BOOL:
+				return mg_value_bool(value1) == mg_value_bool(value2);
+			case mg_value_type.MG_VALUE_TYPE_INTEGER:
+				return mg_value_integer(value1) == mg_value_integer(value2);
+			case mg_value_type.MG_VALUE_TYPE_FLOAT:
+				return mg_value_float(value1) == mg_value_float(value2);
+			case mg_value_type.MG_VALUE_TYPE_STRING:
+				return Detail.ConvertString(mg_value_string(value1)) ==
+					Detail.ConvertString(mg_value_string(value2));
+			case mg_value_type.MG_VALUE_TYPE_LIST:
+				return Detail.AreListsEqual(mg_value_list(value1),
+						mg_value_list(value2));
+			case mg_value_type.MG_VALUE_TYPE_MAP:
+				return Detail.AreMapsEqual(mg_value_map(value1), mg_value_map(value2));
+			case mg_value_type.MG_VALUE_TYPE_NODE:
+				return Detail.AreNodesEqual(mg_value_node(value1),
+						mg_value_node(value2));
+			case mg_value_type.MG_VALUE_TYPE_RELATIONSHIP:
+				return Detail.AreRelationshipsEqual(mg_value_relationship(value1),
+						mg_value_relationship(value2));
+			case mg_value_type.MG_VALUE_TYPE_UNBOUND_RELATIONSHIP:
+				return Detail.AreUnboundRelationshipsEqual(
+						mg_value_unbound_relationship(value1),
+						mg_value_unbound_relationship(value2));
+			case mg_value_type.MG_VALUE_TYPE_PATH:
+				return Detail.ArePathsEqual(mg_value_path(value1),
+						mg_value_path(value2));
+			case mg_value_type.MG_VALUE_TYPE_DATE:
+				return Detail.AreDatesEqual(mg_value_date(value1),
+						mg_value_date(value2));
+			case mg_value_type.MG_VALUE_TYPE_TIME:
+				return Detail.AreTimesEqual(mg_value_time(value1),
+						mg_value_time(value2));
+			case mg_value_type.MG_VALUE_TYPE_LOCAL_TIME:
+				return Detail.AreLocalTimesEqual(mg_value_local_time(value1),
+						mg_value_local_time(value2));
+			case mg_value_type.MG_VALUE_TYPE_DATE_TIME:
+				return Detail.AreDateTimesEqual(mg_value_date_time(value1),
+						mg_value_date_time(value2));
+			case mg_value_type.MG_VALUE_TYPE_DATE_TIME_ZONE_ID:
+				return Detail.AreDateTimeZoneIdsEqual(
+						mg_value_date_time_zone_id(value1),
+						mg_value_date_time_zone_id(value2));
+			case mg_value_type.MG_VALUE_TYPE_LOCAL_DATE_TIME:
+				return Detail.AreLocalDateTimesEqual(mg_value_local_date_time(value1),
+						mg_value_local_date_time(value2));
+			case mg_value_type.MG_VALUE_TYPE_DURATION:
+				return Detail.AreDurationsEqual(mg_value_duration(value1),
+						mg_value_duration(value2));
+			case mg_value_type.MG_VALUE_TYPE_POINT_2D:
+				return Detail.ArePoint2dsEqual(mg_value_point_2d(value1),
+						mg_value_point_2d(value2));
+			case mg_value_type.MG_VALUE_TYPE_POINT_3D:
+				return Detail.ArePoint3dsEqual(mg_value_point_3d(value1),
+						mg_value_point_3d(value2));
+			case mg_value_type.MG_VALUE_TYPE_UNKNOWN:
+				throw new Exception("Comparing values of unknown types!");
+			default: assert(0, "unexpected type: " ~ to!string(mg_value_get_type(value1)));
+		}
+	}
+
+	static bool AreListsEqual(const mg_list *list1, const mg_list *list2) {
+		if (list1 == list2) {
+			return true;
+		}
+		if (mg_list_size(list1) != mg_list_size(list2)) {
+			return false;
+		}
+		const uint len = mg_list_size(list1);
+		for (uint i = 0; i < len; ++i) {
+			if (!Detail.AreValuesEqual(mg_list_at(list1, i), mg_list_at(list2, i))) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	static bool AreMapsEqual(const mg_map *map1, const mg_map *map2) {
+		if (map1 == map2) {
+			return true;
+		}
+		if (mg_map_size(map1) != mg_map_size(map2)) {
+			return false;
+		}
+		const uint len = mg_map_size(map1);
+		for (uint i = 0; i < len; ++i) {
+			const mg_string *key = mg_map_key_at(map1, i);
+			const mg_value *value1 = mg_map_value_at(map1, i);
+			const mg_value *value2 =
+				mg_map_at2(map2, mg_string_size(key), mg_string_data(key));
+			if (value2 == null) {
+				return false;
+			}
+			if (!Detail.AreValuesEqual(value1, value2)) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	static bool AreNodesEqual(const mg_node *node1, const mg_node *node2) {
+		if (node1 == node2) {
+			return true;
+		}
+		if (mg_node_id(node1) != mg_node_id(node2)) {
+			return false;
+		}
+		if (mg_node_label_count(node1) != mg_node_label_count(node2)) {
+			return false;
+		}
+		string[] labels1;
+		string[] labels2;
+		const uint label_count = mg_node_label_count(node1);
+		labels1.length = labels2.length = label_count;
+		for (uint i = 0; i < label_count; ++i) {
+			labels1[i] = Detail.ConvertString(mg_node_label_at(node1, i));
+			labels2[i] = Detail.ConvertString(mg_node_label_at(node2, i));
+		}
+		if (labels1 != labels2) {
+			return false;
+		}
+		return Detail.AreMapsEqual(mg_node_properties(node1),
+				mg_node_properties(node2));
+	}
+
+	static bool AreRelationshipsEqual(const mg_relationship *rel1,
+			const mg_relationship *rel2) {
+		if (rel1 == rel2) {
+			return true;
+		}
+		if (mg_relationship_id(rel1) != mg_relationship_id(rel2)) {
+			return false;
+		}
+		if (mg_relationship_start_id(rel1) != mg_relationship_start_id(rel2)) {
+			return false;
+		}
+		if (mg_relationship_end_id(rel1) != mg_relationship_end_id(rel2)) {
+			return false;
+		}
+		if (Detail.ConvertString(mg_relationship_type(rel1)) !=
+				Detail.ConvertString(mg_relationship_type(rel2))) {
+			return false;
+		}
+		return Detail.AreMapsEqual(mg_relationship_properties(rel1),
+				mg_relationship_properties(rel2));
+	}
+
+	static bool AreUnboundRelationshipsEqual(const mg_unbound_relationship *rel1,
+			const mg_unbound_relationship *rel2) {
+		if (rel1 == rel2) {
+			return true;
+		}
+		if (mg_unbound_relationship_id(rel1) != mg_unbound_relationship_id(rel2)) {
+			return false;
+		}
+		if (Detail.ConvertString(mg_unbound_relationship_type(rel1)) !=
+				Detail.ConvertString(mg_unbound_relationship_type(rel2))) {
+			return false;
+		}
+		return Detail.AreMapsEqual(mg_unbound_relationship_properties(rel1),
+				mg_unbound_relationship_properties(rel2));
+	}
+
+	static bool ArePathsEqual(const mg_path *path1, const mg_path *path2) {
+		if (path1 == path2) {
+			return true;
+		}
+		if (mg_path_length(path1) != mg_path_length(path2)) {
+			return false;
+		}
+		const uint len = mg_path_length(path1);
+		for (uint i = 0; i < len; ++i) {
+			if (!Detail.AreNodesEqual(mg_path_node_at(path1, i),
+						mg_path_node_at(path2, i))) {
+				return false;
+			}
+			if (!Detail.AreUnboundRelationshipsEqual(
+						mg_path_relationship_at(path1, i),
+						mg_path_relationship_at(path2, i))) {
+				return false;
+			}
+			if (mg_path_relationship_reversed_at(path1, i) !=
+					mg_path_relationship_reversed_at(path2, i)) {
+				return false;
+			}
+		}
+		return Detail.AreNodesEqual(mg_path_node_at(path1, len),
+				mg_path_node_at(path2, len));
+	}
+
+	static bool AreDatesEqual(const mg_date *date1, const mg_date *date2) {
+		return mg_date_days(date1) == mg_date_days(date2);
+	}
+
+	static bool AreTimesEqual(const mg_time *time1, const mg_time *time2) {
+		return mg_time_nanoseconds(time1) == mg_time_nanoseconds(time2) &&
+			mg_time_tz_offset_seconds(time1) == mg_time_tz_offset_seconds(time2);
+	}
+
+	static bool AreLocalTimesEqual(const mg_local_time *local_time1,
+			const mg_local_time *local_time2) {
+		return mg_local_time_nanoseconds(local_time1) ==
+			mg_local_time_nanoseconds(local_time2);
+	}
+
+	static bool AreDateTimesEqual(const mg_date_time *date_time1,
+			const mg_date_time *date_time2) {
+		return mg_date_time_seconds(date_time1) == mg_date_time_seconds(date_time2) &&
+			mg_date_time_nanoseconds(date_time1) ==
+			mg_date_time_nanoseconds(date_time2) &&
+			mg_date_time_tz_offset_minutes(date_time1) ==
+			mg_date_time_tz_offset_minutes(date_time2);
+	}
+
+	static bool AreDateTimeZoneIdsEqual(
+			const mg_date_time_zone_id *date_time_zone_id1,
+			const mg_date_time_zone_id *date_time_zone_id2) {
+		return mg_date_time_zone_id_seconds(date_time_zone_id1) ==
+			mg_date_time_zone_id_nanoseconds(date_time_zone_id2) &&
+			mg_date_time_zone_id_nanoseconds(date_time_zone_id1) ==
+			mg_date_time_zone_id_nanoseconds(date_time_zone_id2) &&
+			mg_date_time_zone_id_tz_id(date_time_zone_id1) ==
+			mg_date_time_zone_id_tz_id(date_time_zone_id2);
+	}
+
+	static bool AreLocalDateTimesEqual(const mg_local_date_time *local_date_time1,
+			const mg_local_date_time *local_date_time2) {
+		return mg_local_date_time_seconds(local_date_time1) ==
+			mg_local_date_time_nanoseconds(local_date_time2) &&
+			mg_local_date_time_nanoseconds(local_date_time1) ==
+			mg_local_date_time_nanoseconds(local_date_time2);
+	}
+
+	static bool AreDurationsEqual(const mg_duration *duration1,
+			const mg_duration *duration2) {
+		return mg_duration_months(duration1) == mg_duration_months(duration2) &&
+			mg_duration_days(duration1) == mg_duration_days(duration2) &&
+			mg_duration_seconds(duration1) == mg_duration_seconds(duration2) &&
+			mg_duration_nanoseconds(duration1) ==
+			mg_duration_nanoseconds(duration2);
+	}
+
+	static bool ArePoint2dsEqual(const mg_point_2d *point_2d1,
+			const mg_point_2d *point_2d2) {
+		return mg_point_2d_srid(point_2d1) == mg_point_2d_srid(point_2d2) &&
+			mg_point_2d_x(point_2d1) == mg_point_2d_x(point_2d2) &&
+			mg_point_2d_y(point_2d1) == mg_point_2d_y(point_2d2);
+	}
+
+	static bool ArePoint3dsEqual(const mg_point_3d *point_3d1,
+			const mg_point_3d *point_3d2) {
+		return mg_point_3d_srid(point_3d1) == mg_point_3d_srid(point_3d2) &&
+			mg_point_3d_x(point_3d1) == mg_point_3d_x(point_3d2) &&
+			mg_point_3d_y(point_3d1) == mg_point_3d_y(point_3d2) &&
+			mg_point_3d_z(point_3d1) == mg_point_3d_z(point_3d2);
+	}
+
 }
 
-struct ConstMap {
-	mg_map *_map;
+/// \brief Wrapper class for \ref mg_map.
+struct Map {
+	alias KeyValuePair = Tuple!(string, "key", Value, "value");
+
+	// CREATE_ITERATOR(Map, KeyValuePair);
+
+	this(mg_map *ptr) { ptr_ = ptr; }
+
+	/// \brief Create a Map from a copy of the given \ref mg_map.
+	this(const mg_map *const_ptr) { this(mg_map_copy(const_ptr)); }
+
+	// Map(const Map &other);
+	this(const ref Map other) { this(mg_map_copy(other.ptr_)); }
+
+	// Map(Map &&other);
+	// Map &operator=(const Map &other) = delete;
+	// Map &operator=(Map &&other) = delete;
+	~this() {
+		if (ptr_ != null)
+			mg_map_destroy(ptr_);
+	}
+
+	/// Copies content of the given `map`.
+	// explicit Map(const ConstMap &map);
+
+	/// \brief Constructs an empty Map that can hold at most \p capacity key-value
+	/// pairs.
+	///
+	/// Key-value pairs should be constructed and then inserted using
+	/// \ref Insert, \ref InsertUnsafe and similar.
+	///
+	/// \param capacity The maximum number of key-value pairs that the newly
+	///                 constructed Map can hold.
+	this(uint capacity) { this(mg_map_make_empty(capacity)); }
+
+	/// \brief Constructs an map from the list of key-value pairs.
+	/// Values are copied.
+	// Map(std::initializer_list<std::pair<std::string, Value>> list);
+
+	size_t size() const { return mg_map_size(ptr_); }
+
+	// bool empty() const { return size() == 0; }
+
+	/// \brief Returns the value associated with the given `key`.
+	/// Behaves undefined if there is no such a value.
+	/// \note
+	/// Each key-value pair has to be checked, resulting with
+	/// O(n) time complexity.
+	const Value opIndex(const ref string key) {
+  		return Value(mg_map_at(ptr_, toStringz(key)));
+	}
+
+	// Iterator begin() const { return Iterator(this, 0); }
+	// Iterator end() const { return Iterator(this, size()); }
+
+	/// \brief Returns the key-value iterator for the given `key`.
+	/// In the case there is no such pair, `end` iterator is returned.
+	/// \note
+	/// Each key-value pair has to be checked, resulting with O(n) time
+	/// complexity.
+	// Iterator find(const std::string_view key) const;
+
+	/// \brief Inserts the given `key`-`value` pair into the map.
+	/// Checks if the given `key` already exists by iterating over all entries.
+	/// Copies both the `key` and the `value`.
+	// bool Insert(const std::string_view key, const Value &value);
+
+	/// \brief Inserts the given `key`-`value` pair into the map.
+	/// Checks if the given `key` already exists by iterating over all entries.
+	/// Copies both the `key` and the `value`.
+	// bool Insert(const std::string_view key, const ConstValue &value);
+
+	/// \brief Inserts the given `key`-`value` pair into the map.
+	/// Checks if the given `key` already exists by iterating over all entries.
+	/// Copies the `key` and takes the ownership of `value` by moving it.
+	/// Behaviour of accessing the `value` after performing this operation is
+	/// considered undefined.
+	// bool Insert(const std::string_view key, Value &&value);
+
+	/// \brief Inserts the given `key`-`value` pair into the map.
+	/// It doesn't check if the given `key` already exists in the map.
+	/// Copies both the `key` and the `value`.
+	// bool InsertUnsafe(const std::string_view key, const Value &value);
+
+	/// \brief Inserts the given `key`-`value` pair into the map.
+	/// It doesn't check if the  given `key` already exists in the map.
+	/// Copies both the `key` and the `value`.
+	// bool InsertUnsafe(const std::string_view key, const ConstValue &value);
+
+	/// \brief Inserts the given `key`-`value` pair into the map.
+	/// It doesn't check if the given `key` already exists in the map.
+	/// Copies the `key` and takes the ownership of `value` by moving it.
+	/// Behaviour of accessing the `value` after performing this operation
+	/// is considered undefined.
+	// bool InsertUnsafe(const std::string_view key, Value &&value);
+
+	// const ConstMap AsConstMap() const;
+
+	bool opEquals(const ref Map other) const {
+		return Detail.AreMapsEqual(ptr_, other.ptr_);
+	}
+
+	// const mg_map *ptr() const { return ptr_; }
+
+	bool empty() const {
+		return idx_ >= size();
+	}
+
+	KeyValuePair front() const {
+		assert(idx_ < size());
+		auto key = Detail.ConvertString(mg_map_key_at(ptr_, idx_));
+		auto value = Value(mg_map_value_at(ptr_, idx_));
+		return KeyValuePair(key, value);
+	}
+
+	void popFront() {
+		idx_++;
+	}
+
+private:
+	mg_map *ptr_;
+	uint idx_;
+};
+
+
+/*
+inline std::pair<std::string_view, ConstValue> Map::Iterator::operator*()
+    const {
+  return std::make_pair(
+      detail::ConvertString(mg_map_key_at(iterable_->ptr(), index_)),
+      ConstValue(mg_map_value_at(iterable_->ptr(), index_)));
 }
+*/
+
+// inline Map::Map(Map &&other) : Map(other.ptr_) { other.ptr_ = nullptr; }
+
+// inline Map::Map(const ConstMap &map) : ptr_(mg_map_copy(map.ptr())) {}
+
+/*
+inline Map::Map(std::initializer_list<std::pair<std::string, Value>> list)
+    : Map(list.size()) {
+  for (const auto &[key, value] : list) {
+    Insert(key, value.AsConstValue());
+  }
+}
+*/
+
+/*
+inline Map::Iterator Map::find(const std::string_view key) const {
+  for (size_t i = 0; i < size(); ++i) {
+    if (key == detail::ConvertString(mg_map_key_at(ptr_, i))) {
+      return Iterator(this, i);
+    }
+  }
+  return end();
+}
+*/
+
+/*
+inline bool Map::Insert(const std::string_view key, const Value &value) {
+  return mg_map_insert2(ptr_, mg_string_make2(key.size(), key.data()),
+                        mg_value_copy(value.ptr())) == 0;
+}
+
+inline bool Map::Insert(const std::string_view key, const ConstValue &value) {
+  return mg_map_insert2(ptr_, mg_string_make2(key.size(), key.data()),
+                        mg_value_copy(value.ptr())) == 0;
+}
+
+inline bool Map::Insert(const std::string_view key, Value &&value) {
+  bool result = mg_map_insert2(ptr_, mg_string_make2(key.size(), key.data()),
+                               value.ptr_) == 0;
+  value.ptr_ = nullptr;
+  return result;
+}
+
+inline bool Map::InsertUnsafe(const std::string_view key, const Value &value) {
+  return mg_map_insert_unsafe2(ptr_, mg_string_make2(key.size(), key.data()),
+                               mg_value_copy(value.ptr())) == 0;
+}
+
+inline bool Map::InsertUnsafe(const std::string_view key,
+                              const ConstValue &value) {
+  return mg_map_insert_unsafe2(ptr_, mg_string_make2(key.size(), key.data()),
+                               mg_value_copy(value.ptr())) == 0;
+}
+
+inline bool Map::InsertUnsafe(const std::string_view key, Value &&value) {
+  bool result =
+      mg_map_insert_unsafe2(ptr_, mg_string_make2(key.size(), key.data()),
+                            value.ptr_) == 0;
+  value.ptr_ = nullptr;
+  return result;
+}
+
+inline const ConstMap Map::AsConstMap() const { return ConstMap(ptr_); }
+*/
+
+/*
+inline std::pair<std::string_view, ConstValue> ConstMap::Iterator::operator*()
+    const {
+  return std::make_pair(
+      detail::ConvertString(mg_map_key_at(iterable_->ptr(), index_)),
+      ConstValue(mg_map_value_at(iterable_->ptr(), index_)));
+}
+
+inline ConstValue ConstMap::operator[](const std::string_view key) const {
+  return ConstValue(mg_map_at2(const_ptr_, key.size(), key.data()));
+}
+
+inline ConstMap::Iterator ConstMap::find(const std::string_view key) const {
+  for (size_t i = 0; i < size(); ++i) {
+    if (key == detail::ConvertString(mg_map_key_at(const_ptr_, i))) {
+      return Iterator(this, i);
+    }
+  }
+  return end();
+}
+
+inline bool ConstMap::operator==(const ConstMap &other) const {
+  return detail::AreMapsEqual(const_ptr_, other.const_ptr_);
+}
+
+inline bool ConstMap::operator==(const Map &other) const {
+  return detail::AreMapsEqual(const_ptr_, other.ptr());
+}
+*/
+
+/// \brief Wrapper class for \ref mg_node
+struct Node {
+	/// \brief View of the node's labels
+	struct Labels {
+		// CREATE_ITERATOR(Labels, std::string_view);
+
+		this(const mg_node *node) { node_ = node; }
+
+		size_t size() const { return mg_node_label_count(node_); }
+
+		/// \brief Return node's label at the `index` position.
+		// std::string_view operator[](size_t index) const;
+		string opIndex(int index) const {
+			return Detail.ConvertString(mg_node_label_at(node_, index));
+		}
+
+		// Iterator begin() { return Iterator(this, 0); }
+		// Iterator end() { return Iterator(this, size()); }
+
+		bool empty() const {
+			return idx_ >= size();
+		}
+		string front() const {
+			assert(idx_ < size());
+			return Detail.ConvertString(mg_node_label_at(node_, idx_));
+		}
+		void popFront() {
+			idx_++;
+		}
+
+	private:
+		const mg_node *node_;
+		uint idx_;
+	}
+
+	this(mg_node *ptr) { ptr_ = ptr; }
+
+	/// \brief Create a Node from a copy of the given \ref mg_node.
+	this(const mg_node *const_ptr) { this(mg_node_copy(const_ptr)); }
+
+	this(const ref Node other) {
+		this(mg_node_copy(other.ptr_));
+	}
+
+	// Node(Node &&other);
+	// inline Node::Node(Node &&other) : ptr_(other.ptr_) { other.ptr_ = nullptr; }
+
+	// Node &operator=(const Node &other) = delete;
+	// Node &operator=(Node &&other) = delete;
+	~this() {
+		if (ptr_ != null)
+			mg_node_destroy(ptr_);
+	}
+
+	// explicit Node(const ConstNode &node);
+
+	// Id id() const { return Id::FromInt(mg_node_id(ptr_)); }
+	long id() const { return mg_node_id(ptr_); }
+
+	Labels labels() const { return Labels(ptr_); }
+
+	Map properties() const { return Map(mg_node_properties(ptr_)); }
+
+	// ConstNode AsConstNode() const;
+
+	/// \exception std::runtime_error node property contains value with
+	/// unknown type
+	// bool operator==(const Node &other) const;
+	bool opEquals(const ref Node other) const {
+		return Detail.AreNodesEqual(ptr_, other.ptr_);
+	}
+	/// \exception std::runtime_error node property contains value with
+	/// unknown type
+	// bool operator==(const ConstNode &other) const;
+	/// \exception std::runtime_error node property contains value with
+	/// unknown type
+	// bool operator!=(const Node &other) const { return !(this == other); }
+	/// \exception std::runtime_error node property contains value with
+	/// unknown type
+	// bool operator!=(const ConstNode &other) const { return !(*this == other); }
+
+	// mg_node *ptr() const { return ptr_; }
+
+private:
+	mg_node *ptr_;
+};
+
+/*
+inline std::string_view Node::Labels::Iterator::operator*() const {
+	return (*iterable_)[index_];
+}
+*/
+
+// inline Node::Node(const ConstNode &node) : ptr_(mg_node_copy(node.ptr())) {}
+
+/*
+inline bool Node::operator==(const ConstNode &other) const {
+	return detail::AreNodesEqual(ptr_, other.ptr());
+}
+
+inline ConstNode Node::AsConstNode() const { return ConstNode(ptr_); }
+
+inline bool ConstNode::operator==(const ConstNode &other) const {
+	return detail::AreNodesEqual(const_ptr_, other.const_ptr_);
+}
+
+inline bool ConstNode::operator==(const Node &other) const {
+	return detail::AreNodesEqual(const_ptr_, other.ptr());
+}
+*/
+
+
+
 
 struct Value {
 	/// \brief Types that can be stored in a `Value`.
@@ -211,6 +825,37 @@ struct Value {
 	// const ConstMap ValueMap() const;
 	/// \pre value type is Type::Node
 	// const ConstNode ValueNode() const;
+	auto opCast(T : Node)() const {
+		assert(type() == Type.Node);
+		return Node(mg_value_node(ptr_));
+	}
+	auto opCast(T : long)() const {
+		assert(type() == Type.Int);
+		return mg_value_integer(ptr_);
+	}
+	auto toString() const {
+		switch (type()) {
+			case Type.Node:
+				return to!string(Node(mg_value_node(ptr_)));
+			case Type.String:
+				return Detail.ConvertString(mg_value_string(ptr_));
+			case Type.Bool:
+				return to!string(to!bool(mg_value_bool(ptr_)));
+			case Type.Double:
+				return to!string(mg_value_float(ptr_));
+			case Type.Int:
+				return to!string(mg_value_integer(ptr_));
+			default: assert(0, "unhandled type: " ~ to!string(type()));
+		}
+	}
+	auto opCast(T : bool)() const {
+		assert(type() == Type.Bool);
+		return to!bool(mg_value_bool(ptr_));
+	}
+	auto opCast(T : double)() const {
+		assert(type() == Type.Double);
+		return mg_value_float(ptr_);
+	}
 	/// \pre value type is Type::Relationship
 	// const ConstRelationship ValueRelationship() const;
 	/// \pre value type is Type::UnboundRelationship
@@ -313,8 +958,6 @@ struct Client {
 	// Client &operator=(Client &&) = delete;
 	// ~Client();
 	~this() {
-		import std.stdio;
-		writefln("*** Client DTOR called: %s session: %s", &this, session);
 		if (session)
 			mg_session_destroy(session);
 	}
@@ -360,8 +1003,8 @@ struct Client {
 	/// After executing the statement, the method is blocked
 	/// until all incoming data (execution results) are handled, i.e. until
 	/// `FetchOne` method returns `std::nullopt`.
-	bool Execute(const string statement, const ref ConstMap params) {
-		int status = mg_session_run(session, toStringz(statement), params._map, null, null, null);
+	bool Execute(const string statement, const ref Map params) {
+		int status = mg_session_run(session, toStringz(statement), params.ptr_, null, null, null);
 		if (status < 0) {
 			return false;
 		}
@@ -467,21 +1110,17 @@ struct Client {
 	}
 
 	this(ref return scope inout Client rhs) inout {
-		import std.stdio;
 		writefln("*** Client Copy CTOR lhs: %s rhs: %s", session, rhs.session);
 	}
 
 	/*
 	this(ref return scope const Client rhs) const {
-		import std.stdio;
 		writefln("*** Client const Copy CTOR lhs: %s rhs: %s", session, rhs.session);
 	}
 	*/
 
 private:
 	this(mg_session *session) {
-		import std.stdio;
-		writefln("*** Client CTOR called: %s session: %s", &this, session);
 		this.session = session;
 	}
 

@@ -1,6 +1,6 @@
 import memgraph;
 
-import std.stdio, std.string, std.conv;
+import std.stdio, std.conv, std.array;
 
 // Example adapted from advanced.cpp included in the mgclient git repo.
 
@@ -11,58 +11,6 @@ void ClearDatabaseData(ref Optional!Client client) {
 	}
 	client.DiscardAll();
 }
-
-/*
-int main(int argc, char *argv[]) {
-
-  {
-    while (const auto maybe_result = client->FetchOne()) {
-      const auto result = *maybe_result;
-      if (result.size() < 1) {
-        continue;
-      }
-      const auto value = result[0];
-      if (value.type() == mg::Value::Type::Node) {
-        const auto node = value.ValueNode();
-        auto labels = node.labels();
-        std::string labels_str = std::accumulate(
-            labels.begin(), labels.end(), std::string(""),
-            [](const std::string &acc, const std::string_view value) {
-              return acc + ":" + std::string(value);
-            });
-        const auto props = node.properties();
-        std::string props_str =
-            std::accumulate(
-                props.begin(), props.end(), std::string("{"),
-                [](const std::string &acc, const auto &key_value) {
-                  const auto &[key, value] = key_value;
-                  std::string value_str;
-                  if (value.type() == mg::Value::Type::Int) {
-                    value_str = std::to_string(value.ValueInt());
-                  } else if (value.type() == mg::Value::Type::String) {
-                    value_str = value.ValueString();
-                  } else if (value.type() == mg::Value::Type::Bool) {
-                    value_str = std::to_string(value.ValueBool());
-                  } else if (value.type() == mg::Value::Type::Double) {
-                    value_str = std::to_string(value.ValueDouble());
-                  } else {
-                    std::cerr
-                        << "Uncovered converstion from data type to a string"
-                        << std::endl;
-                    std::exit(1);
-                  }
-                  return acc + " " + std::string(key) + ": " + value_str;
-                }) +
-            " }";
-        std::cout << labels_str << " " << props_str << std::endl;
-      }
-    }
-
-    ClearDatabaseData(client.get());
-  }
-  return 0;
-}
-*/
 
 int main(string[] args) {
 	if (args.length != 3) {
@@ -107,58 +55,39 @@ int main(string[] args) {
 		const auto data = maybeData[0];
 		writefln("Number of results: %s", data.length);
 	}
-	/*
 
-	writeln("before Execute");
 	if (!client.Execute("MATCH (n) RETURN n;")) {
 		writefln("Failed to read data.");
 		return 1;
 	}
-	*/
 
-	/*
-	mg_session_params *params = mg_session_params_make();
-	if (!params) {
-		writefln("failed to allocate session parameters");
-		return 1;
-	}
-	mg_session_params_set_host(params, toStringz(args[1]));
-	mg_session_params_set_port(params, to!ushort(args[2]));
-	mg_session_params_set_sslmode(params, mg_sslmode.MG_SSLMODE_DISABLE);
+	Value[] maybeResult;
+	while ((maybeResult = client.FetchOne()).length) {
+		import std.algorithm;
+		const auto result = maybeResult[0];
+		/* ???
+		if (result.size() < 1) {
+			continue;
+		}
+		*/
+		const auto value = result; // [0];
+		if (value.type() == Value.Type.Node) {
+			const auto node = to!Node(value);
 
-	mg_session *session = null;
-	int status = mg_connect(params, &session);
-	mg_session_params_destroy(params);
-	if (status < 0) {
-		writefln("failed to connect to Memgraph: %s", fromStringz(mg_session_error(session)));
-		mg_session_destroy(session);
-		return 1;
-	}
+			auto labels = node.labels();
+			string labelsStr = labels.join(":");
 
-	if (mg_session_run(session, toStringz(args[3]), null, null, null, null) < 0) {
-		writefln("failed to execute query: %s", fromStringz(mg_session_error(session)));
-		mg_session_destroy(session);
-		return 1;
-	}
-
-	if (mg_session_pull(session, null)) {
-		writefln("failed to pull results of the query: %s", fromStringz(mg_session_error(session)));
-		mg_session_destroy(session);
-		return 1;
+			auto props = node.properties();
+			string propsStr = "{ ";
+			foreach (p; props) {
+				propsStr ~= p.key ~ ":" ~ to!string(p.value) ~ " ";
+			}
+			propsStr ~= "}";
+			writefln("%s %s", labelsStr, propsStr);
+		}
 	}
 
-	mg_result *result;
-	int rows = 0;
-	while ((status = mg_session_fetch(session, &result)) == 1) {
-		rows++;
-	}
-
-	if (status < 0) {
-		writefln("error occurred during query execution: %s", fromStringz(mg_session_error(session)));
-	} else {
-		writefln("query executed successfuly and returned %d rows", rows);
-	}
-	*/
+	ClearDatabaseData(client);
 
 	Client.Finalize();
 
