@@ -275,7 +275,7 @@ version (unittest) {
 unittest {
 	import std.process, std.stdio;
 	writefln("mgclient.d: starting memgraph docker container...");
-	auto run = execute(["docker", "run", "-p", "7687:7687", "-d", "memgraph/memgraph"]);
+	auto run = execute(["docker", "run", "-p", "7688:7687", "-d", "memgraph/memgraph"]);
 	assert(run.status == 0);
 	dockerContainer = run.output;
 
@@ -296,7 +296,7 @@ unittest {
 	assert(params != null);
 
 	mg_session_params_set_host(params, toStringz("localhost"));
-	mg_session_params_set_port(params, to!ushort(7687));
+	mg_session_params_set_port(params, to!ushort(7688));
 	mg_session_params_set_sslmode(params, mg_sslmode.MG_SSLMODE_DISABLE);
 
 	mg_session *session = null;
