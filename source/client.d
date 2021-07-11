@@ -1,51 +1,58 @@
+/// Provides a connection for memgraph.
 module client;
 
 import std.string, std.stdio;
 
 import mgclient, optional, value, map;
 
+/// Provides a connection for memgraph.
 struct Client {
+	/// Connection parameters for Connect(Params)
 	struct Params {
+		/// Hostname, defaults to `localhost`.
 		string host = "localhost";
+		/// Port, defaults to 7687.
 		ushort port = 7687;
+		/// Username, if authentication is required.
 		string username;
+		/// Password, if authentication is required.
 		string password;
+		/// Set to true, if encryption is required.
 		bool useSsl;
-		string userAgent; // defaults to "memgraph-d/major.minor.patch"
+		/// Useragent used when connecting to memgraph, defaults to "memgraph-d/major.minor.patch".
+		string userAgent;
 	}
 
-	// TODO maybe rather a class ?
-
+	// TODO
 	// Client(const Client &) = delete;
 	// Client(Client &&) = default;
 	// Client &operator=(const Client &) = delete;
 	// Client &operator=(Client &&) = delete;
-	// ~Client();
+
+	/// Destructor, destroys the memgraph session.
 	~this() {
 		if (session)
 			mg_session_destroy(session);
 	}
 
-	/// \brief Client software version.
-	/// \return client version in the major.minor.patch format.
+	/// Client software version.
+	/// Return: Client version in the major.minor.patch format.
 	static auto Version() { return fromStringz(mg_client_version()); }
 
 	/// Initializes the client (the whole process).
 	/// Should be called at the beginning of each process using the client.
-	///
-	/// \return Zero if initialization was successful.
+	/// Return: Zero if initialization was successful.
 	static int Init() { return mg_init(); }
 
 	/// Finalizes the client (the whole process).
 	/// Should be called at the end of each process using the client.
 	static void Finalize() { mg_finalize(); }
 
-	/// \brief Executes the given Cypher `statement`.
-	/// \return true when the statement is successfully executed, false otherwise.
-	/// \note
+	/// Executes the given Cypher `statement`.
+	/// Return: true when the statement is successfully executed, false otherwise.
 	/// After executing the statement, the method is blocked until all incoming
 	/// data (execution results) are handled, i.e. until `FetchOne` method returns
-	/// `std::nullopt`. Even if the result set is empty, the fetching has to be
+	/// an empty array. Even if the result set is empty, the fetching has to be
 	/// done/finished to be able to execute another statement.
 	bool Execute(const string statement) {
 		int status = mg_session_run(session, toStringz(statement), null, null, null, null);
@@ -59,14 +66,11 @@ struct Client {
 		return true;
 	}
 
-	/// \brief Executes the given Cypher `statement`, supplied with additional
-	/// `params`.
-	/// \return true when the statement is successfully executed, false
-	/// otherwise.
-	/// \note
-	/// After executing the statement, the method is blocked
-	/// until all incoming data (execution results) are handled, i.e. until
-	/// `FetchOne` method returns `std::nullopt`.
+	/// Executes the given Cypher `statement`, supplied with additional `params`.
+	/// Return: true when the statement is successfully executed, false otherwise.
+	/// After executing the statement, the method is blocked until all incoming
+	/// data (execution results) are handled, i.e. until `FetchOne` method returns
+	/// an empty array.
 	bool Execute(const string statement, const ref Map params) {
 		int status = mg_session_run(session, toStringz(statement), params.ptr, null, null, null);
 		if (status < 0) {
@@ -80,9 +84,9 @@ struct Client {
 		return true;
 	}
 
-	/// \brief Fetches the next result from the input stream.
-	/// \return next result from the input stream.
-	/// If there is nothing to fetch, `std::nullopt` is returned.
+	/// Fetches the next result from the input stream.
+	/// Return next result from the input stream.
+	/// If there is nothing to fetch, an empty array is returned.
 	Value[] FetchOne() {
 		mg_result *result;
 		Value[] values;
@@ -98,12 +102,12 @@ struct Client {
 		return values;
 	}
 
-	/// \brief Fetches all results and discards them.
+	/// Fetches all results and discards them.
 	void DiscardAll() {
 		while (FetchOne()) { }
 	}
 
-	/// \brief Fetches all results.
+	/// Fetches all results.
 	Value[][] FetchAll() {
 		Value[] maybeResult;
 		Value[][] data;
@@ -112,41 +116,38 @@ struct Client {
 		return data;
 	}
 
-	/// \brief Start a transaction.
-	/// \return true when the transaction was successfully started, false
-	/// otherwise.
+	/// Start a transaction.
+	/// Return: true when the transaction was successfully started, false otherwise.
 	bool BeginTransaction() {
 		return mg_session_begin_transaction(session, null) == 0;
 	}
 
-	/// \brief Commit current transaction.
-	/// \return true when the transaction was successfully committed, false
-	/// otherwise.
+	/// Commit current transaction.
+	/// Return: true when the transaction was successfully committed, false otherwise.
 	bool CommitTransaction() {
 		mg_result *result;
 		return mg_session_commit_transaction(session, &result) == 0;
 	}
 
-	/// \brief Rollback current transaction.
-	/// \return true when the transaction was successfully rollbacked, false
-	/// otherwise.
+	/// Rollback current transaction.
+	/// Return: true when the transaction was successfully rollbacked, false otherwise.
 	bool RollbackTransaction() {
 		mg_result *result;
 		return mg_session_rollback_transaction(session, &result) == 0;
 	}
 
-	/// \brief Static method that creates a Memgraph client instance using default parameters localhost:7687
-	/// \return pointer to the created client instance.
-	/// Returns a `null` if the connection couldn't be established.
+	/// Static method that creates a Memgraph client instance using default parameters localhost:7687
+	/// Return: optional client connection instance.
+	/// Returns an empty optional if the connection couldn't be established.
 	static Optional!Client Connect() {
 		Params params;
 		return Connect(params);
 	}
 
-	/// \brief Static method that creates a Memgraph client instance.
-	/// \return pointer to the created client instance.
+	/// Static method that creates a Memgraph client instance.
+	/// Return: optional client connection instance.
 	/// If the connection couldn't be established given the `params`, it returns
-	/// a `nullptr`.
+	/// an empty optional.
 	static Optional!Client Connect(const ref Params params) {
 		mg_session_params *mg_params = mg_session_params_make();
 		if (!mg_params)
@@ -195,7 +196,7 @@ version (unittest) {
 	string dockerContainer;
 }
 
-/// Start a memgraph container for unit testing.
+// Start a memgraph container for unit testing.
 unittest {
 	import std.process, std.stdio;
 	writefln("memgraph.d: starting memgraph docker container...");
@@ -209,23 +210,20 @@ unittest {
 	Thread.sleep(dur!("msecs")(1000));
 }
 
+/// Test connection to memgraph on localhost, port 7688.
 unittest {
-	import std.string, std.conv, std.stdio;
-
-	writefln("memgraph.d: connecting to memgraph docker container...");
-
 	assert(Client.Init() == 0);
 
 	Client.Params params;
 	params.port = 7688;
 	auto client = Client.Connect(params);
 
-	assert(client.hasValue == true);
+	assert(client);
 
-	Client.Finalize(); // TODO check if it is a problem if mg_finalize() comes before mg_session_destroy()
+	Client.Finalize();
 }
 
-/// Stop the memgraph container again.
+// Stop the memgraph container again.
 unittest {
 	import std.process, std.string, std.stdio;
 	writefln("memgraph.d: stopping memgraph docker container...");

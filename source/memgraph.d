@@ -1,3 +1,5 @@
+/// Main D module for the memgraph database.
+/// Imports all required definitions.
 module memgraph;
 
 public import mgclient, optional, client, value, node, map, enums;

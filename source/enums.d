@@ -1,6 +1,7 @@
+/// Enumerations
 module enums;
 
-/// \brief Types that can be stored in a `Value`.
+/// Types that can be stored in a `Value`.
 enum Type {
 	Null,
 	Bool,

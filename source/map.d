@@ -1,10 +1,11 @@
+/// Provides a map (i.e. key/value) tuple.
 module map;
 
 import std.typecons, std.string;
 
 import mgclient, detail, value;
 
-/// \brief Wrapper class for \ref mg_map.
+/// Wrapper class for \ref mg_map.
 struct Map {
 	alias KeyValuePair = Tuple!(string, "key", Value, "value");
 
@@ -12,10 +13,10 @@ struct Map {
 
 	this(mg_map *ptr) { ptr_ = ptr; }
 
-	/// \brief Create a Map from a copy of the given \ref mg_map.
+	/// Create a Map from a copy of the given \ref mg_map.
 	this(const mg_map *const_ptr) { this(mg_map_copy(const_ptr)); }
 
-	// Map(const Map &other);
+	/// Copy constructor.
 	this(const ref Map other) { this(mg_map_copy(other.ptr_)); }
 
 	// Map(Map &&other);
@@ -29,17 +30,15 @@ struct Map {
 	/// Copies content of the given `map`.
 	// explicit Map(const ConstMap &map);
 
-	/// \brief Constructs an empty Map that can hold at most \p capacity key-value
-	/// pairs.
-	///
+	/// Constructs an empty Map that can hold at most \p capacity key-value pairs.
 	/// Key-value pairs should be constructed and then inserted using
 	/// \ref Insert, \ref InsertUnsafe and similar.
 	///
-	/// \param capacity The maximum number of key-value pairs that the newly
+	/// Param: capacity The maximum number of key-value pairs that the newly
 	///                 constructed Map can hold.
 	this(uint capacity) { this(mg_map_make_empty(capacity)); }
 
-	/// \brief Constructs an map from the list of key-value pairs.
+	/// Constructs an map from the list of key-value pairs.
 	/// Values are copied.
 	// Map(std::initializer_list<std::pair<std::string, Value>> list);
 
@@ -47,9 +46,8 @@ struct Map {
 
 	// bool empty() const { return size() == 0; }
 
-	/// \brief Returns the value associated with the given `key`.
+	/// Returns the value associated with the given `key`.
 	/// Behaves undefined if there is no such a value.
-	/// \note
 	/// Each key-value pair has to be checked, resulting with
 	/// O(n) time complexity.
 	const Value opIndex(const ref string key) {
