@@ -4,13 +4,14 @@ import std.conv, std.string;
 
 import mgclient, detail, node, enums;
 
+/// A Bolt value, encapsulating all other values.
 struct Value {
 
-	/// \brief Constructs an object that becomes the owner of the given `value`.
+	/// Constructs an object that becomes the owner of the given `value`.
 	/// `value` is destroyed when a `Value` object is destroyed.
 	this(mg_value *ptr) { ptr_ = ptr; }
 
-	/// \brief Creates a Value from a copy of the given \ref mg_value.
+	/// Creates a Value from a copy of the given `mg_value`.
 	this(const mg_value *const_ptr) { this(mg_value_copy(const_ptr)); }
 
 	this(const ref Value other) { this(mg_value_copy(other.ptr_)); }

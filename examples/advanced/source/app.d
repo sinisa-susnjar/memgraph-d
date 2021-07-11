@@ -18,8 +18,6 @@ int main(string[] args) {
 		return 1;
 	}
 
-	Client.Init();
-
 	Client.Params params;
 	params.host = args[1];
 	params.port = to!ushort(args[2]);
@@ -64,13 +62,7 @@ int main(string[] args) {
 	Value[] maybeResult;
 	while ((maybeResult = client.FetchOne()).length) {
 		import std.algorithm;
-		const auto result = maybeResult[0];
-		/* ???
-		if (result.size() < 1) {
-			continue;
-		}
-		*/
-		const auto value = result; // [0];
+		const auto value = maybeResult[0];
 		if (value.type() == Type.Node) {
 			const auto node = to!Node(value);
 
@@ -78,9 +70,11 @@ int main(string[] args) {
 			string labelsStr = labels.join(":");
 
 			auto props = node.properties();
+			writefln("props: %s", props);
+			// string s = props.map.each!((a) => a.key);
 			string propsStr = "{ ";
-			foreach (p; props) {
-				propsStr ~= p.key ~ ":" ~ to!string(p.value) ~ " ";
+			foreach (k, v; props) {
+				propsStr ~= k ~ ":" ~ to!string(v) ~ " ";
 			}
 			propsStr ~= "}";
 			writefln("%s %s", labelsStr, propsStr);
@@ -88,8 +82,6 @@ int main(string[] args) {
 	}
 
 	ClearDatabaseData(client);
-
-	Client.Finalize();
 
 	return 0;
 }

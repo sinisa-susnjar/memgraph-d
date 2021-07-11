@@ -5,15 +5,15 @@ import std.typecons, std.string;
 
 import mgclient, detail, value;
 
-/// Wrapper class for \ref mg_map.
+/// Wrapper class for `mg_map`.
 struct Map {
 	alias KeyValuePair = Tuple!(string, "key", Value, "value");
 
 	// CREATE_ITERATOR(Map, KeyValuePair);
 
-	this(mg_map *ptr) { ptr_ = ptr; }
+	this(mg_map *ptr) { ptr_ = ptr; fillAA(); }
 
-	/// Create a Map from a copy of the given \ref mg_map.
+	/// Create a Map from a copy of the given `mg_map`.
 	this(const mg_map *const_ptr) { this(mg_map_copy(const_ptr)); }
 
 	/// Copy constructor.
@@ -32,9 +32,9 @@ struct Map {
 
 	/// Constructs an empty Map that can hold at most \p capacity key-value pairs.
 	/// Key-value pairs should be constructed and then inserted using
-	/// \ref Insert, \ref InsertUnsafe and similar.
+	/// `Insert`, `InsertUnsafe` and similar.
 	///
-	/// Param: capacity The maximum number of key-value pairs that the newly
+	/// Params: capacity = The maximum number of key-value pairs that the newly
 	///                 constructed Map can hold.
 	this(uint capacity) { this(mg_map_make_empty(capacity)); }
 
@@ -43,6 +43,15 @@ struct Map {
 	// Map(std::initializer_list<std::pair<std::string, Value>> list);
 
 	size_t size() const { return mg_map_size(ptr_); }
+
+	void fillAA() {
+		const auto sz = mg_map_size(ptr_);
+		for (auto i=0; i < sz; i++) {
+			auto key = Detail.ConvertString(mg_map_key_at(ptr_, i));
+			auto value = Value(mg_map_value_at(ptr_, i));
+			map_[key] = value;
+		}
+	}
 
 	// bool empty() const { return size() == 0; }
 
@@ -106,6 +115,7 @@ struct Map {
 
 	// const mg_map *ptr() const { return ptr_; }
 
+	/*
 	bool empty() const {
 		return idx_ >= size();
 	}
@@ -120,10 +130,15 @@ struct Map {
 	void popFront() {
 		idx_++;
 	}
+	*/
 
 	auto ptr() const { return ptr_; }
 
+	@property auto map() { return map_; }
+
 private:
+	alias map this;
+	Value[string] map_;
 	mg_map *ptr_;
 	uint idx_;
 }

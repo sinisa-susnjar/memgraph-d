@@ -2,7 +2,7 @@ module node;
 
 import mgclient, detail, map;
 
-/// \brief Wrapper class for \ref mg_node
+/// Wrapper class for `mg_node`.
 struct Node {
 	/// \brief View of the node's labels
 	struct Labels {
@@ -12,8 +12,7 @@ struct Node {
 
 		size_t size() const { return mg_node_label_count(node_); }
 
-		/// \brief Return node's label at the `index` position.
-		// std::string_view operator[](size_t index) const;
+		/// Return node's label at the `index` position.
 		string opIndex(int index) const {
 			return Detail.ConvertString(mg_node_label_at(node_, index));
 		}
@@ -39,7 +38,7 @@ struct Node {
 
 	this(mg_node *ptr) { ptr_ = ptr; }
 
-	/// \brief Create a Node from a copy of the given \ref mg_node.
+	/// Create a Node from a copy of the given `mg_node`.
 	this(const mg_node *const_ptr) { this(mg_node_copy(const_ptr)); }
 
 	this(const ref Node other) {

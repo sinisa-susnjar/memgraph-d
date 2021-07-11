@@ -1,5 +1,7 @@
+/// Provide a optional value.
 module optional;
 
+/// Holds an optional value of type `V`.
 struct Optional(V) {
 	this(ref return scope inout Optional!V rhs) inout { }
 	this(V value) {

@@ -34,7 +34,7 @@
 /// supposed to be used to construct data to be sent to the Bolt server, and
 /// read data obtained from the Bolt server.
 ///
-/// Each object has a corresponding \c mg_*_destroy function that should be
+/// Each object has a corresponding `mg_*_destroy` function that should be
 /// invoked on the object at the end of its lifetime to free the resources
 /// allocated for its storage. Each object has an owner, that is responsible for
 /// its destruction. Object can be owned by the API client or by another
@@ -44,7 +44,7 @@
 /// constructed a `mg_list` value and inserted some other `mg_value`
 /// objects into it, they must only invoke `mg_list_destroy` on the list and
 /// all of its members will be properly destroyed, because the list owns all of
-/// its elements. Invoking \c mg_*_destroy on objects that are not owned by the
+/// its elements. Invoking `mg_*_destroy` on objects that are not owned by the
 /// caller will usually result in memory corruption, double freeing, nuclear
 /// apocalypse and similar unwanted behaviors. Therefore, object ownership
 /// should be tracked carefully.
@@ -90,7 +90,7 @@
 ///      - `mg_session_run` takes a non-const pointer to the session because
 ///        it modifies it internal state, but there is no ownership change
 ///
-///     An obvious exception here are \c mg_*_destroy functions which do not
+///     An obvious exception here are `mg_*_destroy` functions which do not
 ///     change ownership of the object.
 ///
 ///     Functions that take a const pointer to a object do not change the
@@ -103,6 +103,17 @@
 ///       - copy functions.
 module mgclient;
 
+/// Module constructor used to initialise memgraph via a call to mg_init().
+static this() {
+	auto rc = mg_init();
+	assert(rc == mg_error.MG_SUCCESS);
+}
+
+/// Module destructor used to finalise memgraph via a call to mg_finalize().
+static ~this() {
+	mg_finalize();
+}
+
 extern (C) {
 	/// Client software version.
 	/// Return: Client version in the major.minor.patch format.
@@ -111,7 +122,7 @@ extern (C) {
 	/// Initializes the client (the whole process).
 	/// Should be called at the beginning of each process using the client.
 	/// Return: Zero if initialization was successful.
-	int mg_init();
+	mg_error mg_init();
 
 	/// Finalizes the client (the whole process).
 	/// Should be called at the end of each process using the client.
