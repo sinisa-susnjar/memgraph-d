@@ -15,3 +15,7 @@ docker run -p 7687:7687 memgraph/memgraph --also-log-to-stderr --log-level=DEBUG
 ## Generate local documentation
 
 dub build -b ddox
+
+## Run unittests and generate coverage data
+
+DFLAGS="-cov -unittest" dub test
