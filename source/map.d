@@ -63,6 +63,10 @@ struct Map {
   		return Value(mg_map_at(ptr_, toStringz(key)));
 	}
 
+	const Value opIndex(const string key) {
+  		return Value(mg_map_at(ptr_, toStringz(key)));
+	}
+
 	// Iterator begin() const { return Iterator(this, 0); }
 	// Iterator end() const { return Iterator(this, size()); }
 

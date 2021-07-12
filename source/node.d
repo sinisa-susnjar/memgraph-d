@@ -73,3 +73,61 @@ private:
 	/// Pointer to `mg_node` instance.
 	mg_node *ptr_;
 }
+
+unittest {
+	import testutils;
+	startContainer();
+}
+
+unittest {
+	import memgraph;
+	import std.algorithm, std.conv;
+
+	Client.Params params;
+	params.port = 7688;
+
+	import std.stdio;
+	writefln("running node.d unit tests");
+
+	auto client = Client.Connect(params);
+	assert(client);
+
+	assert(client.Execute("MATCH (n) DETACH DELETE n;"));
+	client.DiscardAll();
+
+	assert(client.Execute("CREATE INDEX ON :Person(id);"));
+	client.DiscardAll();
+
+	assert(client.Execute(
+				"CREATE (:Person:Entrepreneur {id: 0, age: 40, name: 'John', " ~
+				"isStudent: false, score: 5.0});"));
+	client.DiscardAll();
+
+	assert(client.Execute("MATCH (n) RETURN n;"));
+
+	const auto row = client.FetchOne();
+	assert(row.length == 1);
+
+	const auto value = row[0];
+
+	assert(value.type() == Type.Node);
+
+	const auto node = to!Node(value);
+
+	const auto labels = node.labels();
+
+	import std.stdio;
+
+	assert(labels.size() == 2);
+	assert(labels[0] == "Person");
+	assert(labels[1] == "Entrepreneur");
+
+	const auto props = node.properties();
+	assert(props.size() == 5);
+	assert(to!long(props["id"]) == 0);
+	assert(to!long(props["age"]) == 40);
+	assert(to!string(props["name"]) == "John");
+	assert(to!bool(props["isStudent"]) == false);
+	assert(to!double(props["score"]) == 5.0);
+}
+
