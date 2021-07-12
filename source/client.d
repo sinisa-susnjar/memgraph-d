@@ -192,22 +192,9 @@ private:
 	mg_session *session;
 }
 
-version (unittest) {
-	string dockerContainer;
-}
-
-// Start a memgraph container for unit testing.
 unittest {
-	import std.process, std.stdio;
-	writefln("memgraph.d: starting memgraph docker container...");
-	auto run = execute(["docker", "run", "-p", "7688:7687", "-d", "memgraph/memgraph"]);
-	assert(run.status == 0);
-	dockerContainer = run.output;
-
-	// Need to wait a while until the container is spun up, otherwise connecting will fail.
-	import core.thread.osthread;
-	import core.time;
-	Thread.sleep(dur!("msecs")(1000));
+	import testutils;
+	startContainer();
 }
 
 /// Test connection to memgraph on localhost, port 7688.
@@ -221,13 +208,4 @@ unittest {
 	assert(client);
 
 	Client.Finalize();
-}
-
-// Stop the memgraph container again.
-unittest {
-	import std.process, std.string, std.stdio;
-	writefln("memgraph.d: stopping memgraph docker container...");
-	auto stop = execute(["docker", "rm", "-f", stripRight(dockerContainer)]);
-	assert(stop.status == 0);
-	assert(stop.output == dockerContainer);
 }
