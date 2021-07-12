@@ -28,29 +28,5 @@
 			"libs": [ "openssl" ],
 			"lflags": [ "mgclient/build/src/libmgclient.a" ]
 		}
-	],
-	"subPackages": [
-		{
-			"name": "basic_c",
-			"targetType": "executable",
-			"dependencies": {
-				"memgraph-d": "*"
-			},
-			"libs": [ "openssl" ],
-			"lflags": [ "mgclient/build/src/libmgclient.a" ],
-			"sourcePaths": [ "examples/basic_c" ],
-			"importPaths": [ "examples/basic_c" ]
-		},
-		{
-			"name": "advanced",
-			"targetType": "executable",
-			"dependencies": {
-				"memgraph-d": "*"
-			},
-			"libs": [ "openssl" ],
-			"lflags": [ "mgclient/build/src/libmgclient.a" ],
-			"sourcePaths": [ "examples/advanced" ],
-			"importPaths": [ "examples/advanced" ]
-		}
 	]
 }
