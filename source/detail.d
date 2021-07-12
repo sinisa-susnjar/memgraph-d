@@ -1,9 +1,11 @@
+/// Provides helper functions.
 module detail;
 
 import std.conv;
 
 import mgclient, enums;
 
+/// Wrapper class around static helper functions.
 struct Detail {
 	static string ConvertString(const mg_string *str) {
 		const auto data = mg_string_data(str);
@@ -85,7 +87,7 @@ struct Detail {
 			case mg_value_type.MG_VALUE_TYPE_MAP:
 				return Detail.AreMapsEqual(mg_value_map(value1), mg_value_map(value2));
 			case mg_value_type.MG_VALUE_TYPE_NODE:
-				return Detail.AreNodesEqual(mg_value_node(value1),
+				return Detail.areNodesEqual(mg_value_node(value1),
 						mg_value_node(value2));
 			case mg_value_type.MG_VALUE_TYPE_RELATIONSHIP:
 				return Detail.AreRelationshipsEqual(mg_value_relationship(value1),
@@ -170,7 +172,11 @@ struct Detail {
 		return true;
 	}
 
-	static bool AreNodesEqual(const mg_node *node1, const mg_node *node2) {
+	/// Compares two nodes for equality.
+	/// Params: node1 = first node to compare
+	///         node2 = second node to compare
+	/// Return: `true` if both nodes are equal, `false` otherwise
+	static bool areNodesEqual(const mg_node *node1, const mg_node *node2) {
 		if (node1 == node2) {
 			return true;
 		}
@@ -193,7 +199,7 @@ struct Detail {
 		}
 		return Detail.AreMapsEqual(mg_node_properties(node1),
 				mg_node_properties(node2));
-	}
+	}	// areNodesEqual()
 
 	static bool AreRelationshipsEqual(const mg_relationship *rel1,
 			const mg_relationship *rel2) {
@@ -242,7 +248,7 @@ struct Detail {
 		}
 		const uint len = mg_path_length(path1);
 		for (uint i = 0; i < len; ++i) {
-			if (!Detail.AreNodesEqual(mg_path_node_at(path1, i),
+			if (!Detail.areNodesEqual(mg_path_node_at(path1, i),
 						mg_path_node_at(path2, i))) {
 				return false;
 			}
@@ -256,7 +262,7 @@ struct Detail {
 				return false;
 			}
 		}
-		return Detail.AreNodesEqual(mg_path_node_at(path1, len),
+		return Detail.areNodesEqual(mg_path_node_at(path1, len),
 				mg_path_node_at(path2, len));
 	}
 

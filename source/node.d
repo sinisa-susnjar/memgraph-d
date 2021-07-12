@@ -1,24 +1,25 @@
+/// Provides a node wrapper.
 module node;
 
 import mgclient, detail, map;
 
-/// Wrapper class for `mg_node`.
+/// Represents a node from a labeled property graph.
+///
+/// Consists of a unique identifier (withing the scope of its origin graph), a
+/// list of labels and a map of properties. A node owns its labels and
+/// properties.
+///
+/// Maximum possible number of labels allowed by Bolt protocol is `uint.max`.
 struct Node {
-	/// \brief View of the node's labels
+	/// View of the node's labels.
 	struct Labels {
-		// CREATE_ITERATOR(Labels, std::string_view);
-
-		this(const mg_node *node) { node_ = node; }
-
+		/// Returns the number of labels of node `node`.
 		size_t size() const { return mg_node_label_count(node_); }
 
 		/// Return node's label at the `index` position.
 		string opIndex(int index) const {
 			return Detail.ConvertString(mg_node_label_at(node_, index));
 		}
-
-		// Iterator begin() { return Iterator(this, 0); }
-		// Iterator end() { return Iterator(this, size()); }
 
 		bool empty() const {
 			return idx_ >= size();
@@ -32,58 +33,43 @@ struct Node {
 		}
 
 	private:
+		this(const mg_node *node) { node_ = node; }
 		const mg_node *node_;
 		uint idx_;
 	}
 
+	/// Create a Node using the given `mg_node`.
 	this(mg_node *ptr) { ptr_ = ptr; }
 
 	/// Create a Node from a copy of the given `mg_node`.
 	this(const mg_node *const_ptr) { this(mg_node_copy(const_ptr)); }
 
+	/// Create a Node from a copy of the given `node`.
 	this(const ref Node other) {
 		this(mg_node_copy(other.ptr_));
 	}
 
-	// Node(Node &&other);
-	// inline Node::Node(Node &&other) : ptr_(other.ptr_) { other.ptr_ = nullptr; }
-
-	// Node &operator=(const Node &other) = delete;
-	// Node &operator=(Node &&other) = delete;
+	/// Destroys the given node.
 	~this() {
 		if (ptr_ != null)
 			mg_node_destroy(ptr_);
 	}
 
-	// explicit Node(const ConstNode &node);
-
-	// Id id() const { return Id::FromInt(mg_node_id(ptr_)); }
+	/// Returns the ID of this node.
 	long id() const { return mg_node_id(ptr_); }
 
+	/// Returns the labels belonging to this node.
 	Labels labels() const { return Labels(ptr_); }
 
+	/// Returns the property map belonging to this node.
 	Map properties() const { return Map(mg_node_properties(ptr_)); }
 
-	// ConstNode AsConstNode() const;
-
-	/// \exception std::runtime_error node property contains value with
-	/// unknown type
-	// bool operator==(const Node &other) const;
+	/// Comparison operator.
 	bool opEquals(const ref Node other) const {
-		return Detail.AreNodesEqual(ptr_, other.ptr_);
+		return Detail.areNodesEqual(ptr_, other.ptr_);
 	}
-	/// \exception std::runtime_error node property contains value with
-	/// unknown type
-	// bool operator==(const ConstNode &other) const;
-	/// \exception std::runtime_error node property contains value with
-	/// unknown type
-	// bool operator!=(const Node &other) const { return !(this == other); }
-	/// \exception std::runtime_error node property contains value with
-	/// unknown type
-	// bool operator!=(const ConstNode &other) const { return !(*this == other); }
-
-	// mg_node *ptr() const { return ptr_; }
 
 private:
+	/// Pointer to `mg_node` instance.
 	mg_node *ptr_;
 }
