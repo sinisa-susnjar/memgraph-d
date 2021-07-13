@@ -1,5 +1,7 @@
 [![Build & Test](https://github.com/sinisa-susnjar/memgraph-d/actions/workflows/d.yml/badge.svg)](https://github.com/sinisa-susnjar/memgraph-d/actions)
 
+[![codecov](https://codecov.io/gh/sinisa-susnjar/memgraph-d/branch/main/graph/badge.svg?token=ILY7NOAXDF)](https://codecov.io/gh/sinisa-susnjar/memgraph-d)
+
 # memgraph-d
 
 D bindings for the memgraph DB
@@ -20,4 +22,4 @@ dub build -b ddox
 
 ## Run unittests and generate coverage data
 
-DFLAGS="-cov -unittest" dub test
+dub test -b unittest-cov

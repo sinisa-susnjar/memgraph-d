@@ -29,4 +29,6 @@ jobs:
         # Build and run tests, as defined by `unittest` configuration
         # In this mode, `mainSourceFile` is excluded and `version (unittest)` are included
         # See https://dub.pm/package-format-json.html#configurations
-        dub test --compiler=$DC
+        dub test -b unittest-cov --compiler=$DC
+        # Upload code coverage
+        bash <(curl -s https://codecov.io/bash) -t 829de2fb-f216-4209-9f3e-285087e1c328
