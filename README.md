@@ -1,8 +1,10 @@
+![example workflow](https://github.com/sinisa-susnjar/memgraph-d/actions/workflows/d.yml/badge.svg)
+
 # memgraph-d
 
 D bindings for the memgraph DB
 
-Memgraph DB is copyright Memgraph Ltd., see https://memgraph.com
+Memgraph DB is &copy; Memgraph Ltd., see https://memgraph.com
 
 ## Run
 
