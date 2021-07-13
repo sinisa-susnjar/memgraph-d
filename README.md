@@ -1,4 +1,4 @@
-[![Build & Test](https://github.com/sinisa-susnjar/memgraph-d/workflows/d.yml/badge.svg)](https://github.com/sinisa-susnjar/memgraph-d/actions)
+[![Build & Test](https://github.com/sinisa-susnjar/memgraph-d/actions/d.yml/badge.svg)](https://github.com/sinisa-susnjar/memgraph-d/actions)
 
 # memgraph-d
 
