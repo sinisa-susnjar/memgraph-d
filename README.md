@@ -1,5 +1,7 @@
 ![example workflow](https://github.com/sinisa-susnjar/memgraph-d/actions/workflows/d.yml/badge.svg)
 
+[![Build & Test](https://github.com/sinisa-susnjar/memgraph-d/workflows/push/badge.svg?branch=main&event=push)](https://github.com/sinisa-susnjar/memgraph-d/actions)
+
 # memgraph-d
 
 D bindings for the memgraph DB
