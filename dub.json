@@ -5,8 +5,9 @@
 	"license": "MIT",
 	"name": "memgraph-d",
 	"preGenerateCommands": [
+		"echo PACKAGE_DIR: $PACKAGE_DIR",
 		"git pull --recurse-submodules",
-		"mkdir -p mgclient/build; cd mgclient/build; cmake ..; make"
+		"mkdir -p $PACKAGE_DIR/mgclient/build; cd $PACKAGE_DIR/mgclient/build; cmake ..; make"
 	],
 	"configurations": [
 		{
