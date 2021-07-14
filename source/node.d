@@ -80,32 +80,21 @@ unittest {
 }
 
 unittest {
+	import testutils;
 	import memgraph;
 	import std.algorithm, std.conv;
 
-	Client.Params params;
-	params.port = 7688;
-
-	import std.stdio;
-	writefln("running node.d unit tests");
-
-	auto client = Client.Connect(params);
+	auto client = connectContainer();
 	assert(client);
 
-	assert(client.Execute("MATCH (n) DETACH DELETE n;"));
-	client.DiscardAll();
+	createTestIndex(client);
 
-	assert(client.Execute("CREATE INDEX ON :Person(id);"));
-	client.DiscardAll();
+	deleteTestData(client);
 
-	assert(client.Execute(
-				"CREATE (:Person:Entrepreneur {id: 0, age: 40, name: 'John', " ~
-				"isStudent: false, score: 5.0});"));
-	client.DiscardAll();
+	createTestData(client);
 
-	assert(client.Execute("MATCH (n) RETURN n;"));
-
-	const auto row = client.FetchOne();
+	assert(client.execute("MATCH (n) RETURN n;"));
+	const auto row = client.fetchOne();
 	assert(row.length == 1);
 
 	const auto value = row[0];
@@ -114,13 +103,27 @@ unittest {
 
 	const auto node = to!Node(value);
 
-	const auto labels = node.labels();
+	auto labels = node.labels();
 
 	import std.stdio;
+
+	assert(node.id() > 0);
+
+	auto expectedLabels = [ "Person", "Entrepreneur" ];
 
 	assert(labels.size() == 2);
 	assert(labels[0] == "Person");
 	assert(labels[1] == "Entrepreneur");
+
+	int i;
+	foreach (label; labels) {
+		assert(label == expectedLabels[i]);
+		i++;
+	}
+
+	const auto other = Node(node);
+
+	assert(other == node);
 
 	const auto props = node.properties();
 	assert(props.size() == 5);

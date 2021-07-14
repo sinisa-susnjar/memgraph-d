@@ -10,7 +10,6 @@ int main(string[] args) {
 		return 1;
 	}
 
-	mg_init();
 	writefln("mgclient version: %s", fromStringz(mg_client_version()));
 
 	mg_session_params *params = mg_session_params_make();
@@ -31,17 +30,23 @@ int main(string[] args) {
 		return 1;
 	}
 
+	assert(mg_session_status(session) == mg_session_code.MG_SESSION_READY);
+
 	if (mg_session_run(session, toStringz(args[3]), null, null, null, null) < 0) {
 		writefln("failed to execute query: %s", fromStringz(mg_session_error(session)));
 		mg_session_destroy(session);
 		return 1;
 	}
 
+	assert(mg_session_status(session) == mg_session_code.MG_SESSION_EXECUTING);
+
 	if (mg_session_pull(session, null)) {
 		writefln("failed to pull results of the query: %s", fromStringz(mg_session_error(session)));
 		mg_session_destroy(session);
 		return 1;
 	}
+
+	assert(mg_session_status(session) == mg_session_code.MG_SESSION_FETCHING);
 
 	mg_result *result;
 	int rows = 0;
@@ -56,7 +61,6 @@ int main(string[] args) {
 	}
 
 	mg_session_destroy(session);
-	mg_finalize();
 
 	return 0;
 }

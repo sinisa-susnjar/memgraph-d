@@ -5,11 +5,11 @@ import std.stdio, std.conv, std.array;
 // Example adapted from advanced.cpp included in the mgclient git repo.
 
 void ClearDatabaseData(ref Optional!Client client) {
-	if (!client.Execute("MATCH (n) DETACH DELETE n;")) {
+	if (!client.execute("MATCH (n) DETACH DELETE n;")) {
 		writefln("Failed to delete all data from the database.");
 		assert(0);
 	}
-	client.DiscardAll();
+	client.discardAll();
 }
 
 int main(string[] args) {
@@ -22,7 +22,7 @@ int main(string[] args) {
 	params.host = args[1];
 	params.port = to!ushort(args[2]);
 
-	auto client = Client.Connect(params);
+	auto client = Client.connect(params);
 	if (!client) {
 		writefln("Failed to connect.");
 		return 1;
@@ -30,37 +30,37 @@ int main(string[] args) {
 
 	ClearDatabaseData(client);
 
-	if (!client.Execute("CREATE INDEX ON :Person(id);")) {
+	if (!client.execute("CREATE INDEX ON :Person(id);")) {
 		writefln("Failed to create an index.");
 		return 1;
 	}
-	client.DiscardAll();
+	client.discardAll();
 
-	if (!client.Execute(
+	if (!client.execute(
 				"CREATE (:Person:Entrepreneur {id: 0, age: 40, name: 'John', " ~
 				"isStudent: false, score: 5.0});")) {
 		writefln("Failed to add data.");
 		return 1;
 	}
-	client.DiscardAll();
+	client.discardAll();
 
-	if (!client.Execute("MATCH (n) RETURN n;")) {
+	if (!client.execute("MATCH (n) RETURN n;")) {
 		writefln("Failed to read data.");
 		return 1;
 	}
-	auto maybeData = client.FetchAll();
+	auto maybeData = client.fetchAll();
 	if (maybeData.length) {
 		const auto data = maybeData[0];
 		writefln("Number of results: %s", data.length);
 	}
 
-	if (!client.Execute("MATCH (n) RETURN n;")) {
+	if (!client.execute("MATCH (n) RETURN n;")) {
 		writefln("Failed to read data.");
 		return 1;
 	}
 
 	Value[] maybeResult;
-	while ((maybeResult = client.FetchOne()).length) {
+	while ((maybeResult = client.fetchOne()).length) {
 		import std.algorithm;
 		const auto value = maybeResult[0];
 		if (value.type() == Type.Node) {

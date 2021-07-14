@@ -103,12 +103,14 @@
 ///       - copy functions.
 module mgclient;
 
+/// Initializes the client (the whole process).
 /// Module constructor used to initialise memgraph via a call to mg_init().
 static this() {
 	auto rc = mg_init();
 	assert(rc == mg_error.MG_SUCCESS);
 }
 
+/// Finalizes the client (the whole process).
 /// Module destructor used to finalise memgraph via a call to mg_finalize().
 static ~this() {
 	mg_finalize();
@@ -1167,7 +1169,7 @@ extern (C) {
 	/// Returns the status of `mg_session`.
 	///
 	/// Return: One of the session codes in `mg_session_code`.
-	int mg_session_status(const mg_session *session);
+	mg_session_code mg_session_status(const mg_session *session);
 
 	/// Obtains the error message stored in `mg_session` (if any).
 	const (char) *mg_session_error(mg_session *session);

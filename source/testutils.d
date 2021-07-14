@@ -1,6 +1,10 @@
 module testutils;
 
 version (unittest) {
+	import memgraph;
+
+	// Port where the memgraph container is listening.
+	enum MEMGRAPH_PORT = 7688;
 
 	// Start a memgraph container for unit testing if it is not already running.
 	// Store the container id in $TMP/memgraph-d.container so it can be used in
@@ -28,13 +32,15 @@ version (unittest) {
 		}
 
 		if (startContainer) {
+			import std.conv;
+
 			// Pull the latest memgraph docker image.
 			auto pull = execute(["docker", "pull", "memgraph/memgraph"]);
 			assert(pull.status == 0);
 
 			// Start a new memgraph docker container.
 			auto containerIdFile = File(containerIdFileName, "w");
-			auto run = execute(["docker", "run", "-d", "-p", "7688:7687", "-d", "memgraph/memgraph"]);
+			auto run = execute(["docker", "run", "-d", "-p", to!string(MEMGRAPH_PORT) ~ ":7687", "-d", "memgraph/memgraph"]);
 			assert(run.status == 0);
 
 			// Store container id.
@@ -47,5 +53,31 @@ version (unittest) {
 			Thread.sleep(dur!("msecs")(1000));
 		}
 	}	// startContainer()
+
+	// Create a client connection to the running unit test container.
+	auto connectContainer() {
+		startContainer(); // Make sure container is up.
+		Client.Params params = { port: MEMGRAPH_PORT };
+		return Client.connect(params);
+	}	// connectContainer()
+
+	// Create an index on the test data.
+	void createTestIndex(ref Optional!Client client) {
+		assert(client.execute("CREATE INDEX ON :Person(id);"), client.sessionError);
+		client.discardAll();
+	}	// createTestIndex()
+
+	// Delete the test data.
+	void deleteTestData(ref Optional!Client client) {
+		assert(client.execute("MATCH (n) DETACH DELETE n;"), client.sessionError);
+		client.discardAll();
+	}	// deleteTestData()
+
+	// Create some test data.
+	void createTestData(ref Optional!Client client) {
+		assert(client.execute("CREATE (:Person:Entrepreneur {id: 0, age: 40, name: 'John', isStudent: false, score: 5.0});"),
+				client.sessionError);
+		client.discardAll();
+	}	// createTestData()
 
 }

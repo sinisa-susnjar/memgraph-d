@@ -37,16 +37,21 @@ struct Client {
 
 	/// Client software version.
 	/// Return: Client version in the major.minor.patch format.
-	static auto Version() { return fromStringz(mg_client_version()); }
+	static auto clientVersion() { return fromStringz(mg_client_version()); }
 
-	/// Initializes the client (the whole process).
-	/// Should be called at the beginning of each process using the client.
-	/// Return: Zero if initialization was successful.
-	static int Init() { return mg_init(); }
+	/// Obtains the error message stored in the current session (if any).
+	auto sessionError() {
+		// mg_session_error() seems to randomly fill the first byte with garbage when there actually is no error.
+		auto err = fromStringz(mg_session_error(session));
+		return err.length == 1 ? "" : err;
+	}
 
-	/// Finalizes the client (the whole process).
-	/// Should be called at the end of each process using the client.
-	static void Finalize() { mg_finalize(); }
+	/// Returns the status of the current session.
+	///
+	/// Return: One of the session codes in `mg_session_code`.
+	auto sessionStatus() const {
+		return mg_session_status(session);
+	}
 
 	/// Executes the given Cypher `statement`.
 	/// Return: true when the statement is successfully executed, false otherwise.
@@ -54,7 +59,7 @@ struct Client {
 	/// data (execution results) are handled, i.e. until `FetchOne` method returns
 	/// an empty array. Even if the result set is empty, the fetching has to be
 	/// done/finished to be able to execute another statement.
-	bool Execute(const string statement) {
+	bool execute(const string statement) {
 		int status = mg_session_run(session, toStringz(statement), null, null, null, null);
 		if (status < 0)
 			return false;
@@ -71,7 +76,7 @@ struct Client {
 	/// After executing the statement, the method is blocked until all incoming
 	/// data (execution results) are handled, i.e. until `FetchOne` method returns
 	/// an empty array.
-	bool Execute(const string statement, const ref Map params) {
+	bool execute(const string statement, const ref Map params) {
 		int status = mg_session_run(session, toStringz(statement), params.ptr, null, null, null);
 		if (status < 0) {
 			return false;
@@ -87,7 +92,7 @@ struct Client {
 	/// Fetches the next result from the input stream.
 	/// Return next result from the input stream.
 	/// If there is nothing to fetch, an empty array is returned.
-	Value[] FetchOne() {
+	Value[] fetchOne() {
 		mg_result *result;
 		Value[] values;
 		int status = mg_session_fetch(session, &result);
@@ -103,35 +108,35 @@ struct Client {
 	}
 
 	/// Fetches all results and discards them.
-	void DiscardAll() {
-		while (FetchOne()) { }
+	void discardAll() {
+		while (fetchOne()) { }
 	}
 
 	/// Fetches all results.
-	Value[][] FetchAll() {
+	Value[][] fetchAll() {
 		Value[] maybeResult;
 		Value[][] data;
-		while ((maybeResult = FetchOne()).length > 0)
+		while ((maybeResult = fetchOne()).length > 0)
 			data ~= maybeResult;
 		return data;
 	}
 
 	/// Start a transaction.
 	/// Return: true when the transaction was successfully started, false otherwise.
-	bool BeginTransaction() {
+	bool beginTransaction() {
 		return mg_session_begin_transaction(session, null) == 0;
 	}
 
 	/// Commit current transaction.
 	/// Return: true when the transaction was successfully committed, false otherwise.
-	bool CommitTransaction() {
+	bool commitTransaction() {
 		mg_result *result;
 		return mg_session_commit_transaction(session, &result) == 0;
 	}
 
 	/// Rollback current transaction.
 	/// Return: true when the transaction was successfully rollbacked, false otherwise.
-	bool RollbackTransaction() {
+	bool rollbackTransaction() {
 		mg_result *result;
 		return mg_session_rollback_transaction(session, &result) == 0;
 	}
@@ -139,16 +144,16 @@ struct Client {
 	/// Static method that creates a Memgraph client instance using default parameters localhost:7687
 	/// Return: optional client connection instance.
 	/// Returns an empty optional if the connection couldn't be established.
-	static Optional!Client Connect() {
+	static Optional!Client connect() {
 		Params params;
-		return Connect(params);
+		return connect(params);
 	}
 
 	/// Static method that creates a Memgraph client instance.
 	/// Return: optional client connection instance.
 	/// If the connection couldn't be established given the `params`, it returns
 	/// an empty optional.
-	static Optional!Client Connect(const ref Params params) {
+	static Optional!Client connect(const ref Params params) {
 		mg_session_params *mg_params = mg_session_params_make();
 		if (!mg_params)
 			return Optional!Client();
@@ -192,20 +197,65 @@ private:
 	mg_session *session;
 }
 
+/// Connect example
 unittest {
-	import testutils;
-	startContainer();
+	// Connect to memgraph DB at localhost:7688
+	auto client = Client.connect();
 }
 
-/// Test connection to memgraph on localhost, port 7688.
 unittest {
-	assert(Client.Init() == 0);
+	import testutils;
+	import memgraph;
 
-	Client.Params params;
-	params.port = 7688;
-	auto client = Client.Connect(params);
-
+	auto client = connectContainer();
 	assert(client);
 
-	Client.Finalize();
+	assert(client.sessionStatus == mg_session_code.MG_SESSION_READY);
+
+	assert(client.sessionError() == "");
+
+	assert(client.clientVersion.length > 0);
+}
+
+unittest {
+	import testutils;
+	import memgraph;
+
+	auto client = connectContainer();
+	assert(client);
+
+	createTestIndex(client);
+
+	deleteTestData(client);
+
+	// Create some test data inside a transaction, then roll it back.
+	client.beginTransaction();
+
+	createTestData(client);
+
+	// Inside the transaction the row count should be 1.
+	assert(client.execute("MATCH (n) RETURN n;"));
+	assert(client.fetchAll.length == 1);
+
+	client.rollbackTransaction();
+
+	// Outside the transaction the row count should be 0.
+	assert(client.execute("MATCH (n) RETURN n;"), client.sessionError);
+	assert(client.fetchAll.length == 0);
+
+
+	// Create some test data inside a transaction, then commit it.
+	client.beginTransaction();
+
+	createTestData(client);
+
+	// Inside the transaction the row count should be 1.
+	assert(client.execute("MATCH (n) RETURN n;"));
+	assert(client.fetchAll.length == 1);
+
+	client.commitTransaction();
+
+	// Outside the transaction the row count should still be 1.
+	assert(client.execute("MATCH (n) RETURN n;"), client.sessionError);
+	assert(client.fetchAll.length == 1);
 }
