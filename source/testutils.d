@@ -6,13 +6,34 @@ version (unittest) {
 	// Port where the memgraph container is listening.
 	enum MEMGRAPH_PORT = 7688;
 
+	bool canConnect() {
+		import std.string, std.conv, std.stdio;
+		auto params = mg_session_params_make();
+		assert(params != null);
+
+		mg_session_params_set_host(params, toStringz("localhost"));
+		mg_session_params_set_port(params, to!ushort(MEMGRAPH_PORT));
+		mg_session_params_set_sslmode(params, mg_sslmode.MG_SSLMODE_DISABLE);
+
+		mg_session *session = null;
+		int status = mg_connect(params, &session);
+		mg_session_params_destroy(params);
+
+		// writefln("canConnect: %s", fromStringz(mg_session_error(session)));
+
+		mg_session_destroy(session);
+
+		return status == 0;
+	}	// canConnect()
+
 	// Start a memgraph container for unit testing if it is not already running.
 	// Store the container id in $TMP/memgraph-d.container so it can be used in
 	// other tests without having to start a new container each time.
 	void startContainer() {
 		import std.process, std.stdio, std.file, std.string;
 
-		// writefln("startContainer()");
+		import std.conv;
+		// writefln("startContainer() on localhost:%s", to!string(MEMGRAPH_PORT));
 
 		auto containerIdFileName = environment.get("TMP", "/tmp") ~ "/memgraph-d.container";
 
@@ -59,15 +80,19 @@ version (unittest) {
 			// writefln("startContainer(): %s", containerId);
 
 			// Need to wait a while until the container is spun up, otherwise connecting will fail.
-			import core.thread.osthread, core.time;
-			Thread.sleep(dur!("msecs")(1000));
+			while (!canConnect()) {
+				import core.thread.osthread, core.time;
+				// writefln("can't connect yet");
+				Thread.sleep(dur!("msecs")(250));
+			}
 		}
 	}	// startContainer()
 
 	// Create a client connection to the running unit test container.
 	auto connectContainer() {
 		startContainer(); // Make sure container is up.
-		Client.Params params = { port: MEMGRAPH_PORT };
+		Client.Params params;
+		params.port = MEMGRAPH_PORT;
 		return Client.connect(params);
 	}	// connectContainer()
 
