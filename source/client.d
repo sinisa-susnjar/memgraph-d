@@ -212,7 +212,7 @@ unittest {
 
 	assert(client.sessionStatus == mg_session_code.MG_SESSION_READY);
 
-	assert(client.sessionError() == "");
+	assert(client.sessionError() == "", client.sessionError);
 
 	assert(client.clientVersion.length > 0);
 }
