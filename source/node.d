@@ -18,7 +18,7 @@ struct Node {
 
 		/// Return node's label at the `index` position.
 		string opIndex(int index) const {
-			return Detail.ConvertString(mg_node_label_at(node_, index));
+			return Detail.convertString(mg_node_label_at(node_, index));
 		}
 
 		bool empty() const {
@@ -26,7 +26,7 @@ struct Node {
 		}
 		string front() const {
 			assert(idx_ < size());
-			return Detail.ConvertString(mg_node_label_at(node_, idx_));
+			return Detail.convertString(mg_node_label_at(node_, idx_));
 		}
 		void popFront() {
 			idx_++;

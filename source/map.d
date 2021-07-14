@@ -47,7 +47,7 @@ struct Map {
 	void fillAA() {
 		const auto sz = mg_map_size(ptr_);
 		for (auto i=0; i < sz; i++) {
-			auto key = Detail.ConvertString(mg_map_key_at(ptr_, i));
+			auto key = Detail.convertString(mg_map_key_at(ptr_, i));
 			auto value = Value(mg_map_value_at(ptr_, i));
 			map_[key] = value;
 		}
@@ -114,7 +114,7 @@ struct Map {
 	// const ConstMap AsConstMap() const;
 
 	bool opEquals(const ref Map other) const {
-		return Detail.AreMapsEqual(ptr_, other.ptr_);
+		return Detail.areMapsEqual(ptr_, other.ptr_);
 	}
 
 	// const mg_map *ptr() const { return ptr_; }
@@ -126,7 +126,7 @@ struct Map {
 
 	KeyValuePair front() const {
 		assert(idx_ < size());
-		auto key = Detail.ConvertString(mg_map_key_at(ptr_, idx_));
+		auto key = Detail.convertString(mg_map_key_at(ptr_, idx_));
 		auto value = Value(mg_map_value_at(ptr_, idx_));
 		return KeyValuePair(key, value);
 	}

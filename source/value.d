@@ -1,3 +1,4 @@
+/// Provides a wrapper for a Bolt value.
 module value;
 
 import std.conv, std.string;
@@ -11,34 +12,36 @@ struct Value {
 	/// `value` is destroyed when a `Value` object is destroyed.
 	this(mg_value *ptr) { ptr_ = ptr; }
 
-	/// Creates a Value from a copy of the given `mg_value`.
+	/// Creates a new Value from a copy of the given `mg_value`.
 	this(const mg_value *const_ptr) { this(mg_value_copy(const_ptr)); }
 
+	/// Creates a new Value from a copy of the given `Value`.
 	this(const ref Value other) { this(mg_value_copy(other.ptr_)); }
-	// Value(Value &&other);
-	// Value &operator=(const Value &other) = delete;
-	// Value &operator=(Value &&other) = delete;
+
+	/// Destroys any value held.
 	~this() {
 		if (ptr_ != null)
 			mg_value_destroy(ptr_);
 	}
 
-	// explicit Value(const ConstValue &value);
+	/// Creates a Null value.
+	// TODO: not sure this is worth the trouble atm
+	// this(typeof(null)) { this(mg_value_make_null()); }
+	// @disable this();
 
-	/// \brief Creates Null value.
-	// this() { this(mg_value_make_null()); }
-
-	// Constructors for primitive types:
+	/// Make a new `Value` from a bool.
 	this(bool value) { this(mg_value_make_bool(value)); }
+	/// Make a new `Value` from a int.
 	this(int value) { this(mg_value_make_integer(value)); }
+	/// Make a new `Value` from a long.
 	this(long value) { this(mg_value_make_integer(value)); }
+	/// Make a new `Value` from a double.
 	this(double value) { this(mg_value_make_float(value)); }
 
-	// Constructors for string:
-	this(const ref string value) {
+	// Make a new `Value` from a string.
+	this(const string value) {
 		this(mg_value_make_string(toStringz(value)));
 	}
-	// explicit Value(const char *value);
 
 
 	/// \brief Constructs a list value and takes the ownership of the `list`.
@@ -119,34 +122,49 @@ struct Value {
 	/// this operation is considered undefined.
 	// explicit Value(Point3d &&point3d);
 
-	/// \pre value type is Type::Bool
-	// bool ValueBool() const;
-	/// \pre value type is Type::Int
-	// int64_t ValueInt() const;
-	/// \pre value type is Type::Double
-	// double ValueDouble() const;
-	/// \pre value type is Type::String
-	// std::string_view ValueString() const;
-	/// \pre value type is Type::List
 	// const ConstList ValueList() const;
-	/// \pre value type is Type::Map
 	// const ConstMap ValueMap() const;
-	/// \pre value type is Type::Node
-	// const ConstNode ValueNode() const;
+
+	/// Return this value as a `Node`.
 	auto opCast(T : Node)() const {
 		assert(type() == Type.Node);
 		return Node(mg_value_node(ptr_));
 	}
+
+	/// Return this value as a long.
 	auto opCast(T : long)() const {
 		assert(type() == Type.Int);
 		return mg_value_integer(ptr_);
 	}
+
+	/// Return this value as an int.
+	auto opCast(T : int)() const {
+		assert(type() == Type.Int);
+		return mg_value_integer(ptr_);
+	}
+
+	/// Return this value as a bool.
+	auto opCast(T : bool)() const {
+		assert(type() == Type.Bool);
+		return to!bool(mg_value_bool(ptr_));
+	}
+
+	/// Return this value as a double.
+	auto opCast(T : double)() const {
+		assert(type() == Type.Double);
+		return mg_value_float(ptr_);
+	}
+
+	/// Return this value as a string.
+	/// If the value held is not of type `Type.String`, then
+	/// it will be first converted into the appropriate string
+	/// representation.
 	auto toString() const {
 		switch (type()) {
 			case Type.Node:
 				return to!string(Node(mg_value_node(ptr_)));
 			case Type.String:
-				return Detail.ConvertString(mg_value_string(ptr_));
+				return Detail.convertString(mg_value_string(ptr_));
 			case Type.Bool:
 				return to!string(to!bool(mg_value_bool(ptr_)));
 			case Type.Double:
@@ -156,14 +174,7 @@ struct Value {
 			default: assert(0, "unhandled type: " ~ to!string(type()));
 		}
 	}
-	auto opCast(T : bool)() const {
-		assert(type() == Type.Bool);
-		return to!bool(mg_value_bool(ptr_));
-	}
-	auto opCast(T : double)() const {
-		assert(type() == Type.Double);
-		return mg_value_float(ptr_);
-	}
+
 	/// \pre value type is Type::Relationship
 	// const ConstRelationship ValueRelationship() const;
 	/// \pre value type is Type::UnboundRelationship
@@ -190,24 +201,110 @@ struct Value {
 	/// \pre value type is Type::Point3d
 	//const ConstPoint3d ValuePoint3d() const;
 
-	/// \exception std::runtime_error the value type is unknown
+	/// Return the type of value being held.
 	Type type() const {
-		return Detail.ConvertType(mg_value_get_type(ptr_));
+		// if (ptr_ == null) return Type.Null;
+		return Detail.convertType(mg_value_get_type(ptr_));
 	}
 
-	//ConstValue AsConstValue() const;
+	/// Comparison operator for another `Value`.
+	bool opEquals(const ref Value other) const {
+		return Detail.areValuesEqual(ptr_, other.ptr_);
+	}
 
-	/// \exception std::runtime_error the value type is unknown
-	//bool operator==(const Value &other) const;
-	/// \exception std::runtime_error the value type is unknown
-	//bool operator==(const ConstValue &other) const;
-	/// \exception std::runtime_error the value type is unknown
-	//bool operator!=(const Value &other) const { return !(*this == other); }
-	/// \exception std::runtime_error the value type is unknown
-	//bool operator!=(const ConstValue &other) const { return !(*this == other); }
+	/// Comparison operator for a string.
+	/// Note: The code asserts that the current value holds a string.
+	bool opEquals(const string val) const {
+		assert(type == Type.String);
+		return Detail.convertString(mg_value_string(ptr_)) == val;
+	}
 
-	//const mg_value *ptr() const { return ptr_; }
+	/// Comparison operator for a long.
+	/// Note: The code asserts that the current value holds an integer.
+	bool opEquals(const long val) const {
+		assert(type == Type.Int);
+		return mg_value_integer(ptr_) == val;
+	}
+
+	/// Comparison operator for a int.
+	/// Note: The code asserts that the current value holds an integer.
+	bool opEquals(const int val) const {
+		assert(type == Type.Int);
+		return mg_value_integer(ptr_) == val;
+	}
+
+	/// Comparison operator for a bool.
+	/// Note: The code asserts that the current value holds a bool.
+	bool opEquals(const bool val) const {
+		assert(type == Type.Bool);
+		return mg_value_bool(ptr_) == val;
+	}
+
+	/// Comparison operator for a double.
+	/// Note: The code asserts that the current value holds a double.
+	bool opEquals(const double val) const {
+		assert(type == Type.Double);
+		return mg_value_float(ptr_) == val;
+	}
 
 private:
 	mg_value *ptr_;
+}
+
+unittest {
+	auto v1 = Value("Zdravo, svijete!");
+	assert(v1.type == Type.String);
+	assert(v1 == "Zdravo, svijete!");
+
+	auto v2 = v1;
+	assert(v1.type == v2.type);
+	assert(v1 == v2);
+	assert(v2 == "Zdravo, svijete!");
+
+	assert(v1.toString == "Zdravo, svijete!");
+}
+
+unittest {
+	auto v1 = Value(42L);
+	assert(v1.type == Type.Int);
+	assert(v1 == 42);
+	assert(v1 == 42L);
+
+	auto v2 = v1;
+	assert(v1.type == v2.type);
+	assert(v1 == v2);
+	assert(v2 == 42);
+
+	auto v3 = Value(42);
+	assert(v1.type == v3.type);
+	assert(v1 == v3);
+	assert(v3 == 42);
+
+	assert(v1.toString == "42");
+}
+
+unittest {
+	auto v1 = Value(true);
+	assert(v1.type == Type.Bool);
+	assert(v1 == true);
+
+	auto v2 = v1;
+	assert(v1.type == v2.type);
+	assert(v1 == v2);
+	assert(v2 == true);
+
+	assert(v1.toString == "true");
+}
+
+unittest {
+	auto v1 = Value(3.1415926);
+	assert(v1.type == Type.Double);
+	assert(v1 == 3.1415926);
+
+	auto v2 = v1;
+	assert(v1.type == v2.type);
+	assert(v1 == v2);
+	assert(v2 == 3.1415926);
+
+	assert(v1.toString == "3.14159");
 }
