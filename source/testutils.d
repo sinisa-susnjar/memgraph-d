@@ -12,6 +12,8 @@ version (unittest) {
 	void startContainer() {
 		import std.process, std.stdio, std.file, std.string;
 
+		// writefln("startContainer()");
+
 		auto containerIdFileName = environment.get("TMP", "/tmp") ~ "/memgraph-d.container";
 
 		auto startContainer = true;
@@ -31,12 +33,18 @@ version (unittest) {
 				startContainer = true;
 		}
 
+		// writefln("startContainer(): %s", startContainer);
+
 		if (startContainer) {
 			import std.conv;
+
+			// writefln("startContainer(): pull");
 
 			// Pull the latest memgraph docker image.
 			auto pull = execute(["docker", "pull", "memgraph/memgraph"]);
 			assert(pull.status == 0);
+
+			// writefln("startContainer(): run");
 
 			// Start a new memgraph docker container.
 			auto containerIdFile = File(containerIdFileName, "w");
@@ -47,6 +55,8 @@ version (unittest) {
 			auto containerId = run.output;
 			containerIdFile.write(containerId);
 			containerIdFile.close();
+
+			// writefln("startContainer(): %s", containerId);
 
 			// Need to wait a while until the container is spun up, otherwise connecting will fail.
 			import core.thread.osthread, core.time;

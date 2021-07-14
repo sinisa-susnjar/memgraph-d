@@ -107,7 +107,7 @@ unittest {
 
 	import std.stdio;
 
-	assert(node.id() > 0);
+	assert(node.id() >= 0);
 
 	auto expectedLabels = [ "Person", "Entrepreneur" ];
 
