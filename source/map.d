@@ -1,20 +1,14 @@
 /// Provides a map (i.e. key/value) tuple.
-module map;
+module memgraph.map;
 
 import std.typecons, std.string;
 
-import mgclient, detail, value;
+import memgraph.mgclient, memgraph.detail, memgraph.value;
 
 /// Wrapper class for `mg_map`.
 struct Map {
+	/// Key/value pair stored inside this map.
 	alias KeyValuePair = Tuple!(string, "key", Value, "value");
-
-	// CREATE_ITERATOR(Map, KeyValuePair);
-
-	this(mg_map *ptr) { ptr_ = ptr; fillAA(); }
-
-	/// Create a Map from a copy of the given `mg_map`.
-	this(const mg_map *const_ptr) { this(mg_map_copy(const_ptr)); }
 
 	/// Copy constructor.
 	this(const ref Map other) { this(mg_map_copy(other.ptr_)); }
@@ -136,9 +130,13 @@ struct Map {
 	}
 	*/
 
-	auto ptr() const { return ptr_; }
-
 	@property auto map() { return map_; }
+
+package:
+	this(mg_map *ptr) { ptr_ = ptr; fillAA(); }
+	/// Create a Map from a copy of the given `mg_map`.
+	this(const mg_map *const_ptr) { this(mg_map_copy(const_ptr)); }
+	auto ptr() const { return ptr_; }
 
 private:
 	alias map this;

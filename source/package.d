@@ -2,9 +2,9 @@
 /// Imports all required definitions.
 module memgraph;
 
-public import mgclient, optional, client, value, node, map, enums;
+public import memgraph.mgclient, memgraph.optional, memgraph.client, memgraph.value, memgraph.node, memgraph.map, memgraph.enums;
 
-import detail;
+import memgraph.detail;
 
 /*
 inline std::pair<std::string_view, ConstValue> Map::Iterator::operator*()

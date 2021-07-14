@@ -1,5 +1,5 @@
 /// Enumerations
-module enums;
+module memgraph.enums;
 
 /// Types that can be stored in a `Value`.
 enum Type {

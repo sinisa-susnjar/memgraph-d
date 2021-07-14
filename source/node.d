@@ -1,7 +1,7 @@
 /// Provides a node wrapper.
-module node;
+module memgraph.node;
 
-import mgclient, detail, map;
+import memgraph.mgclient, memgraph.detail, memgraph.map;
 
 /// Represents a node from a labeled property graph.
 ///
@@ -38,9 +38,6 @@ struct Node {
 		uint idx_;
 	}
 
-	/// Create a Node using the given `mg_node`.
-	this(mg_node *ptr) { ptr_ = ptr; }
-
 	/// Create a Node from a copy of the given `mg_node`.
 	this(const mg_node *const_ptr) { this(mg_node_copy(const_ptr)); }
 
@@ -68,6 +65,13 @@ struct Node {
 	bool opEquals(const ref Node other) const {
 		return Detail.areNodesEqual(ptr_, other.ptr_);
 	}
+
+package:
+	/// Create a Node using the given `mg_node`.
+	this(mg_node *ptr) { ptr_ = ptr; }
+
+	auto ptr() const { return ptr_; }
+	auto ptr() { return ptr_; }
 
 private:
 	/// Pointer to `mg_node` instance.

@@ -1,9 +1,9 @@
 /// Provides helper functions.
-module detail;
+module memgraph.detail;
 
 import std.conv;
 
-import mgclient, enums;
+import memgraph.mgclient, memgraph.enums;
 
 /// Wrapper class around static helper functions.
 struct Detail {

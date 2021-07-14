@@ -1,9 +1,9 @@
 /// Provides a connection for memgraph.
-module client;
+module memgraph.client;
 
 import std.string, std.stdio;
 
-import mgclient, optional, value, map;
+import memgraph.mgclient, memgraph.optional, memgraph.value, memgraph.map;
 
 /// Provides a connection for memgraph.
 struct Client {

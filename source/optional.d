@@ -1,5 +1,5 @@
 /// Provide a optional value.
-module optional;
+module memgraph.optional;
 
 /// Holds an optional value of type `V`.
 struct Optional(V) {

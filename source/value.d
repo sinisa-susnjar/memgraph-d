@@ -1,9 +1,9 @@
 /// Provides a wrapper for a Bolt value.
-module value;
+module memgraph.value;
 
 import std.conv, std.string;
 
-import mgclient, detail, node, enums;
+import memgraph.mgclient, memgraph.detail, memgraph.node, memgraph.enums;
 
 /// A Bolt value, encapsulating all other values.
 struct Value {
@@ -56,10 +56,16 @@ struct Value {
 	/// considered undefined.
 	// this(Map &&map);
 
-	/// \brief Constructs a vertex value and takes the ownership of the given
-	/// `vertex`. \note Behaviour of accessing the `vertex` after performing this
-	/// operation is considered undefined.
-	// explicit Value(Node &&vertex);
+	/// Constructs a vertex value and takes the ownership of the given `vertex`.
+	this(ref Node vertex) {
+		this(mg_value_make_node(vertex.ptr));
+		// vertex.ptr = null;
+	}
+
+	/// Constructs a vertex value and copies the given `vertex`.
+	this(const ref Node vertex) {
+		this(mg_value_make_node(mg_node_copy(vertex.ptr)));
+	}
 
 	/// \brief Constructs an edge value and takes the ownership of the given
 	/// `edge`. \note Behaviour of accessing the `edge` after performing this

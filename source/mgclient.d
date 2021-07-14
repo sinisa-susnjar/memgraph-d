@@ -101,7 +101,7 @@
 ///         container (e.g. `mg_path_node_at`, `mg_node_label_count`,
 ///         ...).
 ///       - copy functions.
-module mgclient;
+module memgraph.mgclient;
 
 /// Initializes the client (the whole process).
 /// Module constructor used to initialise memgraph via a call to mg_init().
