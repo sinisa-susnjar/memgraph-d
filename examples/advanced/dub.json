@@ -6,7 +6,5 @@
 	"name": "advanced",
 	"dependencies": {
 		"memgraph-d": { "path": "../../" }
-	},
-	"libs": [ "openssl" ],
-	"lflags": [ "../../mgclient/build/src/libmgclient.a" ]
+	}
 }

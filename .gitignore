@@ -13,4 +13,4 @@ memgraph-d-test-*
 *.o
 *.obj
 *.lst
-lib
+libmemgraph-d.a

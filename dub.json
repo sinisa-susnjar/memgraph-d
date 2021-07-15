@@ -6,27 +6,26 @@
 	"name": "memgraph-d",
 	"preGenerateCommands": [
 		"git submodule update --init --recursive",
-		"mkdir -p $PACKAGE_DIR/mgclient/build; cd $PACKAGE_DIR/mgclient/build; cmake ..; make"
+		"mkdir -p $PACKAGE_DIR/mgclient/build",
+		"cd $PACKAGE_DIR/mgclient/build; cmake ..; make"
 	],
+	"libs": [ "openssl" ],
+	"lflags": [ "$PACKAGE_DIR/mgclient/build/src/libmgclient.a" ],
 	"configurations": [
 		{
 			"name": "lib",
 			"excludedSourceFiles": ["source/test.d"],
-			"targetType": "staticLibrary",
-			"targetPath": "lib"
+			"targetType": "staticLibrary"
 		},
 		{
 			"name": "shared",
 			"excludedSourceFiles": ["source/test.d"],
-			"targetType": "dynamicLibrary",
-			"targetPath": "lib"
+			"targetType": "dynamicLibrary"
 		},
 		{
 			"name": "memgraph-d-test-lib",
 			"mainSourceFile": "source/test.d",
-			"targetType": "executable",
-			"libs": [ "openssl" ],
-			"lflags": [ "mgclient/build/src/libmgclient.a" ]
+			"targetType": "executable"
 		}
 	]
 }
