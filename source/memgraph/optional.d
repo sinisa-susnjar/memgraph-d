@@ -3,7 +3,7 @@ module memgraph.optional;
 
 /// Holds an optional value of type `V`.
 struct Optional(V) {
-	this(ref return scope inout Optional!V rhs) inout { }
+	this(ref return scope inout Optional!V rhs) inout { _value = rhs._value; }
 	this(V value) {
 		_value = value;
 		_hasValue = true;
@@ -36,4 +36,26 @@ private:
 	alias value this;
 	bool _hasValue;
 	V _value;
+}
+
+unittest {
+	Optional!string s = "Hello there";
+
+	assert(s.hasValue);
+	assert(s.value == "Hello there");
+	assert(s == "Hello there");
+
+	s = "Hi!";
+	assert(s == "Hi!");
+}
+
+unittest {
+	struct test_s {
+		int addOne(int val) {
+			return val + 1;
+		}
+	}
+
+	auto s = Optional!test_s();
+	assert(s.addOne(41) == 42);
 }
