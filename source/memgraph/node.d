@@ -38,9 +38,6 @@ struct Node {
 		uint idx_;
 	}
 
-	/// Create a Node from a copy of the given `mg_node`.
-	this(const mg_node *const_ptr) { this(mg_node_copy(const_ptr)); }
-
 	/// Create a Node from a copy of the given `node`.
 	this(const ref Node other) {
 		this(mg_node_copy(other.ptr_));
@@ -69,6 +66,9 @@ struct Node {
 package:
 	/// Create a Node using the given `mg_node`.
 	this(mg_node *ptr) { ptr_ = ptr; }
+
+	/// Create a Node from a copy of the given `mg_node`.
+	this(const mg_node *const_ptr) { this(mg_node_copy(const_ptr)); }
 
 	auto ptr() const { return ptr_; }
 	auto ptr() { return ptr_; }
