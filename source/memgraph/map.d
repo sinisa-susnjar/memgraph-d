@@ -92,6 +92,8 @@ private:
 	// Copy the contents from the mg_map into an associative array
 	// for faster processing and also to enable range semantics.
 	void mapToAA() {
+		import std.stdio;
+		writefln("mapToAA: %s", &this);
 		const auto sz = mg_map_size(ptr_);
 		for (auto i=0; i < sz; i++) {
 			auto key = Detail.convertString(mg_map_key_at(ptr_, i));

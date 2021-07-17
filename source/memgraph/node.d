@@ -3,6 +3,8 @@ module memgraph.node;
 
 import memgraph.mgclient, memgraph.detail, memgraph.map;
 
+import std.typecons, std.conv;
+
 /// Represents a node from a labeled property graph.
 ///
 /// Consists of a unique identifier (withing the scope of its origin graph), a
@@ -24,12 +26,22 @@ struct Node {
 		bool empty() const {
 			return idx_ >= size();
 		}
-		string front() const {
+		auto front() const {
 			assert(idx_ < size());
-			return Detail.convertString(mg_node_label_at(node_, idx_));
+			return Tuple!(uint, string)(idx_, Detail.convertString(mg_node_label_at(node_, idx_)));
 		}
 		void popFront() {
 			idx_++;
+		}
+
+		bool opEquals(const string[] labels) {
+			if (labels.length != size())
+				return false;
+			foreach (idx, label; labels) {
+				if (label != Detail.convertString(mg_node_label_at(node_, to!uint(idx))))
+					return false;
+			}
+			return true;
 		}
 
 	private:
@@ -109,24 +121,20 @@ unittest {
 
 	auto labels = node.labels();
 
-	import std.stdio;
-
 	assert(node.id() >= 0);
 
-	auto expectedLabels = [ "Person", "Entrepreneur" ];
+	immutable auto expectedLabels = [ "Person", "Entrepreneur" ];
 
 	assert(labels.size() == 2);
 	assert(labels[0] == "Person");
 	assert(labels[1] == "Entrepreneur");
 
-	int i;
-	foreach (label; labels) {
-		assert(label == expectedLabels[i]);
-		i++;
-	}
+	foreach (idx, label; labels)
+		assert(label == expectedLabels[idx]);
+
+	assert(expectedLabels == labels);
 
 	const auto other = Node(node);
-
 	assert(other == node);
 
 	const auto props = node.properties();
@@ -136,5 +144,10 @@ unittest {
 	assert(props["name"] == "John");
 	assert(props["isStudent"] == false);
 	assert(props["score"] == 5.0);
-}
 
+	auto otherProps = Map(props);
+	assert(otherProps == props);
+
+	// const auto otherProps2 = Map(otherProps.ptr);
+	// assert(otherProps2 == otherProps);
+}
