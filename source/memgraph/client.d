@@ -76,7 +76,7 @@ struct Client {
 	/// After executing the statement, the method is blocked until all incoming
 	/// data (execution results) are handled, i.e. until `FetchOne` method returns
 	/// an empty array.
-	bool execute(const string statement, const ref Map params) {
+	bool execute(const string statement, ref Map params) {
 		int status = mg_session_run(session, toStringz(statement), params.ptr, null, null, null);
 		if (status < 0) {
 			return false;

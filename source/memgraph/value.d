@@ -10,16 +10,16 @@ struct Value {
 
 	/// Constructs an object that becomes the owner of the given `value`.
 	/// `value` is destroyed when a `Value` object is destroyed.
-	this(mg_value *ptr) { ptr_ = ptr; }
+	@safe @nogc this(mg_value *ptr) { ptr_ = ptr; }
 
 	/// Creates a new Value from a copy of the given `mg_value`.
-	this(const mg_value *const_ptr) { this(mg_value_copy(const_ptr)); }
+	@safe @nogc this(const mg_value *const_ptr) { this(mg_value_copy(const_ptr)); }
 
 	/// Creates a new Value from a copy of the given `Value`.
-	this(const ref Value other) { this(mg_value_copy(other.ptr_)); }
+	@safe @nogc this(const ref Value other) { this(mg_value_copy(other.ptr_)); }
 
 	/// Destroys any value held.
-	~this() {
+	@safe @nogc ~this() {
 		if (ptr_ != null)
 			mg_value_destroy(ptr_);
 	}
@@ -253,10 +253,45 @@ struct Value {
 		return mg_value_float(ptr_) == val;
 	}
 
+	auto opAssign(const bool value) {
+		if (ptr_ != null)
+			mg_value_destroy(ptr_);
+		ptr_ = mg_value_make_bool(value);
+	}
+
+	auto opAssign(const int value) {
+		if (ptr_ != null)
+			mg_value_destroy(ptr_);
+		ptr_ = mg_value_make_integer(value);
+	}
+
+	auto opAssign(const long value) {
+		if (ptr_ != null)
+			mg_value_destroy(ptr_);
+		ptr_ = mg_value_make_integer(value);
+	}
+
+	auto opAssign(const double value) {
+		if (ptr_ != null)
+			mg_value_destroy(ptr_);
+		ptr_ = mg_value_make_float(value);
+	}
+
+	auto opAssign(const string value) {
+		if (ptr_ != null)
+			mg_value_destroy(ptr_);
+		ptr_ = mg_value_make_string(toStringz(value));
+	}
+
+package:
+	auto ptr() const { return ptr_; }
+	auto ptr() { return ptr_; }
+
 private:
 	mg_value *ptr_;
 }
 
+// string tests
 unittest {
 	auto v1 = Value("Zdravo, svijete!");
 	assert(v1.type == Type.String);
@@ -270,6 +305,7 @@ unittest {
 	assert(v1.toString == "Zdravo, svijete!");
 }
 
+// long/int tests
 unittest {
 	auto v1 = Value(42L);
 	assert(v1.type == Type.Int);
@@ -287,8 +323,12 @@ unittest {
 	assert(v3 == 42);
 
 	assert(v1.toString == "42");
+
+	v1 = 23;
+	assert(v1 == 23);
 }
 
+// bool tests
 unittest {
 	auto v1 = Value(true);
 	assert(v1.type == Type.Bool);
@@ -302,6 +342,7 @@ unittest {
 	assert(v1.toString == "true");
 }
 
+// double tests
 unittest {
 	auto v1 = Value(3.1415926);
 	assert(v1.type == Type.Double);

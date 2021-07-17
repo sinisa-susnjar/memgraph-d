@@ -1,19 +1,18 @@
 /// Provides a map (i.e. key/value) tuple.
 module memgraph.map;
 
-import std.typecons, std.string;
+import std.string, std.conv;
 
 import memgraph.mgclient, memgraph.detail, memgraph.value;
 
 /// Sized sequence of pairs of keys and values.
+/// Maximum possible map size allowed by Bolt protocol is `uint.max`.
 ///
 /// Map may contain a mixture of different types as values. A map owns all keys
 /// and values stored in it.
 ///
-/// Maximum possible map size allowed by Bolt protocol is `uint.max`.
+/// Can be used like a standard D hash map (because it is one under the hood).
 struct Map {
-	/// Key/value pair stored inside this map.
-	alias KeyValuePair = Tuple!(string, "key", Value, "value");
 
 	/// Copy constructor.
 	this(const ref Map other) { this(mg_map_copy(other.ptr_)); }
@@ -35,92 +34,57 @@ struct Map {
 	///
 	/// Params: capacity = The maximum number of key-value pairs that the newly
 	///                 constructed Map can hold.
-	this(uint capacity) { this(mg_map_make_empty(capacity)); }
+	// this(uint capacity) { this(mg_map_make_empty(capacity)); }
 
 	/// Constructs an map from the list of key-value pairs.
 	/// Values are copied.
 	// Map(std::initializer_list<std::pair<std::string, Value>> list);
 
-	size_t size() const { return mg_map_size(ptr_); }
-
 	// bool empty() const { return size() == 0; }
 
 	/// Returns the value associated with the given `key`.
-	/// Behaves undefined if there is no key with the given value.
-	/// Each key-value pair has to be checked, resulting with
-	/// O(n) time complexity.
-	const Value opIndex(const ref string key) {
-  		return Value(mg_map_at(ptr_, toStringz(key)));
+	/// If the given `key` does not exist, an empty `Value` is returned.
+	/// The time complexity is constant.
+	ref Value opIndex(const string key) {
+		return map_.require(key, Value());
 	}
 
 	const Value opIndex(const string key) {
-  		return Value(mg_map_at(ptr_, toStringz(key)));
+		assert(key in map_);
+		return map_[key];
 	}
-
-	// Iterator begin() const { return Iterator(this, 0); }
-	// Iterator end() const { return Iterator(this, size()); }
-
-	/// \brief Returns the key-value iterator for the given `key`.
-	/// In the case there is no such pair, `end` iterator is returned.
-	/// \note
-	/// Each key-value pair has to be checked, resulting with O(n) time
-	/// complexity.
-	// Iterator find(const std::string_view key) const;
-
-	/// \brief Inserts the given `key`-`value` pair into the map.
-	/// Checks if the given `key` already exists by iterating over all entries.
-	/// Copies both the `key` and the `value`.
-	// bool Insert(const std::string_view key, const Value &value);
-
-	/// \brief Inserts the given `key`-`value` pair into the map.
-	/// Checks if the given `key` already exists by iterating over all entries.
-	/// Copies both the `key` and the `value`.
-	// bool Insert(const std::string_view key, const ConstValue &value);
-
-	/// \brief Inserts the given `key`-`value` pair into the map.
-	/// Checks if the given `key` already exists by iterating over all entries.
-	/// Copies the `key` and takes the ownership of `value` by moving it.
-	/// Behaviour of accessing the `value` after performing this operation is
-	/// considered undefined.
-	// bool Insert(const std::string_view key, Value &&value);
-
-	/// \brief Inserts the given `key`-`value` pair into the map.
-	/// It doesn't check if the given `key` already exists in the map.
-	/// Copies both the `key` and the `value`.
-	// bool InsertUnsafe(const std::string_view key, const Value &value);
-
-	/// \brief Inserts the given `key`-`value` pair into the map.
-	/// It doesn't check if the  given `key` already exists in the map.
-	/// Copies both the `key` and the `value`.
-	// bool InsertUnsafe(const std::string_view key, const ConstValue &value);
-
-	/// \brief Inserts the given `key`-`value` pair into the map.
-	/// It doesn't check if the given `key` already exists in the map.
-	/// Copies the `key` and takes the ownership of `value` by moving it.
-	/// Behaviour of accessing the `value` after performing this operation
-	/// is considered undefined.
-	// bool InsertUnsafe(const std::string_view key, Value &&value);
-
-	// const ConstMap AsConstMap() const;
 
 	bool opEquals(const ref Map other) const {
-		return Detail.areMapsEqual(ptr_, other.ptr_);
+		return map_ == other.map_;
+		// return Detail.areMapsEqual(ptr_, other.ptr_);
 	}
+
+	/*
+	auto opDispatch(string name, T...)(T vals) {
+		return mixin("map_." ~ name)(vals);
+	}
+
+	auto opBinary(string op)(const string key) {
+		static assert(op == "in");
+		return key in map_;
+	}
+	*/
 
 	@property auto toAA() const { return map_; }
 
 package:
 	/// Create a Map using the given `mg_map`.
-	this(mg_map *ptr) { ptr_ = ptr; fillAA(); }
+	this(mg_map *ptr) { ptr_ = ptr; mapToAA(); }
 
 	/// Create a Map from a copy of the given `mg_map`.
-	this(const mg_map *const_ptr) { this(mg_map_copy(const_ptr)); fillAA(); }
+	this(const mg_map *const_ptr) { this(mg_map_copy(const_ptr)); mapToAA(); }
 
-	auto ptr() const { return ptr_; }
-	auto ptr() { return ptr_; }
+	auto ptr() { AAToMap(); return ptr_; }
 
 private:
-	void fillAA() {
+	// Copy the contents from the mg_map into an associative array
+	// for faster processing and also to enable range semantics.
+	void mapToAA() {
 		const auto sz = mg_map_size(ptr_);
 		for (auto i=0; i < sz; i++) {
 			auto key = Detail.convertString(mg_map_key_at(ptr_, i));
@@ -129,8 +93,45 @@ private:
 		}
 	}
 
+	// Copy the contents from the associative array into the mg_map
+	// when requested.
+	void AAToMap() @safe {
+		assert(ptr_ == null);
+		ptr_ = mg_map_make_empty(to!uint(map_.length));
+		foreach (k, v; map_) {
+			mg_map_insert_unsafe(ptr_, toStringz(k), v.ptr);
+		}
+	}
+
 	alias toAA this;
 	Value[string] map_;
 	mg_map *ptr_;
 	uint idx_;
+}
+
+unittest {
+	Map m;
+	m["answer_to_life_the_universe_and_everything"] = 42;
+	assert("answer_to_life_the_universe_and_everything" in m);
+	assert(m["answer_to_life_the_universe_and_everything"] == 42);
+	assert(m.length == 1);
+
+	// assert(m.remove("answer_to_life_the_universe_and_everything"));
+	// assert("answer_to_life_the_universe_and_everything" ! in m);
+	// assert(m.length == 0);
+
+
+	m["id"] = 0;
+	m["age"] = 40;
+	m["name"] = "John";
+	m["isStudent"] = false;
+	m["score"] = 5.0;
+
+	assert(m.length == 6);
+
+	// assert(to!long(props["id"]) == 0);
+	// assert(to!long(props["age"]) == 40);
+	// assert(to!string(props["name"]) == "John");
+	// assert(to!bool(props["isStudent"]) == false);
+	// assert(to!double(props["score"]) == 5.0);
 }

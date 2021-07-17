@@ -130,7 +130,7 @@ unittest {
 	assert(other == node);
 
 	const auto props = node.properties();
-	assert(props.size() == 5);
+	assert(props.length == 5);
 	assert(to!long(props["id"]) == 0);
 	assert(to!long(props["age"]) == 40);
 	assert(to!string(props["name"]) == "John");
