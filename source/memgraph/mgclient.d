@@ -722,7 +722,7 @@ extern (C) {
 	mg_map *mg_map_copy(const mg_map *map);
 
 	/// Destroys the given map.
-	void mg_map_destroy(mg_map *map);
+	@safe @nogc void mg_map_destroy(mg_map *map) pure nothrow;
 
 	/// Returns the ID of node `node`.
 	long mg_node_id(const mg_node *node);

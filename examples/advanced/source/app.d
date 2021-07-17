@@ -65,19 +65,8 @@ int main(string[] args) {
 		const auto value = maybeResult[0];
 		if (value.type() == Type.Node) {
 			const auto node = to!Node(value);
-
-			auto labels = node.labels();
-			string labelsStr = labels.join(":");
-
-			auto props = node.properties();
-			writefln("props: %s", props);
-			// string s = props.map.each!((a) => a.key);
-			string propsStr = "{ ";
-			foreach (k, v; props) {
-				propsStr ~= k ~ ":" ~ to!string(v) ~ " ";
-			}
-			propsStr ~= "}";
-			writefln("%s %s", labelsStr, propsStr);
+			writefln("%s %s", node.labels.join(":"), 
+					"{" ~ node.properties.byKeyValue.map!(p => p.key ~ ":" ~ to!string(p.value)).join(" ") ~ "}");
 		}
 	}
 

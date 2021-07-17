@@ -5,7 +5,12 @@ import std.typecons, std.string;
 
 import memgraph.mgclient, memgraph.detail, memgraph.value;
 
-/// Wrapper class for `mg_map`.
+/// Sized sequence of pairs of keys and values.
+///
+/// Map may contain a mixture of different types as values. A map owns all keys
+/// and values stored in it.
+///
+/// Maximum possible map size allowed by Bolt protocol is `uint.max`.
 struct Map {
 	/// Key/value pair stored inside this map.
 	alias KeyValuePair = Tuple!(string, "key", Value, "value");
@@ -16,7 +21,7 @@ struct Map {
 	// Map(Map &&other);
 	// Map &operator=(const Map &other) = delete;
 	// Map &operator=(Map &&other) = delete;
-	~this() {
+	@safe @nogc ~this() pure nothrow {
 		if (ptr_ != null)
 			mg_map_destroy(ptr_);
 	}
@@ -38,19 +43,10 @@ struct Map {
 
 	size_t size() const { return mg_map_size(ptr_); }
 
-	void fillAA() {
-		const auto sz = mg_map_size(ptr_);
-		for (auto i=0; i < sz; i++) {
-			auto key = Detail.convertString(mg_map_key_at(ptr_, i));
-			auto value = Value(mg_map_value_at(ptr_, i));
-			map_[key] = value;
-		}
-	}
-
 	// bool empty() const { return size() == 0; }
 
 	/// Returns the value associated with the given `key`.
-	/// Behaves undefined if there is no such a value.
+	/// Behaves undefined if there is no key with the given value.
 	/// Each key-value pair has to be checked, resulting with
 	/// O(n) time complexity.
 	const Value opIndex(const ref string key) {
@@ -111,35 +107,29 @@ struct Map {
 		return Detail.areMapsEqual(ptr_, other.ptr_);
 	}
 
-	// const mg_map *ptr() const { return ptr_; }
-
-	/*
-	bool empty() const {
-		return idx_ >= size();
-	}
-
-	KeyValuePair front() const {
-		assert(idx_ < size());
-		auto key = Detail.convertString(mg_map_key_at(ptr_, idx_));
-		auto value = Value(mg_map_value_at(ptr_, idx_));
-		return KeyValuePair(key, value);
-	}
-
-	void popFront() {
-		idx_++;
-	}
-	*/
-
-	@property auto map() { return map_; }
+	@property auto toAA() const { return map_; }
 
 package:
+	/// Create a Map using the given `mg_map`.
 	this(mg_map *ptr) { ptr_ = ptr; fillAA(); }
+
 	/// Create a Map from a copy of the given `mg_map`.
-	this(const mg_map *const_ptr) { this(mg_map_copy(const_ptr)); }
+	this(const mg_map *const_ptr) { this(mg_map_copy(const_ptr)); fillAA(); }
+
 	auto ptr() const { return ptr_; }
+	auto ptr() { return ptr_; }
 
 private:
-	alias map this;
+	void fillAA() {
+		const auto sz = mg_map_size(ptr_);
+		for (auto i=0; i < sz; i++) {
+			auto key = Detail.convertString(mg_map_key_at(ptr_, i));
+			auto value = Value(mg_map_value_at(ptr_, i));
+			map_[key] = value;
+		}
+	}
+
+	alias toAA this;
 	Value[string] map_;
 	mg_map *ptr_;
 	uint idx_;
