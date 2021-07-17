@@ -59,6 +59,13 @@ struct Map {
 		// return Detail.areMapsEqual(ptr_, other.ptr_);
 	}
 
+	auto remove(const string key) {
+		return map_.remove(key);
+	}
+	auto clear() {
+		map_.clear();
+	}
+
 	/*
 	auto opDispatch(string name, T...)(T vals) {
 		return mixin("map_." ~ name)(vals);
@@ -116,10 +123,9 @@ unittest {
 	assert(m["answer_to_life_the_universe_and_everything"] == 42);
 	assert(m.length == 1);
 
-	// assert(m.remove("answer_to_life_the_universe_and_everything"));
-	// assert("answer_to_life_the_universe_and_everything" ! in m);
-	// assert(m.length == 0);
-
+	assert(m.remove("answer_to_life_the_universe_and_everything"));
+	assert("answer_to_life_the_universe_and_everything" ! in m);
+	assert(m.length == 0);
 
 	m["id"] = 0;
 	m["age"] = 40;
@@ -127,11 +133,19 @@ unittest {
 	m["isStudent"] = false;
 	m["score"] = 5.0;
 
-	assert(m.length == 6);
+	assert(m.length == 5);
 
-	// assert(to!long(props["id"]) == 0);
-	// assert(to!long(props["age"]) == 40);
-	// assert(to!string(props["name"]) == "John");
-	// assert(to!bool(props["isStudent"]) == false);
-	// assert(to!double(props["score"]) == 5.0);
+	assert("id" in m);
+	assert(m["id"] == 0);
+	assert("age" in m);
+	assert(m["age"] == 40);
+	assert("name" in m);
+	assert(m["name"] == "John");
+	assert("isStudent" in m);
+	assert(m["isStudent"] == false);
+	assert("score" in m);
+	assert(m["score"] == 5.0);
+
+	m.clear();
+	assert(m.length == 0);
 }

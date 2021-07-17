@@ -131,10 +131,10 @@ unittest {
 
 	const auto props = node.properties();
 	assert(props.length == 5);
-	assert(to!long(props["id"]) == 0);
-	assert(to!long(props["age"]) == 40);
-	assert(to!string(props["name"]) == "John");
-	assert(to!bool(props["isStudent"]) == false);
-	assert(to!double(props["score"]) == 5.0);
+	assert(props["id"] == 0);
+	assert(props["age"] == 40);
+	assert(props["name"] == "John");
+	assert(props["isStudent"] == false);
+	assert(props["score"] == 5.0);
 }
 
