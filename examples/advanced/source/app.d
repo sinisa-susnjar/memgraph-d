@@ -65,7 +65,7 @@ int main(string[] args) {
 		const auto value = maybeResult[0];
 		if (value.type() == Type.Node) {
 			const auto node = to!Node(value);
-			writefln("%s %s", node.labels.join(":"), 
+			writefln("%s %s", node.labels.join(":"),
 					"{" ~ node.properties.byKeyValue.map!(p => p.key ~ ":" ~ to!string(p.value)).join(" ") ~ "}");
 		}
 	}

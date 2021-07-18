@@ -3,7 +3,7 @@ module memgraph.node;
 
 import memgraph.mgclient, memgraph.detail, memgraph.map;
 
-import std.typecons, std.conv;
+import std.conv;
 
 /// Represents a node from a labeled property graph.
 ///
@@ -28,7 +28,7 @@ struct Node {
 		}
 		auto front() const {
 			assert(idx_ < size());
-			return Tuple!(uint, string)(idx_, Detail.convertString(mg_node_label_at(node_, idx_)));
+			return Detail.convertString(mg_node_label_at(node_, idx_));
 		}
 		void popFront() {
 			idx_++;
@@ -126,11 +126,8 @@ unittest {
 	immutable auto expectedLabels = [ "Person", "Entrepreneur" ];
 
 	assert(labels.size() == 2);
-	assert(labels[0] == "Person");
-	assert(labels[1] == "Entrepreneur");
-
-	foreach (idx, label; labels)
-		assert(label == expectedLabels[idx]);
+	assert(labels[0] == expectedLabels[0]);
+	assert(labels[1] == expectedLabels[1]);
 
 	assert(expectedLabels == labels);
 
@@ -148,6 +145,7 @@ unittest {
 	auto otherProps = Map(props);
 	assert(otherProps == props);
 
+	// this is a package internal method
 	const auto otherProps2 = Map(cast(const(mg_map*))(otherProps.ptr));
 	assert(otherProps2 == otherProps);
 }

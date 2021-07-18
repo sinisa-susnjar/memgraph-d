@@ -63,11 +63,9 @@ struct Client {
 		int status = mg_session_run(session, toStringz(statement), null, null, null, null);
 		if (status < 0)
 			return false;
-
 		status = mg_session_pull(session, null);
 		if (status < 0)
 			return false;
-
 		return true;
 	}
 
@@ -78,14 +76,11 @@ struct Client {
 	/// an empty array.
 	bool execute(const string statement, ref Map params) {
 		int status = mg_session_run(session, toStringz(statement), params.ptr, null, null, null);
-		if (status < 0) {
+		if (status < 0)
 			return false;
-		}
-
 		status = mg_session_pull(session, null);
-		if (status < 0) {
+		if (status < 0)
 			return false;
-		}
 		return true;
 	}
 
@@ -260,5 +255,11 @@ unittest {
 
 	// Outside the transaction the row count should still be 1.
 	assert(client.execute("MATCH (n) RETURN n;"), client.sessionError);
+	assert(client.fetchAll.length == 1);
+
+	// Just some test for execute() using Map parameters.
+	Map m;
+	m["test"] = 42;
+	assert(client.execute("MATCH (n) RETURN n;", m), client.sessionError);
 	assert(client.fetchAll.length == 1);
 }

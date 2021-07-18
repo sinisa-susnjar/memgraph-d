@@ -15,7 +15,11 @@ import memgraph.mgclient, memgraph.detail, memgraph.value;
 struct Map {
 
 	/// Copy constructor.
-	this(const ref Map other) { this(mg_map_copy(other.ptr_)); }
+	this(const ref Map other) {
+		foreach (k, v; other.map_)
+			map_[k] = v;
+		this(mg_map_copy(other.ptr_));
+	}
 
 	// Map(Map &&other);
 	// Map &operator=(const Map &other) = delete;
@@ -82,12 +86,14 @@ struct Map {
 package:
 	/// Create a Map using the given `mg_map`.
 	this(mg_map *ptr) {
-		ptr_ = ptr; mapToAA();
+		ptr_ = ptr;
+		mapToAA();
 	}
 
 	/// Create a Map from a copy of the given `mg_map`.
 	this(const mg_map *const_ptr) {
-		this(mg_map_copy(const_ptr)); mapToAA();
+		this(mg_map_copy(const_ptr));
+		mapToAA();
 	}
 
 	auto ptr() { AAToMap(); return ptr_; }
@@ -96,11 +102,13 @@ private:
 	// Copy the contents from the mg_map into an associative array
 	// for faster processing and also to enable range semantics.
 	void mapToAA() {
-		const auto sz = mg_map_size(ptr_);
-		for (auto i=0; i < sz; i++) {
-			auto key = Detail.convertString(mg_map_key_at(ptr_, i));
-			auto value = Value(mg_map_value_at(ptr_, i));
-			map_[key] = value;
+		if (ptr_) {
+			const auto sz = mg_map_size(ptr_);
+			for (auto i=0; i < sz; i++) {
+				auto key = Detail.convertString(mg_map_key_at(ptr_, i));
+				auto value = Value(mg_map_value_at(ptr_, i));
+				map_[key] = value;
+			}
 		}
 	}
 
