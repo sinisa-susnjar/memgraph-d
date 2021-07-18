@@ -68,7 +68,7 @@ struct Node {
 	Labels labels() const { return Labels(ptr_); }
 
 	/// Returns the property map belonging to this node.
-	Map properties() const { return Map(mg_node_properties(ptr_)); }
+	const (Map) properties() const { return Map(mg_node_properties(ptr_)); }
 
 	/// Comparison operator.
 	bool opEquals(const ref Node other) const {
@@ -148,6 +148,6 @@ unittest {
 	auto otherProps = Map(props);
 	assert(otherProps == props);
 
-	// const auto otherProps2 = Map(otherProps.ptr);
-	// assert(otherProps2 == otherProps);
+	const auto otherProps2 = Map(cast(const(mg_map*))(otherProps.ptr));
+	assert(otherProps2 == otherProps);
 }

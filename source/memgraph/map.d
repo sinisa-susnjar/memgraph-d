@@ -81,10 +81,14 @@ struct Map {
 
 package:
 	/// Create a Map using the given `mg_map`.
-	this(mg_map *ptr) { ptr_ = ptr; mapToAA(); }
+	this(mg_map *ptr) {
+		ptr_ = ptr; mapToAA();
+	}
 
 	/// Create a Map from a copy of the given `mg_map`.
-	this(const mg_map *const_ptr) { this(mg_map_copy(const_ptr)); mapToAA(); }
+	this(const mg_map *const_ptr) {
+		this(mg_map_copy(const_ptr)); mapToAA();
+	}
 
 	auto ptr() { AAToMap(); return ptr_; }
 
@@ -92,8 +96,6 @@ private:
 	// Copy the contents from the mg_map into an associative array
 	// for faster processing and also to enable range semantics.
 	void mapToAA() {
-		import std.stdio;
-		writefln("mapToAA: %s", &this);
 		const auto sz = mg_map_size(ptr_);
 		for (auto i=0; i < sz; i++) {
 			auto key = Detail.convertString(mg_map_key_at(ptr_, i));
@@ -104,11 +106,12 @@ private:
 
 	// Copy the contents from the associative array into the mg_map
 	// when requested.
-	void AAToMap() @safe {
-		assert(ptr_ == null);
-		ptr_ = mg_map_make_empty(to!uint(map_.length));
-		foreach (k, v; map_) {
-			mg_map_insert_unsafe(ptr_, toStringz(k), v.ptr);
+	void AAToMap() {
+		if (ptr_ == null) {
+			ptr_ = mg_map_make_empty(to!uint(map_.length));
+			foreach (k, v; map_) {
+				mg_map_insert_unsafe(ptr_, toStringz(k), mg_value_copy(v.ptr));
+			}
 		}
 	}
 
@@ -147,6 +150,11 @@ unittest {
 	assert(m["isStudent"] == false);
 	assert("score" in m);
 	assert(m["score"] == 5.0);
+
+	// This is a package internal method, not for public consumption.
+	assert(m.ptr_ == null);
+	auto p = m.ptr();
+	assert(p != null);
 
 	m.clear();
 	assert(m.length == 0);
