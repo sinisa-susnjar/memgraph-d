@@ -131,34 +131,48 @@ struct Value {
 	// const ConstList ValueList() const;
 	// const ConstMap ValueMap() const;
 
-	/// Return this value as a `Node`.
-	auto opCast(T : Node)() const {
-		assert(type() == Type.Node);
-		return Node(mg_value_node(ptr_));
+	mixin template genOpCast(dType, alias valueType, alias mgValueFunc) {
+		auto opCast(T : dType)() const {
+			assert(type() == valueType);
+			return mgValueFunc(ptr_);
+		}
 	}
 
-	/// Return this value as a long.
-	auto opCast(T : long)() const {
-		assert(type() == Type.Int);
-		return mg_value_integer(ptr_);
+	// mixin genOpCast!(double, Type.Double, mg_value_float);
+
+	mixin template GenOps(Types...) {
+		import std.typecons;
+		enum auto ops = [
+			typeid(int): tuple(Type.Int, "integer"),
+			typeid(double): tuple(Type.Double, "float"),
+		];
+		static foreach (idx, t; Types) {
+			// static assert(typeid(t) in ops, "unexpected type " ~ t.stringof);
+			pragma(msg, "opCast: " ~ t.stringof ~ " " ~ typeid(t).stringof ~ " " ~ ops[typeid(t)][1]);
+
+			auto opCast(T : t)() const {
+				assert(type() == ops[typeid(t)][0]);
+				return mixin("mg_value_" ~ ops[typeid(t)][1] ~ "(ptr_)");
+			}
+		}
 	}
 
-	/// Return this value as an int.
-	auto opCast(T : int)() const {
-		assert(type() == Type.Int);
-		return mg_value_integer(ptr_);
-	}
+	// mixin GenOps!(int, double);
 
-	/// Return this value as a bool.
-	auto opCast(T : bool)() const {
-		assert(type() == Type.Bool);
-		return to!bool(mg_value_bool(ptr_));
-	}
+	// Fr@k repetition :)
+	import std.typecons;
+	enum auto ops = [
+		typeid(double):	tuple(Type.Double,	"mg_value_float(ptr_)"),
+		typeid(int):	tuple(Type.Int,		"mg_value_integer(ptr_)"),
+		typeid(long):	tuple(Type.Int,		"mg_value_integer(ptr_)"),
+		typeid(bool):	tuple(Type.Bool,	"mg_value_bool(ptr_)"),
+		typeid(Node):	tuple(Type.Node,	"Node(mg_value_node(ptr_))"),
+	];
 
-	/// Return this value as a double.
-	auto opCast(T : double)() const {
-		assert(type() == Type.Double);
-		return mg_value_float(ptr_);
+	/// Cast this value to type `T`.
+	auto opCast(T)() const {
+		assert(type() == ops[typeid(T)][0]);
+		return to!T(mixin(ops[typeid(T)][1]));
 	}
 
 	/// Return this value as a string.
@@ -167,16 +181,11 @@ struct Value {
 	/// representation.
 	auto toString() const {
 		switch (type()) {
-			case Type.Node:
-				return to!string(Node(mg_value_node(ptr_)));
-			case Type.String:
-				return Detail.convertString(mg_value_string(ptr_));
-			case Type.Bool:
-				return to!string(to!bool(mg_value_bool(ptr_)));
-			case Type.Double:
-				return to!string(mg_value_float(ptr_));
-			case Type.Int:
-				return to!string(mg_value_integer(ptr_));
+			case Type.Double:	return to!string(to!double(this));
+			case Type.Node:		return to!string(to!Node(this));
+			case Type.Bool:		return to!string(to!bool(this));
+			case Type.Int:		return to!string(to!int(this));
+			case Type.String:	return Detail.convertString(mg_value_string(ptr_));
 			default: assert(0, "unhandled type: " ~ to!string(type()));
 		}
 	}
@@ -303,6 +312,8 @@ unittest {
 	assert(v2 == "Zdravo, svijete!");
 
 	assert(v1.toString == "Zdravo, svijete!");
+
+	assert(to!string(v1) == "Zdravo, svijete!");
 }
 
 // long/int tests
@@ -326,6 +337,8 @@ unittest {
 
 	v1 = 23;
 	assert(v1 == 23);
+	assert(to!int(v1) == 23);
+	assert(to!long(v1) == 23);
 }
 
 // bool tests
@@ -340,6 +353,9 @@ unittest {
 	assert(v2 == true);
 
 	assert(v1.toString == "true");
+
+	assert(to!bool(v1) == true);
+	assert(v1 == true);
 }
 
 // double tests
@@ -354,4 +370,7 @@ unittest {
 	assert(v2 == 3.1415926);
 
 	assert(v1.toString == "3.14159");
+
+	assert(to!double(v1) == 3.1415926);
+	assert(v1 == 3.1415926);
 }

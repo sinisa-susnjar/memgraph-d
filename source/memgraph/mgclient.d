@@ -395,7 +395,8 @@ extern (C) {
 	///
 	/// Type check should be made first. Accessing the wrong value results in
 	/// undefined behavior.
-	int mg_value_bool(const mg_value *val);
+	/// TODO: check if this is really ok, as the original return type was int !!!
+	bool mg_value_bool(const mg_value *val);
 
 	/// Returns the underlying integer value.
 	///

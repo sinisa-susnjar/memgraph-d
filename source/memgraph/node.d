@@ -55,6 +55,13 @@ struct Node {
 		this(mg_node_copy(other.ptr_));
 	}
 
+	/// Create a node from a Value. TODO ?!?
+	/*
+	this(const ref Value value) {
+		this(mg_node_copy(other.ptr_));
+	}
+	*/
+
 	/// Destroys the given node.
 	~this() {
 		if (ptr_ != null)
