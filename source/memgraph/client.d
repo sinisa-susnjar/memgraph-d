@@ -8,6 +8,9 @@ import memgraph.mgclient, memgraph.optional, memgraph.value, memgraph.map;
 /// Provides a connection for memgraph.
 struct Client {
 	/// Connection parameters for Connect(Params)
+	// TODO: make this a real wrapper for `mg_session_params`, e.g.:
+	//       mg_session_params *mg_params = mg_session_params_make();
+	//       not this half-backed crap
 	struct Params {
 		/// Hostname, defaults to `localhost`.
 		string host = "localhost";
@@ -40,7 +43,7 @@ struct Client {
 	static auto clientVersion() { return fromStringz(mg_client_version()); }
 
 	/// Obtains the error message stored in the current session (if any).
-	auto sessionError() {
+	auto error() {
 		// mg_session_error() seems to randomly fill the first byte with garbage when there actually is no error.
 		auto err = fromStringz(mg_session_error(session));
 		return err.length == 1 ? "" : err;
@@ -49,7 +52,7 @@ struct Client {
 	/// Returns the status of the current session.
 	///
 	/// Return: One of the session codes in `mg_session_code`.
-	auto sessionStatus() const {
+	auto status() const {
 		return mg_session_status(session);
 	}
 
@@ -59,13 +62,15 @@ struct Client {
 	/// data (execution results) are handled, i.e. until `FetchOne` method returns
 	/// an empty array. Even if the result set is empty, the fetching has to be
 	/// done/finished to be able to execute another statement.
-	bool execute(const string statement) {
+	bool execute(const string statement, bool autoDiscard = false) {
 		int status = mg_session_run(session, toStringz(statement), null, null, null, null);
 		if (status < 0)
 			return false;
 		status = mg_session_pull(session, null);
 		if (status < 0)
 			return false;
+		if (autoDiscard)
+			discardAll();
 		return true;
 	}
 
@@ -74,13 +79,15 @@ struct Client {
 	/// After executing the statement, the method is blocked until all incoming
 	/// data (execution results) are handled, i.e. until `FetchOne` method returns
 	/// an empty array.
-	bool execute(const string statement, ref Map params) {
+	bool execute(const string statement, ref Map params, bool autoDiscard = false) {
 		int status = mg_session_run(session, toStringz(statement), params.ptr, null, null, null);
 		if (status < 0)
 			return false;
 		status = mg_session_pull(session, null);
 		if (status < 0)
 			return false;
+		if (autoDiscard)
+			discardAll();
 		return true;
 	}
 
@@ -88,6 +95,7 @@ struct Client {
 	/// Return next result from the input stream.
 	/// If there is nothing to fetch, an empty array is returned.
 	Value[] fetchOne() {
+		// TODO: encapsulate mg_result as `Result`
 		mg_result *result;
 		Value[] values;
 		int status = mg_session_fetch(session, &result);
@@ -118,20 +126,20 @@ struct Client {
 
 	/// Start a transaction.
 	/// Return: true when the transaction was successfully started, false otherwise.
-	bool beginTransaction() {
+	bool begin() {
 		return mg_session_begin_transaction(session, null) == 0;
 	}
 
 	/// Commit current transaction.
 	/// Return: true when the transaction was successfully committed, false otherwise.
-	bool commitTransaction() {
+	bool commit() {
 		mg_result *result;
 		return mg_session_commit_transaction(session, &result) == 0;
 	}
 
 	/// Rollback current transaction.
-	/// Return: true when the transaction was successfully rollbacked, false otherwise.
-	bool rollbackTransaction() {
+	/// Return: true when the transaction was successfully rolled back, false otherwise.
+	bool rollback() {
 		mg_result *result;
 		return mg_session_rollback_transaction(session, &result) == 0;
 	}
@@ -174,9 +182,11 @@ struct Client {
 		return Optional!Client(session);
 	}
 
+	/*
 	this(ref return scope inout Client rhs) inout {
 		writefln("*** Client Copy CTOR lhs: %s rhs: %s", session, rhs.session);
 	}
+	*/
 
 	/*
 	this(ref return scope const Client rhs) const {
@@ -184,11 +194,13 @@ struct Client {
 	}
 	*/
 
+package:
 	this(mg_session *session) {
 		this.session = session;
 	}
 
 private:
+
 	mg_session *session;
 }
 
@@ -205,12 +217,12 @@ unittest {
 	auto client = connectContainer();
 	assert(client);
 
-	assert(client.sessionStatus == mg_session_code.MG_SESSION_READY);
+	assert(client.status == mg_session_code.MG_SESSION_READY);
 
-	// TODO: something weird is going on with sessionError:
+	// TODO: something weird is going on with error:
 	//       with ldc2, the first character seems to be random garbage if there actually is no error
 	//       and with dmd, the whole error message seems to retain it's last state, even after successful connect
-	// assert(client.sessionError() == "", client.sessionError);
+	// assert(client.error() == "", client.error);
 
 	assert(client.clientVersion.length > 0);
 }
@@ -227,7 +239,7 @@ unittest {
 	deleteTestData(client);
 
 	// Create some test data inside a transaction, then roll it back.
-	client.beginTransaction();
+	client.begin();
 
 	createTestData(client);
 
@@ -235,15 +247,15 @@ unittest {
 	assert(client.execute("MATCH (n) RETURN n;"));
 	assert(client.fetchAll.length == 1);
 
-	client.rollbackTransaction();
+	client.rollback();
 
 	// Outside the transaction the row count should be 0.
-	assert(client.execute("MATCH (n) RETURN n;"), client.sessionError);
+	assert(client.execute("MATCH (n) RETURN n;"), client.error);
 	assert(client.fetchAll.length == 0);
 
 
 	// Create some test data inside a transaction, then commit it.
-	client.beginTransaction();
+	client.begin();
 
 	createTestData(client);
 
@@ -251,15 +263,15 @@ unittest {
 	assert(client.execute("MATCH (n) RETURN n;"));
 	assert(client.fetchAll.length == 1);
 
-	client.commitTransaction();
+	client.commit();
 
 	// Outside the transaction the row count should still be 1.
-	assert(client.execute("MATCH (n) RETURN n;"), client.sessionError);
+	assert(client.execute("MATCH (n) RETURN n;"), client.error);
 	assert(client.fetchAll.length == 1);
 
 	// Just some test for execute() using Map parameters.
 	Map m;
 	m["test"] = 42;
-	assert(client.execute("MATCH (n) RETURN n;", m), client.sessionError);
+	assert(client.execute("MATCH (n) RETURN n;", m), client.error);
 	assert(client.fetchAll.length == 1);
 }
