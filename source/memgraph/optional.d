@@ -3,11 +3,11 @@ module memgraph.optional;
 
 /// Holds an optional value of type `V`.
 struct Optional(V) {
-	// this(ref return scope inout Optional!V rhs) inout {
-	this(ref inout Optional!V rhs) inout {
+	this(ref return scope inout Optional!V rhs) inout {
 		 _value = rhs._value;
+		 _hasValue = rhs._hasValue;
 	}
-	this(V value) {
+	this(inout V value) inout {
 		_value = value;
 		_hasValue = true;
 	}
@@ -23,13 +23,13 @@ struct Optional(V) {
 	auto opCast(T : bool)() const {
 		return _hasValue;
 	}
-	auto opCast(T : V)() const {
+	auto opCast(T : inout V)() inout {
 		return _value;
 	}
-	auto hasValue() const {
+	@property auto hasValue() inout {
 		return _hasValue;
 	}
-	@property V value() {
+	@property inout(V) value() inout {
 		return _value;
 	}
 	auto opDispatch(string name, T...)(T vals) {
@@ -61,4 +61,24 @@ unittest {
 
 	auto s = Optional!TestStruct();
 	assert(s.addOne(41) == 42);
+}
+
+unittest {
+	immutable Optional!string s = "Hi";
+	assert(s.hasValue);
+	assert(s.value == "Hi");
+	assert(s == "Hi");
+}
+
+unittest {
+	const Optional!string s = "Hi";
+	assert(s.hasValue);
+	assert(s.value == "Hi");
+	assert(s == "Hi");
+}
+
+unittest {
+	immutable Optional!string s1 = "Hi";
+	immutable a1 = s1;
+	assert(a1 == s1);
 }
