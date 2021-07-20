@@ -91,7 +91,7 @@ version (unittest) {
 	// Create a client connection to the running unit test container.
 	auto connectContainer() {
 		startContainer(); // Make sure container is up.
-		Client.Params params;
+		Params params;
 		params.port = MEMGRAPH_PORT;
 		return Client.connect(params);
 	}	// connectContainer()

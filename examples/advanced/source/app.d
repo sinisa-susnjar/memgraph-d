@@ -17,7 +17,7 @@ int main(string[] args) {
 		return 1;
 	}
 
-	Client.Params params;
+	Params params;
 	params.host = args[1];
 	params.port = to!ushort(args[2]);
 

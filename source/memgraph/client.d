@@ -3,29 +3,10 @@ module memgraph.client;
 
 import std.string, std.stdio;
 
-import memgraph.mgclient, memgraph.optional, memgraph.value, memgraph.map;
+import memgraph.mgclient, memgraph.optional, memgraph.value, memgraph.map, memgraph.params;
 
 /// Provides a connection for memgraph.
 struct Client {
-	/// Connection parameters for Connect(Params)
-	// TODO: make this a real wrapper for `mg_session_params`, e.g.:
-	//       mg_session_params *mg_params = mg_session_params_make();
-	//       not this half-backed crap
-	struct Params {
-		/// Hostname, defaults to `localhost`.
-		string host = "localhost";
-		/// Port, defaults to 7687.
-		ushort port = 7687;
-		/// Username, if authentication is required.
-		string username;
-		/// Password, if authentication is required.
-		string password;
-		/// Set to true, if encryption is required.
-		bool useSsl;
-		/// Useragent used when connecting to memgraph, defaults to "memgraph-d/major.minor.patch".
-		string userAgent;
-	}
-
 	// TODO
 	// Client(const Client &) = delete;
 	// Client(Client &&) = default;
@@ -154,31 +135,13 @@ struct Client {
 
 	/// Static method that creates a Memgraph client instance.
 	/// Return: optional client connection instance.
-	/// If the connection couldn't be established given the `params`, it returns
-	/// an empty optional.
-	static Optional!Client connect(const ref Params params) {
-		mg_session_params *mg_params = mg_session_params_make();
-		if (!mg_params)
-			return Optional!Client();
-		mg_session_params_set_host(mg_params, toStringz(params.host));
-		mg_session_params_set_port(mg_params, params.port);
-		if (params.username.length > 0) {
-			mg_session_params_set_username(mg_params, toStringz(params.username));
-			mg_session_params_set_password(mg_params, toStringz(params.password));
-		}
-		mg_session_params_set_user_agent(mg_params,
-					params.userAgent.length > 0 ?
-						toStringz(params.userAgent) :
-						toStringz("memgraph-d/" ~ fromStringz(mg_client_version()))
-				);
-		mg_session_params_set_sslmode(mg_params, params.useSsl ? mg_sslmode.MG_SSLMODE_REQUIRE : mg_sslmode.MG_SSLMODE_DISABLE);
-
+	/// If the connection couldn't be established given the `params`, it will
+	/// return an empty optional.
+	static Optional!Client connect(ref Params params) {
 		mg_session *session = null;
-		int status = mg_connect(mg_params, &session);
-		mg_session_params_destroy(mg_params);
+		int status = mg_connect(params.ptr, &session);
 		if (status < 0)
 			return Optional!Client();
-
 		return Optional!Client(session);
 	}
 

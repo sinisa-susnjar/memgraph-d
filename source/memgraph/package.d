@@ -2,7 +2,14 @@
 /// Imports all required definitions.
 module memgraph;
 
-public import memgraph.mgclient, memgraph.optional, memgraph.client, memgraph.value, memgraph.node, memgraph.map, memgraph.enums;
+public import memgraph.mgclient;
+public import memgraph.optional;
+public import memgraph.client;
+public import memgraph.value;
+public import memgraph.node;
+public import memgraph.map;
+public import memgraph.enums;
+public import memgraph.params;
 
 import memgraph.detail;
 
