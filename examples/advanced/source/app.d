@@ -4,7 +4,7 @@ import std.stdio, std.conv, std.array;
 
 // Example adapted from advanced.cpp included in the mgclient git repo.
 
-void ClearDatabaseData(ref Optional!Client client) {
+private void clearDatabaseData(ref Optional!Client client) {
 	if (!client.execute("MATCH (n) DETACH DELETE n;", true)) {
 		writefln("Failed to delete all data from the database: %s %s", client.status, client.error);
 		assert(0);
@@ -17,17 +17,14 @@ int main(string[] args) {
 		return 1;
 	}
 
-	Params params;
-	params.host = args[1];
-	params.port = to!ushort(args[2]);
-
+	Params params = { host: args[1], port: to!ushort(args[2]) };
 	auto client = Client.connect(params);
 	if (!client) {
 		writefln("Failed to connect.");
 		return 1;
 	}
 
-	ClearDatabaseData(client);
+	clearDatabaseData(client);
 
 	if (!client.execute("CREATE INDEX ON :Person(id);", true)) {
 		writefln("Failed to create an index: %s %s", client.status, client.error);
@@ -58,7 +55,7 @@ int main(string[] args) {
 
 	Value[] maybeResult;
 	while ((maybeResult = client.fetchOne()).length) {
-		import std.algorithm;
+		import std.algorithm : map;
 		const auto value = maybeResult[0];
 		if (value.type() == Type.Node) {
 			const auto node = to!Node(value);
@@ -67,7 +64,7 @@ int main(string[] args) {
 		}
 	}
 
-	ClearDatabaseData(client);
+	clearDatabaseData(client);
 
 	return 0;
 }
