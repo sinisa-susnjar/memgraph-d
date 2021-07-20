@@ -24,7 +24,7 @@ struct Client {
 	static auto clientVersion() { return fromStringz(mg_client_version()); }
 
 	/// Obtains the error message stored in the current session (if any).
-	auto error() {
+	@property auto error() {
 		// mg_session_error() seems to randomly fill the first byte with garbage when there actually is no error.
 		auto err = fromStringz(mg_session_error(session));
 		return err.length == 1 ? "" : err;
@@ -33,7 +33,7 @@ struct Client {
 	/// Returns the status of the current session.
 	///
 	/// Return: One of the session codes in `mg_session_code`.
-	auto status() const {
+	@property auto status() inout {
 		return mg_session_status(session);
 	}
 
@@ -79,7 +79,7 @@ struct Client {
 		// TODO: encapsulate mg_result as `Result`
 		mg_result *result;
 		Value[] values;
-		int status = mg_session_fetch(session, &result);
+		immutable status = mg_session_fetch(session, &result);
 		if (status != 1)
 			return values;
 
@@ -139,7 +139,7 @@ struct Client {
 	/// return an empty optional.
 	static Optional!Client connect(ref Params params) {
 		mg_session *session = null;
-		int status = mg_connect(params.ptr, &session);
+		immutable status = mg_connect(params.ptr, &session);
 		if (status < 0)
 			return Optional!Client();
 		return Optional!Client(session);
@@ -170,7 +170,7 @@ private:
 /// Connect example
 unittest {
 	// Connect to memgraph DB at localhost:7688
-	auto client = Client.connect();
+	const client = Client.connect();
 }
 
 unittest {
