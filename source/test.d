@@ -1,3 +1,0 @@
-import memgraph;
-
-void main() { }

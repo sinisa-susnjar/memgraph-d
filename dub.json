@@ -13,13 +13,11 @@
 	"configurations": [
 		{
 			"name": "lib",
-			"excludedSourceFiles": ["source/test.d"],
 			"targetType": "staticLibrary",
 			"lflags": [ "$PACKAGE_DIR/mgclient/build/src/libmgclient.a" ]
 		},
 		{
 			"name": "shared",
-			"excludedSourceFiles": ["source/test.d"],
 			"targetType": "dynamicLibrary",
 			"libs": [ "mgclient" ],
 			"lflags": [ "-L$PACKAGE_DIR/mgclient/build/src" ]
