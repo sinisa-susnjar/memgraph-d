@@ -224,7 +224,6 @@ unittest {
 	assert(result, client.error);
 	assert(result.count == 0);
 
-
 	// Create some test data inside a transaction, then commit it.
 	client.begin();
 
@@ -252,6 +251,7 @@ unittest {
 	// Just for coverage at the moment
 	assert(client.error.length >= 0);
 	assert(result.summary.length >= 0);
+	assert(result.columns == ["n"]);
 }
 
 unittest {

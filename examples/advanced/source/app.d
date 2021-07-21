@@ -59,6 +59,7 @@ int main(string[] args) {
 		resultCount++;
 	}
 	writefln("Summary: {%s}", results.summary.byKeyValue.map!(p => p.key ~ ":" ~ to!string(p.value)).join(" "));
+	writefln("Columns: %s", results.columns);
 	writefln("Number of results: %s", resultCount);
 
 	clearDatabaseData(client);
