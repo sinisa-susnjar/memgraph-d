@@ -1,7 +1,7 @@
 /// Provides a map (i.e. key/value) tuple.
 module memgraph.map;
 
-import std.string, std.conv;
+import std.string, std.conv, std.stdio;
 
 import memgraph.mgclient, memgraph.detail, memgraph.value;
 
@@ -16,6 +16,7 @@ struct Map {
 
 	/// Copy constructor.
 	this(const ref Map other) {
+		// writefln("map copy ctor");
 		foreach (k, v; other.map_)
 			map_[k] = v;
 		this(mg_map_copy(other.ptr_));
@@ -25,6 +26,7 @@ struct Map {
 	// Map &operator=(const Map &other) = delete;
 	// Map &operator=(Map &&other) = delete;
 	@safe @nogc ~this() pure nothrow {
+		// writeln("map dtor");
 		if (ptr_ != null)
 			mg_map_destroy(ptr_);
 	}
@@ -86,12 +88,14 @@ struct Map {
 package:
 	/// Create a Map using the given `mg_map`.
 	this(mg_map *ptr) {
+		// writefln("map mg_map ctor");
 		ptr_ = ptr;
 		mapToAA();
 	}
 
 	/// Create a Map from a copy of the given `mg_map`.
 	this(const mg_map *const_ptr) {
+		// writefln("map const mg_map ctor");
 		this(mg_map_copy(const_ptr));
 		mapToAA();
 	}

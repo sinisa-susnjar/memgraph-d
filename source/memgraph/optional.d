@@ -3,6 +3,8 @@ module memgraph.optional;
 
 /// Holds an optional value of type `V`.
 struct Optional(V) {
+	@disable this(this);
+
 	this(ref return scope inout Optional!V rhs) inout {
 		 _value = rhs._value;
 		 _hasValue = rhs._hasValue;

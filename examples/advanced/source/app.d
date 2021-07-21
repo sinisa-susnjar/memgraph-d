@@ -1,11 +1,12 @@
 import memgraph;
 
 import std.stdio, std.conv, std.array;
+import std.algorithm : map;
 
 // Example adapted from advanced.cpp included in the mgclient git repo.
 
 private void clearDatabaseData(ref Optional!Client client) {
-	if (!client.execute("MATCH (n) DETACH DELETE n;", true)) {
+	if (!client.run("MATCH (n) DETACH DELETE n;")) {
 		writefln("Failed to delete all data from the database: %s %s", client.status, client.error);
 		assert(0);
 	}
@@ -26,43 +27,39 @@ int main(string[] args) {
 
 	clearDatabaseData(client);
 
-	if (!client.execute("CREATE INDEX ON :Person(id);", true)) {
+	if (!client.run("CREATE INDEX ON :Person(id);")) {
 		writefln("Failed to create an index: %s %s", client.status, client.error);
 		return 1;
 	}
 
 	foreach (id; 0..100) {
-		if (!client.execute(
+		if (!client.run(
 					"CREATE (:Person:Entrepreneur {id: " ~ to!string(id) ~ ", age: 40, name: 'John', " ~
-					"isStudent: false, score: 5.0});", true)) {
+					"isStudent: false, score: 5.0});")) {
 			writefln("Failed to add data: %s %s", client.status, client.error);
 			return 1;
 		}
 	}
 
-	if (!client.execute("MATCH (n) RETURN n;")) {
-		writefln("Failed to read data: %s %s", client.status, client.error);
-		return 1;
-	}
-	auto maybeData = client.fetchAll();
-	if (maybeData.length)
-		writefln("Number of results: %s", maybeData.length);
+	auto results = client.execute("MATCH (n) RETURN n;");
 
-	if (!client.execute("MATCH (n) RETURN n;")) {
-		writefln("Failed to read data: %s %s", client.status, client.error);
-		return 1;
-	}
+	/* TODO: calling summary on a non-fetched result crashes - why?
+	auto summary = results.summary();
+	writefln("map: ", summary);
+	writefln("summary: {%s}", summary.byKeyValue.map!(p => p.key ~ ":" ~ to!string(p.value)).join(" "));
+	*/
 
-	Value[] maybeResult;
-	while ((maybeResult = client.fetchOne()).length) {
-		import std.algorithm : map;
-		const auto value = maybeResult[0];
-		if (value.type() == Type.Node) {
-			const auto node = to!Node(value);
-			writefln("%s %s", node.labels.join(":"),
-					"{" ~ node.properties.byKeyValue.map!(p => p.key ~ ":" ~ to!string(p.value)).join(" ") ~ "}");
+	size_t resultCount;
+	foreach (r; results) {
+		if (r.type() == Type.Node) {
+			const auto node = to!Node(r);
+			writefln("%s {%s}", node.labels.join(":"),
+					node.properties.byKeyValue.map!(p => p.key ~ ":" ~ to!string(p.value)).join(" "));
 		}
+		resultCount++;
 	}
+	writefln("Summary: {%s}", results.summary.byKeyValue.map!(p => p.key ~ ":" ~ to!string(p.value)).join(" "));
+	writefln("Number of results: %s", resultCount);
 
 	clearDatabaseData(client);
 

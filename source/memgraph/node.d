@@ -115,11 +115,11 @@ unittest {
 
 	createTestData(client);
 
-	assert(client.execute("MATCH (n) RETURN n;"));
-	const auto row = client.fetchOne();
-	assert(row.length == 1);
-
-	const auto value = row[0];
+	auto result = client.execute("MATCH (n) RETURN n;");
+	assert(result, client.error);
+	assert(!result.empty());
+	auto value = result.front;
+	assert(result.count == 1);
 
 	assert(value.type() == Type.Node);
 

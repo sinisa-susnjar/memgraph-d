@@ -3,7 +3,7 @@ module memgraph.client;
 
 import std.string, std.stdio;
 
-import memgraph.mgclient, memgraph.optional, memgraph.value, memgraph.map, memgraph.params;
+import memgraph.mgclient, memgraph.optional, memgraph.value, memgraph.map, memgraph.params, memgraph.result;
 
 /// Provides a connection for memgraph.
 struct Client {
@@ -37,41 +37,45 @@ struct Client {
 		return mg_session_status(session);
 	}
 
-	/// Executes the given Cypher `statement`.
-	/// Return: true when the statement is successfully executed, false otherwise.
-	/// After executing the statement, the method is blocked until all incoming
-	/// data (execution results) are handled, i.e. until `FetchOne` method returns
-	/// an empty array. Even if the result set is empty, the fetching has to be
-	/// done/finished to be able to execute another statement.
-	bool execute(const string statement, bool autoDiscard = false) {
-		int status = mg_session_run(session, toStringz(statement), null, null, null, null);
-		if (status < 0)
+	/// Runs the given Cypher `statement` and discards any possible results.
+	/// Return: true when the statement ran successfully, false otherwise.
+	bool run(const string statement) {
+		auto result = execute(statement);
+		if (!result)
 			return false;
+		foreach (r; result) { }
+		return true;
+	}
+
+	/// Executes the given Cypher `statement`.
+	/// Return: optional `Result` that can be used as a range e.g. using foreach() to process all results.
+	/// After executing the statement, the method is blocked until all incoming
+	/// data (execution results) are handled, i.e. until the returned `Result` has been completely processed.
+	Optional!Result execute(const string statement) {
+		auto status = mg_session_run(session, toStringz(statement), null, null, null, null);
+		if (status < 0)
+			return Optional!Result();
 		status = mg_session_pull(session, null);
 		if (status < 0)
-			return false;
-		if (autoDiscard)
-			discardAll();
-		return true;
+			return Optional!Result();
+		return Optional!Result(session);
 	}
 
 	/// Executes the given Cypher `statement`, supplied with additional `params`.
-	/// Return: true when the statement is successfully executed, false otherwise.
+	/// Return: optional `Result` that can be used as a range e.g. using foreach() to process all results.
 	/// After executing the statement, the method is blocked until all incoming
-	/// data (execution results) are handled, i.e. until `FetchOne` method returns
-	/// an empty array.
-	bool execute(const string statement, ref Map params, bool autoDiscard = false) {
+	/// data (execution results) are handled, i.e. until the returned `Result` has been completely processed.
+	Optional!Result execute(const string statement, ref Map params) {
 		int status = mg_session_run(session, toStringz(statement), params.ptr, null, null, null);
 		if (status < 0)
-			return false;
+			return Optional!Result();
 		status = mg_session_pull(session, null);
 		if (status < 0)
-			return false;
-		if (autoDiscard)
-			discardAll();
-		return true;
+			return Optional!Result();
+		return Optional!Result(session);
 	}
 
+/*
 	/// Fetches the next result from the input stream.
 	/// Return next result from the input stream.
 	/// If there is nothing to fetch, an empty array is returned.
@@ -104,6 +108,7 @@ struct Client {
 			data ~= maybeResult;
 		return data;
 	}
+	*/
 
 	/// Start a transaction.
 	/// Return: true when the transaction was successfully started, false otherwise.
@@ -193,6 +198,7 @@ unittest {
 unittest {
 	import testutils;
 	import memgraph;
+	import std.algorithm : count;
 
 	auto client = connectContainer();
 	assert(client);
@@ -207,14 +213,16 @@ unittest {
 	createTestData(client);
 
 	// Inside the transaction the row count should be 1.
-	assert(client.execute("MATCH (n) RETURN n;"));
-	assert(client.fetchAll.length == 1);
+	auto result = client.execute("MATCH (n) RETURN n;");
+	assert(result, client.error);
+	assert(result.count == 1);
 
 	client.rollback();
 
 	// Outside the transaction the row count should be 0.
-	assert(client.execute("MATCH (n) RETURN n;"), client.error);
-	assert(client.fetchAll.length == 0);
+	result = client.execute("MATCH (n) RETURN n;");
+	assert(result, client.error);
+	assert(result.count == 0);
 
 
 	// Create some test data inside a transaction, then commit it.
@@ -223,18 +231,21 @@ unittest {
 	createTestData(client);
 
 	// Inside the transaction the row count should be 1.
-	assert(client.execute("MATCH (n) RETURN n;"));
-	assert(client.fetchAll.length == 1);
+	result = client.execute("MATCH (n) RETURN n;");
+	assert(result, client.error);
+	assert(result.count == 1);
 
 	client.commit();
 
 	// Outside the transaction the row count should still be 1.
-	assert(client.execute("MATCH (n) RETURN n;"), client.error);
-	assert(client.fetchAll.length == 1);
+	result = client.execute("MATCH (n) RETURN n;");
+	assert(result, client.error);
+	assert(result.count == 1);
 
 	// Just some test for execute() using Map parameters.
 	Map m;
 	m["test"] = 42;
-	assert(client.execute("MATCH (n) RETURN n;", m), client.error);
-	assert(client.fetchAll.length == 1);
+	result = client.execute("MATCH (n) RETURN n;", m);
+	assert(result, client.error);
+	assert(result.count == 1);
 }
