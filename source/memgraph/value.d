@@ -10,10 +10,10 @@ struct Value {
 
 	/// Constructs an object that becomes the owner of the given `value`.
 	/// `value` is destroyed when a `Value` object is destroyed.
-	@safe @nogc this(mg_value *ptr) { ptr_ = ptr; }
+	package @safe @nogc this(mg_value *ptr) { ptr_ = ptr; }
 
 	/// Creates a new Value from a copy of the given `mg_value`.
-	@safe @nogc this(const mg_value *const_ptr) { this(mg_value_copy(const_ptr)); }
+	package @safe @nogc this(const mg_value *const_ptr) { this(mg_value_copy(const_ptr)); }
 
 	/// Creates a new Value from a copy of the given `Value`.
 	@safe @nogc this(const ref Value other) { this(mg_value_copy(other.ptr_)); }
@@ -38,7 +38,7 @@ struct Value {
 	/// Make a new `Value` from a double.
 	this(double value) { this(mg_value_make_float(value)); }
 
-	// Make a new `Value` from a string.
+	/// Make a new `Value` from a string.
 	this(const string value) {
 		this(mg_value_make_string(toStringz(value)));
 	}
@@ -56,6 +56,7 @@ struct Value {
 	/// considered undefined.
 	// this(Map &&map);
 
+/* TODO
 	/// Constructs a vertex value and takes the ownership of the given `vertex`.
 	this(ref Node vertex) {
 		this(mg_value_make_node(vertex.ptr));
@@ -66,6 +67,7 @@ struct Value {
 	this(const ref Node vertex) {
 		this(mg_value_make_node(mg_node_copy(vertex.ptr)));
 	}
+*/
 
 	/// \brief Constructs an edge value and takes the ownership of the given
 	/// `edge`. \note Behaviour of accessing the `edge` after performing this
@@ -131,48 +133,55 @@ struct Value {
 	// const ConstList ValueList() const;
 	// const ConstMap ValueMap() const;
 
-	mixin template genOpCast(dType, alias valueType, alias mgValueFunc) {
-		auto opCast(T : dType)() const {
-			assert(type() == valueType);
-			return mgValueFunc(ptr_);
-		}
-	}
-
-	// mixin genOpCast!(double, Type.Double, mg_value_float);
-
-	mixin template GenOps(Types...) {
-		import std.typecons;
-		enum auto ops = [
-			typeid(int): tuple(Type.Int, "integer"),
-			typeid(double): tuple(Type.Double, "float"),
-		];
-		static foreach (idx, t; Types) {
-			// static assert(typeid(t) in ops, "unexpected type " ~ t.stringof);
-			pragma(msg, "opCast: " ~ t.stringof ~ " " ~ typeid(t).stringof ~ " " ~ ops[typeid(t)][1]);
-
-			auto opCast(T : t)() const {
-				assert(type() == ops[typeid(t)][0]);
-				return mixin("mg_value_" ~ ops[typeid(t)][1] ~ "(ptr_)");
-			}
-		}
-	}
-
-	// mixin GenOps!(int, double);
-
 	// Fr@k repetition :)
-	import std.typecons;
-	enum auto ops = [
-		typeid(double):	tuple(Type.Double,	"mg_value_float(ptr_)"),
-		typeid(int):	tuple(Type.Int,		"mg_value_integer(ptr_)"),
-		typeid(long):	tuple(Type.Int,		"mg_value_integer(ptr_)"),
-		typeid(bool):	tuple(Type.Bool,	"mg_value_bool(ptr_)"),
-		typeid(Node):	tuple(Type.Node,	"Node(mg_value_node(ptr_))"),
+	import std.typecons : tuple;
+	private static immutable enum auto ops = [
+		// D type		memgraph type		opCast/opEquals
+		typeid(double):	tuple(Type.Double,	"mg_value_float(ptr_)",		"mg_value_make_float"),
+		typeid(int):	tuple(Type.Int,		"mg_value_integer(ptr_)",	"mg_value_make_integer"),
+		typeid(long):	tuple(Type.Int,		"mg_value_integer(ptr_)",	"mg_value_make_integer"),
+		typeid(bool):	tuple(Type.Bool,	"mg_value_bool(ptr_)",		"mg_value_make_bool"),
+		typeid(Node):	tuple(Type.Node,	"Node(mg_value_node(ptr_))", ""),
+		typeid(string):	tuple(Type.String,	"Detail.convertString(mg_value_string(ptr_))", ""),
 	];
 
 	/// Cast this value to type `T`.
 	auto opCast(T)() const {
 		assert(type() == ops[typeid(T)][0]);
 		return to!T(mixin(ops[typeid(T)][1]));
+	}
+
+	/// Comparison operator for type `T`.
+	/// Note: The code asserts that the current value holds a representation of type `T`.
+	bool opEquals(T)(const T val) const {
+		assert(type() == ops[typeid(T)][0]);
+		return mixin(ops[typeid(T)][1]) == val;
+	}
+
+	/// Assignment operator for type `T`.
+	void opAssign(T)(const T value) {
+		if (ptr_ != null)
+			mg_value_destroy(ptr_);
+		ptr_ = mixin(ops[typeid(T)][2])(value);
+	}
+
+	/// Comparison operator for another `Value`.
+	bool opEquals(const ref Value other) const {
+		return Detail.areValuesEqual(ptr_, other.ptr_);
+	}
+
+	/// Assignment operator for another `Value`.
+	void opAssign(const Value value) {
+		if (ptr_ != null)
+			mg_value_destroy(ptr_);
+		ptr_ = mg_value_copy(value.ptr);
+	}
+
+	/// Assignment operator for a `string`.
+	void opAssign(const string value) {
+		if (ptr_ != null)
+			mg_value_destroy(ptr_);
+		ptr_ = mg_value_make_string(toStringz(value));
 	}
 
 	/// Return this value as a string.
@@ -217,84 +226,13 @@ struct Value {
 	//const ConstPoint3d ValuePoint3d() const;
 
 	/// Return the type of value being held.
-	Type type() const {
+	@property Type type() const {
 		// if (ptr_ == null) return Type.Null;
 		return Detail.convertType(mg_value_get_type(ptr_));
 	}
 
-	/// Comparison operator for another `Value`.
-	bool opEquals(const ref Value other) const {
-		return Detail.areValuesEqual(ptr_, other.ptr_);
-	}
-
-	/// Comparison operator for a string.
-	/// Note: The code asserts that the current value holds a string.
-	bool opEquals(const string val) const {
-		assert(type == Type.String);
-		return Detail.convertString(mg_value_string(ptr_)) == val;
-	}
-
-	/// Comparison operator for a long.
-	/// Note: The code asserts that the current value holds an integer.
-	bool opEquals(const long val) const {
-		assert(type == Type.Int);
-		return mg_value_integer(ptr_) == val;
-	}
-
-	/// Comparison operator for a int.
-	/// Note: The code asserts that the current value holds an integer.
-	bool opEquals(const int val) const {
-		assert(type == Type.Int);
-		return mg_value_integer(ptr_) == val;
-	}
-
-	/// Comparison operator for a bool.
-	/// Note: The code asserts that the current value holds a bool.
-	bool opEquals(const bool val) const {
-		assert(type == Type.Bool);
-		return mg_value_bool(ptr_) == val;
-	}
-
-	/// Comparison operator for a double.
-	/// Note: The code asserts that the current value holds a double.
-	bool opEquals(const double val) const {
-		assert(type == Type.Double);
-		return mg_value_float(ptr_) == val;
-	}
-
-	auto opAssign(const bool value) {
-		if (ptr_ != null)
-			mg_value_destroy(ptr_);
-		ptr_ = mg_value_make_bool(value);
-	}
-
-	auto opAssign(const int value) {
-		if (ptr_ != null)
-			mg_value_destroy(ptr_);
-		ptr_ = mg_value_make_integer(value);
-	}
-
-	auto opAssign(const long value) {
-		if (ptr_ != null)
-			mg_value_destroy(ptr_);
-		ptr_ = mg_value_make_integer(value);
-	}
-
-	auto opAssign(const double value) {
-		if (ptr_ != null)
-			mg_value_destroy(ptr_);
-		ptr_ = mg_value_make_float(value);
-	}
-
-	auto opAssign(const string value) {
-		if (ptr_ != null)
-			mg_value_destroy(ptr_);
-		ptr_ = mg_value_make_string(toStringz(value));
-	}
-
 package:
-	auto ptr() const { return ptr_; }
-	auto ptr() { return ptr_; }
+	auto ptr() inout { return ptr_; }
 
 private:
 	mg_value *ptr_;
@@ -312,7 +250,25 @@ unittest {
 	assert(v2 == "Zdravo, svijete!");
 
 	assert(v1.toString == "Zdravo, svijete!");
+	assert(to!string(v1) == "Zdravo, svijete!");
 
+	v2 = "Hello there";
+	assert(v2 == "Hello there");
+	assert(v2.toString == "Hello there");
+	assert(to!string(v2) == "Hello there");
+}
+
+unittest {
+	const v1 = Value("Zdravo, svijete!");
+	assert(v1.type == Type.String);
+	assert(v1 == "Zdravo, svijete!");
+
+	const v2 = v1;
+	assert(v1.type == v2.type);
+	assert(v1 == v2);
+	assert(v2 == "Zdravo, svijete!");
+
+	assert(v1.toString == "Zdravo, svijete!");
 	assert(to!string(v1) == "Zdravo, svijete!");
 }
 
@@ -341,6 +297,25 @@ unittest {
 	assert(to!long(v1) == 23);
 }
 
+unittest {
+	const v1 = Value(42L);
+	assert(v1.type == Type.Int);
+	assert(v1 == 42);
+	assert(v1 == 42L);
+
+	const v2 = v1;
+	assert(v1.type == v2.type);
+	assert(v1 == v2);
+	assert(v2 == 42);
+
+	const v3 = Value(42);
+	assert(v1.type == v3.type);
+	assert(v1 == v3);
+	assert(v3 == 42);
+
+	assert(v1.toString == "42");
+}
+
 // bool tests
 unittest {
 	auto v1 = Value(true);
@@ -358,6 +333,22 @@ unittest {
 	assert(v1 == true);
 }
 
+unittest {
+	const v1 = Value(true);
+	assert(v1.type == Type.Bool);
+	assert(v1 == true);
+
+	const v2 = v1;
+	assert(v1.type == v2.type);
+	assert(v1 == v2);
+	assert(v2 == true);
+
+	assert(v1.toString == "true");
+
+	assert(to!bool(v1) == true);
+	assert(v1 == true);
+}
+
 // double tests
 unittest {
 	auto v1 = Value(3.1415926);
@@ -365,6 +356,22 @@ unittest {
 	assert(v1 == 3.1415926);
 
 	auto v2 = v1;
+	assert(v1.type == v2.type);
+	assert(v1 == v2);
+	assert(v2 == 3.1415926);
+
+	assert(v1.toString == "3.14159");
+
+	assert(to!double(v1) == 3.1415926);
+	assert(v1 == 3.1415926);
+}
+
+unittest {
+	const v1 = Value(3.1415926);
+	assert(v1.type == Type.Double);
+	assert(v1 == 3.1415926);
+
+	const v2 = v1;
 	assert(v1.type == v2.type);
 	assert(v1 == v2);
 	assert(v2 == 3.1415926);
