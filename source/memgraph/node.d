@@ -89,8 +89,7 @@ package:
 	/// Create a Node from a copy of the given `mg_node`.
 	this(const mg_node *const_ptr) { this(mg_node_copy(const_ptr)); }
 
-	auto ptr() const { return ptr_; }
-	auto ptr() { return ptr_; }
+	// auto ptr() inout { return ptr_; }
 
 private:
 	/// Pointer to `mg_node` instance.
@@ -98,14 +97,14 @@ private:
 }
 
 unittest {
-	import testutils;
+	import testutils : startContainer;
 	startContainer();
 }
 
 unittest {
 	import testutils;
 	import memgraph;
-	import std.algorithm, std.conv;
+	import std.algorithm, std.conv, std.range;
 
 	auto client = connectContainer();
 	assert(client);
@@ -136,7 +135,10 @@ unittest {
 	assert(labels[0] == expectedLabels[0]);
 	assert(labels[1] == expectedLabels[1]);
 
+	assert([] != labels);
+	assert([ "Nope", "x" ] != labels);
 	assert(expectedLabels == labels);
+	assert(expectedLabels.join(":") == labels.join(":"));
 
 	const auto other = Node(node);
 	assert(other == node);
