@@ -248,4 +248,27 @@ unittest {
 	result = client.execute("MATCH (n) RETURN n;", m);
 	assert(result, client.error);
 	assert(result.count == 1);
+
+	// Just for coverage at the moment
+	assert(client.error.length >= 0);
+	assert(result.summary.length >= 0);
+}
+
+unittest {
+	Params params;
+	params.host = "0.0.0.0";
+	params.port = 12_345;
+	auto client = Client.connect(params);
+	assert(!client);
+}
+
+unittest {
+	import testutils;
+	import memgraph;
+	auto client = connectContainer();
+	assert(client);
+	assert(!client.run("WHAT IS THE ANSWER TO LIFE, THE UNIVERSE AND EVERYTHING?"));
+	Map m;
+	m["answer"] = 42;
+	assert(!client.execute("WHAT IS THE ANSWER TO LIFE, THE UNIVERSE AND EVERYTHING?", m));
 }

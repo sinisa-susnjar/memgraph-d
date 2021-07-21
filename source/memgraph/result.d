@@ -59,8 +59,8 @@ struct Result {
 			// Ref count is 0 - this means the original `Result` instance is being destructed,
 			// the `mg_result` pointer is not needed anymore, free it.
 			import core.stdc.stdlib : free;
-			assert(result_ != null);
-			free(result_);
+			if (result_ != null)
+				free(result_);
 			result_ = null;
 		}
 	}
