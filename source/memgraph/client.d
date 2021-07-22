@@ -172,12 +172,6 @@ private:
 	mg_session *session;
 }
 
-/// Connect example
-unittest {
-	// Connect to memgraph DB at localhost:7688
-	const client = Client.connect();
-}
-
 unittest {
 	import testutils;
 	import memgraph;
@@ -271,4 +265,15 @@ unittest {
 	Map m;
 	m["answer"] = 42;
 	assert(!client.execute("WHAT IS THE ANSWER TO LIFE, THE UNIVERSE AND EVERYTHING?", m));
+}
+
+/// Connect example
+unittest {
+	import std.stdio;
+	import memgraph;
+	// Connect to memgraph DB at localhost:7688
+	Params p = { host: "localhost", port: 7688 };
+	auto client = Client.connect(p);
+	if (!client)
+		writefln("cannot connect to %s:%s: %s", p.host, p.port, client.status);
 }
