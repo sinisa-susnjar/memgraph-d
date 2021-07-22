@@ -7,12 +7,6 @@ import memgraph.mgclient, memgraph.optional, memgraph.value, memgraph.map, memgr
 
 /// Provides a connection for memgraph.
 struct Client {
-	// TODO
-	// Client(const Client &) = delete;
-	// Client(Client &&) = default;
-	// Client &operator=(const Client &) = delete;
-	// Client &operator=(Client &&) = delete;
-
 	/// Destructor, destroys the memgraph session.
 	~this() {
 		if (session)
@@ -25,13 +19,11 @@ struct Client {
 
 	/// Obtains the error message stored in the current session (if any).
 	@property auto error() {
-		// mg_session_error() seems to randomly fill the first byte with garbage when there actually is no error.
-		auto err = fromStringz(mg_session_error(session));
-		return err.length == 1 ? "" : err;
+		// TODO: mg_session_error() seems to randomly fill the first byte with garbage when there actually is no error.
+		return fromStringz(mg_session_error(session));
 	}
 
 	/// Returns the status of the current session.
-	///
 	/// Return: One of the session codes in `mg_session_code`.
 	@property auto status() inout {
 		return mg_session_status(session);
@@ -150,18 +142,6 @@ struct Client {
 		return Optional!Client(session);
 	}
 
-	/*
-	this(ref return scope inout Client rhs) inout {
-		writefln("*** Client Copy CTOR lhs: %s rhs: %s", session, rhs.session);
-	}
-	*/
-
-	/*
-	this(ref return scope const Client rhs) const {
-		writefln("*** Client const Copy CTOR lhs: %s rhs: %s", session, rhs.session);
-	}
-	*/
-
 package:
 	this(mg_session *session) {
 		this.session = session;
@@ -276,4 +256,8 @@ unittest {
 	auto client = Client.connect(p);
 	if (!client)
 		writefln("cannot connect to %s:%s: %s", p.host, p.port, client.status);
+}
+
+unittest {
+	auto c = Client.connect();
 }

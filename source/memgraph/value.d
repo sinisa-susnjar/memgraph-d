@@ -8,15 +8,19 @@ import memgraph.mgclient, memgraph.detail, memgraph.node, memgraph.enums;
 /// A Bolt value, encapsulating all other values.
 struct Value {
 
-	/// Constructs an object that becomes the owner of the given `value`.
-	/// `value` is destroyed when a `Value` object is destroyed.
-	package @safe @nogc this(mg_value *ptr) { ptr_ = ptr; }
-
-	/// Creates a new Value from a copy of the given `mg_value`.
-	package @safe @nogc this(const mg_value *const_ptr) { this(mg_value_copy(const_ptr)); }
-
 	/// Creates a new Value from a copy of the given `Value`.
-	@safe @nogc this(const ref Value other) { this(mg_value_copy(other.ptr_)); }
+	/*
+	@safe @nogc this(const ref Value other) {
+	// this(const ref Value other) {
+		// import std.stdio;
+		// writefln("this copy ctor: value: %s", other.toString);
+		this(mg_value_copy(other.ptr_));
+	}
+	*/
+	this(this) {
+		if (ptr_)
+			ptr_ = mg_value_copy(ptr_);
+	}
 
 	/// Destroys any value held.
 	@safe @nogc ~this() {
@@ -232,6 +236,21 @@ struct Value {
 	}
 
 package:
+	/// Constructs an object that becomes the owner of the given `value`.
+	/// `value` is destroyed when a `Value` object is destroyed.
+	/*
+	*/
+	@safe @nogc this(mg_value *ptr) {
+		assert(ptr != null);
+		ptr_ = ptr;
+	}
+
+	/// Creates a new Value from a copy of the given `mg_value`.
+	@safe @nogc this(const mg_value *const_ptr) {
+		assert(const_ptr != null);
+		this(mg_value_copy(const_ptr));
+	}
+
 	auto ptr() inout { return ptr_; }
 
 private:

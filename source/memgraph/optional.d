@@ -3,6 +3,7 @@ module memgraph.optional;
 
 /// Holds an optional value of type `V`.
 struct Optional(V) {
+	// TODO: wtf is going on with this?
 	@disable this(this);
 
 	/// Copy construct `this` from another `Optional` instance.
@@ -17,8 +18,10 @@ struct Optional(V) {
 	}
 	/// Copy construct `this` by creating an instance of type `V` using constructor arguments `args`.
 	this(Args...)(Args args) {
-		_value = V(args);
-		_hasValue = true;
+		static if (args.length > 0) {
+			_value = V(args);
+			_hasValue = true;
+		}
 	}
 	/// Assign value of type `V` to `this`.
 	auto opAssign(V value) {

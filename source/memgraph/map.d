@@ -15,10 +15,16 @@ import memgraph.mgclient, memgraph.detail, memgraph.value;
 struct Map {
 
 	/// Create a copy of `other` map. Will copy all key/value pairs into this map from `other`.
+	/*
 	this(const ref Map other) {
-		foreach (k, v; other.map_)
-			map_[k] = v;
+		// foreach (k, v; other.map_) map_[k] = v;
+		map_ = other.map_.dup;
 		this(mg_map_copy(other.ptr_));
+	}
+	*/
+	this(this) {
+		if (ptr_)
+			ptr_ = mg_map_copy(ptr_);
 	}
 
 	/// Destructor. Destroys the internal `mg_map`.
@@ -36,7 +42,7 @@ struct Map {
 
 	/// Returns the value associated with the given `key`.
 	/// This method will `assert` that the `key` exists.
-	const Value opIndex(const string key) {
+	auto opIndex(const string key) const {
 		assert(key in map_);
 		return map_[key];
 	}
@@ -115,7 +121,6 @@ private:
 	alias toAA this;
 	Value[string] map_;
 	mg_map *ptr_;
-	uint idx_;
 }
 
 unittest {

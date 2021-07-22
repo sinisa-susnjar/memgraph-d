@@ -277,24 +277,24 @@ extern (C) {
 	/// Constructs a nil `mg_value`.
 	///
 	/// Return: Pointer to the newly constructed value or NULL if error occurred.
-	@safe @nogc mg_value *mg_value_make_null();
+	@safe @nogc mg_value *mg_value_make_null() pure nothrow;
 
 	/// Constructs a boolean `mg_value`.
 	///
 	/// Params: val = If the parameter is zero, constructed value will be false.
 	///               Otherwise, it will be true.
 	/// Return: Pointer to the newly constructed value or NULL if error occurred.
-	@safe @nogc mg_value *mg_value_make_bool(int val);
+	@safe @nogc mg_value *mg_value_make_bool(int val) pure nothrow;
 
 	/// Constructs an integer `mg_value` with the given underlying value.
 	///
 	/// Return: Pointer to the newly constructed value or NULL if error occurred.
-	@safe @nogc mg_value *mg_value_make_integer(long val);
+	@safe @nogc mg_value *mg_value_make_integer(long val) pure nothrow;
 
 	/// Constructs a float `mg_value` with the given underlying value.
 	///
 	/// Return: Pointer to the newly constructed value or NULL if error occurred.
-	@safe @nogc mg_value *mg_value_make_float(double val);
+	@safe @nogc mg_value *mg_value_make_float(double val) pure nothrow;
 
 	/// Constructs a string `mg_value` given a null-terminated string.
 	///
@@ -304,89 +304,89 @@ extern (C) {
 	/// Params: str = A null-terminated UTF-8 string.
 	///
 	/// Return: Pointer to the newly constructed value or NULL if error occurred.
-	@safe @nogc mg_value *mg_value_make_string(const char *str);
+	@safe @nogc mg_value *mg_value_make_string(const char *str) pure nothrow;
 
 	/// Construct a string `mg_value` given the underlying `mg_string`.
 	///
 	/// Return: Pointer to the newly constructed value or NULL if error occurred.
-	@safe @nogc mg_value *mg_value_make_string2(mg_string *str);
+	@safe @nogc mg_value *mg_value_make_string2(mg_string *str) pure nothrow;
 
 	/// Constructs a list `mg_value` given the underlying `mg_list`.
 	///
 	/// Return: Pointer to the newly constructed value or NULL if error occurred.
-	@safe @nogc mg_value *mg_value_make_list(mg_list *list);
+	@safe @nogc mg_value *mg_value_make_list(mg_list *list) pure nothrow;
 
 	/// Constructs a map `mg_value` given the underlying `mg_map`.
 	///
 	/// Return: Pointer to the newly constructed value or NULL if error occurred.
-	@safe @nogc mg_value *mg_value_make_map(mg_map *map);
+	@safe @nogc mg_value *mg_value_make_map(mg_map *map) pure nothrow;
 
 	/// Constructs a node `mg_value` given the underlying `mg_node`.
 	///
 	/// Return: Pointer to the newly constructed value or NULL if error occurred.
-	@safe @nogc mg_value *mg_value_make_node(mg_node *node);
+	@safe @nogc mg_value *mg_value_make_node(mg_node *node) pure nothrow;
 
 	/// Constructs a relationship `mg_value` given the underlying
 	/// `mg_relationship`.
 	///
 	/// Return: Pointer to the newly constructed value or NULL if error occurred.
-	@safe @nogc mg_value *mg_value_make_relationship(mg_relationship *rel);
+	@safe @nogc mg_value *mg_value_make_relationship(mg_relationship *rel) pure nothrow;
 
 	/// Constructs an unbound relationship `mg_value` given the underlying
 	/// `mg_unbound_relationship`.
 	///
 	/// Return: Pointer to the newly constructed value or NULL if error occurred.
-	@safe @nogc mg_value *mg_value_make_unbound_relationship(mg_unbound_relationship *rel);
+	@safe @nogc mg_value *mg_value_make_unbound_relationship(mg_unbound_relationship *rel) pure nothrow;
 
 	/// Constructs a path `mg_value` given the underlying `mg_path`.
 	///
 	/// Return: Pointer to the newly constructed value or NULL if error occurred.
-	@safe @nogc mg_value *mg_value_make_path(mg_path *path);
+	@safe @nogc mg_value *mg_value_make_path(mg_path *path) pure nothrow;
 
 	/// Constructs a date `mg_value` given the underlying `mg_date`.
 	///
 	/// Return: Pointer to the newly constructed value or NULL if error occurred.
-	@safe @nogc mg_value *mg_value_make_date(mg_date *date);
+	@safe @nogc mg_value *mg_value_make_date(mg_date *date) pure nothrow;
 
 	/// Constructs a time `mg_value` given the underlying `mg_time`.
 	///
 	/// Return: Pointer to the newly constructed value or NULL if error occurred.
-	@safe @nogc mg_value *mg_value_make_time(mg_time *time);
+	@safe @nogc mg_value *mg_value_make_time(mg_time *time) pure nothrow;
 
 	/// Constructs a local time `mg_value` given the underlying `mg_local_time`.
 	///
 	/// Return: Pointer to the newly constructed value or NULL if error occurred.
-	@safe @nogc mg_value *mg_value_make_local_time(mg_local_time *local_time);
+	@safe @nogc mg_value *mg_value_make_local_time(mg_local_time *local_time) pure nothrow;
 
 	/// Constructs a date and time `mg_value` given the underlying `mg_date_time`.
 	///
 	/// Return: Pointer to the newly constructed value or NULL if error occurred.
-	@safe @nogc mg_value *mg_value_make_date_time(mg_date_time *date_time);
+	@safe @nogc mg_value *mg_value_make_date_time(mg_date_time *date_time) pure nothrow;
 
 	/// Constructs a date and time `mg_value` given the underlying `mg_date_time_zone_id`.
 	///
 	/// Return: Pointer to the newly constructed value or NULL if error occurred.
-	@safe @nogc mg_value *mg_value_make_date_time_zone_id(mg_date_time_zone_id *date_time_zone_id);
+	@safe @nogc mg_value *mg_value_make_date_time_zone_id(mg_date_time_zone_id *date_time_zone_id) pure nothrow;
 
 	/// Constructs a local date and time `mg_value` given the underlying `mg_local_date_time`.
 	///
 	/// Return: Pointer to the newly constructed value or NULL if error occurred.
-	@safe @nogc mg_value *mg_value_make_local_date_time(mg_local_date_time *local_date_time);
+	@safe @nogc mg_value *mg_value_make_local_date_time(mg_local_date_time *local_date_time) pure nothrow;
 
 	/// Constructs a duration `mg_value` given the underlying `mg_duration`.
 	///
 	/// Return: Pointer to the newly constructed value or NULL if error occurred.
-	@safe @nogc mg_value *mg_value_make_duration(mg_duration *duration);
+	@safe @nogc mg_value *mg_value_make_duration(mg_duration *duration) pure nothrow;
 
 	/// Constructs a 2D point `mg_value` given the underlying `mg_point_2d`.
 	///
 	/// Return: Pointer to the newly constructed value or NULL if error occurred.
-	@safe @nogc mg_value *mg_value_make_point_2d(mg_point_2d *point_2d);
+	@safe @nogc mg_value *mg_value_make_point_2d(mg_point_2d *point_2d) pure nothrow;
 
 	/// Constructs a 3D point `mg_value` given the underlying `mg_point_3d`.
 	///
 	/// Return: Pointer to the newly constructed value or NULL if error occurred.
-	@safe @nogc mg_value *mg_value_make_point_3d(mg_point_3d *point_3d);
+	@safe @nogc mg_value *mg_value_make_point_3d(mg_point_3d *point_3d) pure nothrow;
 
 	/// Returns the type of the given `mg_value`.
 	enum mg_value_type mg_value_get_type(const mg_value *val);
@@ -509,10 +509,10 @@ extern (C) {
 	/// Creates a copy of the given value.
 	///
 	/// Return: Pointer to the copy or NULL if error occurred.
-	@safe @nogc mg_value *mg_value_copy(const mg_value *val);
+	@safe @nogc mg_value *mg_value_copy(const mg_value *val) pure nothrow;
 
 	/// Destroys the given value.
-	@safe @nogc void mg_value_destroy(mg_value *val);
+	@safe @nogc void mg_value_destroy(mg_value *val) pure nothrow;
 
 	/// Constructs a string given a null-terminated string.
 	///
@@ -523,7 +523,7 @@ extern (C) {
 	///
 	/// Return: A pointer to the newly constructed `mg_string` object or NULL
 	///         if an error occurred.
-	@safe @nogc mg_string *mg_string_make(const char *str);
+	@safe @nogc mg_string *mg_string_make(const char *str) pure nothrow;
 
 	/// Constructs a string given its length (in bytes) and contents.
 	///
@@ -534,7 +534,7 @@ extern (C) {
 	///
 	/// Return: A pointer to the newly constructed `mg_string` object or NULL
 	///         if an error occurred.
-	@safe @nogc mg_string *mg_string_make2(uint len, const char *data);
+	@safe @nogc mg_string *mg_string_make2(uint len, const char *data) pure nothrow;
 
 	/// Returns a pointer to the beginning of data buffer of string `str`.
 	const (char) *mg_string_data(const mg_string *str);
@@ -545,10 +545,10 @@ extern (C) {
 	/// Creates a copy of the given string.
 	///
 	/// Return: A pointer to the copy or NULL if an error occurred.
-	@safe @nogc mg_string *mg_string_copy(const mg_string *str);
+	@safe @nogc mg_string *mg_string_copy(const mg_string *str) pure nothrow;
 
 	/// Destroys the given string.
-	@safe @nogc void mg_string_destroy(mg_string *str);
+	@safe @nogc void mg_string_destroy(mg_string *str) pure nothrow;
 
 	/// Constructs a list that can hold at most `capacity` elements.
 	///
@@ -559,7 +559,7 @@ extern (C) {
 	///
 	/// Return: A pointer to the newly constructed empty list or NULL if an error
 	///         occurred.
-	@safe @nogc mg_list *mg_list_make_empty(uint capacity);
+	@safe @nogc mg_list *mg_list_make_empty(uint capacity) pure nothrow;
 
 	/// Appends an element at the end of the list `list`.
 	///
@@ -585,10 +585,10 @@ extern (C) {
 	/// Creates a copy of the given list.
 	///
 	/// Return: A pointer to the copy or NULL if an error occurred.
-	@safe @nogc mg_list *mg_list_copy(const mg_list *list);
+	@safe @nogc mg_list *mg_list_copy(const mg_list *list) pure nothrow;
 
 	/// Destroys the given list.
-	@safe @nogc void mg_list_destroy(mg_list *list);
+	@safe @nogc void mg_list_destroy(mg_list *list) pure nothrow;
 
 	/// Constructs an empty map that can hold at most `capacity` key-value pairs.
 	///
@@ -600,7 +600,7 @@ extern (C) {
 	///
 	/// Return: A pointer to the newly constructed empty map or NULL if an error
 	///         occurred.
-	@safe @nogc mg_map *mg_map_make_empty(uint capacity);
+	@safe @nogc mg_map *mg_map_make_empty(uint capacity) pure nothrow;
 
 	/// Inserts the given key-value pair into the map.
 	///
@@ -720,7 +720,7 @@ extern (C) {
 	/// Creates a copy of the given map.
 	///
 	/// Return: A pointer to the copy or NULL if an error occurred.
-	@safe @nogc mg_map *mg_map_copy(const mg_map *map);
+	@safe @nogc mg_map *mg_map_copy(const mg_map *map) pure nothrow;
 
 	/// Destroys the given map.
 	@safe @nogc void mg_map_destroy(mg_map *map) pure nothrow;
@@ -743,10 +743,10 @@ extern (C) {
 	/// Creates a copy of the given node.
 	///
 	/// Return: A pointer to the copy or NULL if an error occurred.
-	@safe @nogc mg_node *mg_node_copy(const mg_node *node);
+	@safe @nogc mg_node *mg_node_copy(const mg_node *node) pure nothrow;
 
 	/// Destroys the given node.
-	@safe @nogc void mg_node_destroy(mg_node *node);
+	@safe @nogc void mg_node_destroy(mg_node *node) pure nothrow;
 
 	/// Returns the ID of the relationship `rel`.
 	long mg_relationship_id(const mg_relationship *rel);
@@ -766,10 +766,10 @@ extern (C) {
 	/// Creates a copy of the given relationship.
 	///
 	/// Return: A pointer to the copy or NULL if an error occurred.
-	@safe @nogc mg_relationship *mg_relationship_copy(const mg_relationship *rel);
+	@safe @nogc mg_relationship *mg_relationship_copy(const mg_relationship *rel) pure nothrow;
 
 	/// Destroys the given relationship.
-	@safe @nogc void mg_relationship_destroy(mg_relationship *rel);
+	@safe @nogc void mg_relationship_destroy(mg_relationship *rel) pure nothrow;
 
 	/// Returns the ID of the unbound relationship `rel`.
 	long mg_unbound_relationship_id(const mg_unbound_relationship *rel);
@@ -783,10 +783,10 @@ extern (C) {
 	/// Creates a copy of the given unbound relationship.
 	///
 	/// Return: A pointer to the copy or NULL if an error occurred.
-	@safe @nogc mg_unbound_relationship *mg_unbound_relationship_copy(const mg_unbound_relationship *rel);
+	@safe @nogc mg_unbound_relationship *mg_unbound_relationship_copy(const mg_unbound_relationship *rel) pure nothrow;
 
 	/// Destroys the given unbound relationship.
-	@safe @nogc void mg_unbound_relationship_destroy(mg_unbound_relationship *rel);
+	@safe @nogc void mg_unbound_relationship_destroy(mg_unbound_relationship *rel) pure nothrow;
 
 	/// Returns the length (the number of edges) of path `path`.
 	uint mg_path_length(const mg_path *path);
@@ -821,10 +821,10 @@ extern (C) {
 	/// Creates a copy of the given path.
 	///
 	/// Return: A pointer to the copy or NULL if an error occurred.
-	@safe @nogc mg_path *mg_path_copy(const mg_path *path);
+	@safe @nogc mg_path *mg_path_copy(const mg_path *path) pure nothrow;
 
 	/// Destroys the given path.
-	@safe @nogc void mg_path_destroy(mg_path *path);
+	@safe @nogc void mg_path_destroy(mg_path *path) pure nothrow;
 
 	/// Returns days since the Unix epoch.
 	long mg_date_days(const mg_date *date);
@@ -832,10 +832,10 @@ extern (C) {
 	/// Creates a copy of the given date.
 	///
 	/// Return: A pointer to the copy or NULL if an error occured.
-	@safe @nogc mg_date *mg_date_copy(const mg_date *date);
+	@safe @nogc mg_date *mg_date_copy(const mg_date *date) pure nothrow;
 
 	/// Destroys the given date.
-	@safe @nogc void mg_date_destroy(mg_date *date);
+	@safe @nogc void mg_date_destroy(mg_date *date) pure nothrow;
 
 	/// Returns nanoseconds since midnight.
 	long mg_time_nanoseconds(const mg_time *time);
@@ -846,10 +846,10 @@ extern (C) {
 	/// Creates a copy of the given time.
 	///
 	/// Return: A pointer to the copy or NULL if an error occured.
-	@safe @nogc mg_time *mg_time_copy(const mg_time *time);
+	@safe @nogc mg_time *mg_time_copy(const mg_time *time) pure nothrow;
 
 	/// Destroys the given time.
-	@safe @nogc void mg_time_destroy(mg_time *time);
+	@safe @nogc void mg_time_destroy(mg_time *time) pure nothrow;
 
 	/// Returns nanoseconds since midnight.
 	long mg_local_time_nanoseconds(const mg_local_time *local_time);
@@ -857,10 +857,10 @@ extern (C) {
 	/// Creates a copy of the given local time.
 	///
 	/// Return: A pointer to the copy or NULL if an error occured.
-	@safe @nogc mg_local_time *mg_local_time_copy(const mg_local_time *local_time);
+	@safe @nogc mg_local_time *mg_local_time_copy(const mg_local_time *local_time) pure nothrow;
 
 	/// Destroys the given local time.
-	@safe @nogc void mg_local_time_destroy(mg_local_time *local_time);
+	@safe @nogc void mg_local_time_destroy(mg_local_time *local_time) pure nothrow;
 
 	/// Returns seconds since Unix epoch.
 	long mg_date_time_seconds(const mg_date_time *date_time);
@@ -874,10 +874,10 @@ extern (C) {
 	/// Creates a copy of the given date and time.
 	///
 	/// Return: A pointer to the copy or NULL if an error occured.
-	@safe @nogc mg_date_time *mg_date_time_copy(const mg_date_time *date_time);
+	@safe @nogc mg_date_time *mg_date_time_copy(const mg_date_time *date_time) pure nothrow;
 
 	/// Destroys the given date and time.
-	@safe @nogc void mg_date_time_destroy(mg_date_time *date_time);
+	@safe @nogc void mg_date_time_destroy(mg_date_time *date_time) pure nothrow;
 
 	/// Returns seconds since Unix epoch.
 	long mg_date_time_zone_id_seconds(const mg_date_time_zone_id *date_time_zone_id);
@@ -891,10 +891,10 @@ extern (C) {
 	/// Creates a copy of the given date and time.
 	///
 	/// Return: A pointer to the copy or NULL if an error occured.
-	@safe @nogc mg_date_time_zone_id *mg_date_time_zone_id_copy(const mg_date_time_zone_id *date_time_zone_id);
+	@safe @nogc mg_date_time_zone_id *mg_date_time_zone_id_copy(const mg_date_time_zone_id *date_time_zone_id) pure nothrow;
 
 	/// Destroys the given date and time.
-	@safe @nogc void mg_date_time_zone_id_destroy(mg_date_time_zone_id *date_time_zone_id);
+	@safe @nogc void mg_date_time_zone_id_destroy(mg_date_time_zone_id *date_time_zone_id) pure nothrow;
 
 	/// Returns seconds since Unix epoch.
 	long mg_local_date_time_seconds(const mg_local_date_time *local_date_time);
@@ -905,10 +905,10 @@ extern (C) {
 	/// Creates a copy of the given local date and time.
 	///
 	/// Return: A pointer to the copy or NULL if an error occured.
-	@safe @nogc mg_local_date_time *mg_local_date_time_copy(const mg_local_date_time *local_date_time);
+	@safe @nogc mg_local_date_time *mg_local_date_time_copy(const mg_local_date_time *local_date_time) pure nothrow;
 
 	/// Destroy the given local date and time.
-	@safe @nogc void mg_local_date_time_destroy(mg_local_date_time *local_date_time);
+	@safe @nogc void mg_local_date_time_destroy(mg_local_date_time *local_date_time) pure nothrow;
 
 	/// Returns the months part of the temporal amount.
 	long mg_duration_months(const mg_duration *duration);
@@ -925,10 +925,10 @@ extern (C) {
 	/// Creates a copy of the given duration.
 	///
 	/// Return: A pointer to the copy or NULL if an error occured.
-	@safe @nogc mg_duration *mg_duration_copy(const mg_duration *duration);
+	@safe @nogc mg_duration *mg_duration_copy(const mg_duration *duration) pure nothrow;
 
 	/// Destroy the given duration.
-	@safe @nogc void mg_duration_destroy(mg_duration *duration);
+	@safe @nogc void mg_duration_destroy(mg_duration *duration) pure nothrow;
 
 	/// Returns SRID of the 2D point.
 	long mg_point_2d_srid(const mg_point_2d *point_2d);
@@ -942,10 +942,10 @@ extern (C) {
 	/// Creates a copy of the given 2D point.
 	///
 	/// Return: A pointer to the copy or NULL if an error occured.
-	@safe @nogc mg_point_2d *mg_point_2d_copy(const mg_point_2d *point_2d);
+	@safe @nogc mg_point_2d *mg_point_2d_copy(const mg_point_2d *point_2d) pure nothrow;
 
 	/// Destroys the given 2D point.
-	@safe @nogc void mg_point_2d_destroy(mg_point_2d *point_2d);
+	@safe @nogc void mg_point_2d_destroy(mg_point_2d *point_2d) pure nothrow;
 
 	/// Returns SRID of the 3D point.
 	long mg_point_3d_srid(const mg_point_3d *point_3d);
@@ -962,10 +962,10 @@ extern (C) {
 	/// Creates a copy of the given 3D point.
 	///
 	/// Return: A pointer to the copy or NULL if an error occured.
-	@safe @nogc mg_point_3d *mg_point_3d_copy(const mg_point_3d *point_3d);
+	@safe @nogc mg_point_3d *mg_point_3d_copy(const mg_point_3d *point_3d) pure nothrow;
 
 	/// Destroys the given 3D point.
-	@safe @nogc void mg_point_3d_destroy(mg_point_3d *point_3d);
+	@safe @nogc void mg_point_3d_destroy(mg_point_3d *point_3d) pure nothrow;
 
 	/// Return codes for `mg_session_status`.
 	enum mg_session_code {
@@ -1122,10 +1122,10 @@ extern (C) {
 	alias mg_trust_callback_type = int function(const char *, const char *, const char *, const char *, void *);
 
 	/// Creates a new `mg_session_params` object.
-	@safe @nogc mg_session_params *mg_session_params_make();
+	@safe @nogc mg_session_params *mg_session_params_make() pure nothrow;
 
 	/// Destroys a `mg_session_params` object.
-	@safe @nogc void mg_session_params_destroy(mg_session_params *);
+	@safe @nogc void mg_session_params_destroy(mg_session_params *) pure nothrow;
 
 	/// Getters and setters for `mg_session_params` values.
 	void mg_session_params_set_address(mg_session_params *, const char *address);
@@ -1176,7 +1176,7 @@ extern (C) {
 	const (char) *mg_session_error(mg_session *session);
 
 	/// Destroys a `mg_session` and releases all of its resources.
-	@safe @nogc void mg_session_destroy(mg_session *session);
+	@safe @nogc void mg_session_destroy(mg_session *session) pure nothrow;
 
 	/// An object encapsulating a single result row or query execution summary. Its
 	/// lifetime is limited by lifetime of parent `mg_session`. Also, invoking

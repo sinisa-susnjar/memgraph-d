@@ -11,6 +11,7 @@ public import memgraph.map;
 public import memgraph.enums;
 public import memgraph.params;
 public import memgraph.result;
+public import memgraph.list;
 
 import memgraph.detail;
 
