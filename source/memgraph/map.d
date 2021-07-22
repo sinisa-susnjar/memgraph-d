@@ -14,39 +14,18 @@ import memgraph.mgclient, memgraph.detail, memgraph.value;
 /// Can be used like a standard D hash map (because it is one under the hood).
 struct Map {
 
-	/// Copy constructor.
+	/// Create a copy of `other` map. Will copy all key/value pairs into this map from `other`.
 	this(const ref Map other) {
-		// writefln("map copy ctor");
 		foreach (k, v; other.map_)
 			map_[k] = v;
 		this(mg_map_copy(other.ptr_));
 	}
 
-	// Map(Map &&other);
-	// Map &operator=(const Map &other) = delete;
-	// Map &operator=(Map &&other) = delete;
+	/// Destructor. Destroys the internal `mg_map`.
 	@safe @nogc ~this() pure nothrow {
-		// writeln("map dtor");
 		if (ptr_ != null)
 			mg_map_destroy(ptr_);
 	}
-
-	/// Copies content of the given `map`.
-	// explicit Map(const ConstMap &map);
-
-	/// Constructs an empty Map that can hold at most \p capacity key-value pairs.
-	/// Key-value pairs should be constructed and then inserted using
-	/// `Insert`, `InsertUnsafe` and similar.
-	///
-	/// Params: capacity = The maximum number of key-value pairs that the newly
-	///                 constructed Map can hold.
-	// this(uint capacity) { this(mg_map_make_empty(capacity)); }
-
-	/// Constructs an map from the list of key-value pairs.
-	/// Values are copied.
-	// Map(std::initializer_list<std::pair<std::string, Value>> list);
-
-	// bool empty() const { return size() == 0; }
 
 	/// Returns the value associated with the given `key`.
 	/// If the given `key` does not exist, an empty `Value` is returned.
@@ -55,20 +34,26 @@ struct Map {
 		return map_.require(key, Value());
 	}
 
+	/// Returns the value associated with the given `key`.
+	/// This method will `assert` that the `key` exists.
 	const Value opIndex(const string key) {
 		assert(key in map_);
 		return map_[key];
 	}
 
+	/// Compares this map with `other`.
+	/// Return: true if same, false otherwise.
 	bool opEquals(const ref Map other) const {
 		return map_ == other.map_;
-		// return Detail.areMapsEqual(ptr_, other.ptr_);
 	}
 
+	/// Remove given `key` from map.
+	/// Return: true if key was removed, false otherwise.
 	auto remove(const string key) {
 		return map_.remove(key);
 	}
-	auto clear() {
+	/// Clears the map.
+	void clear() {
 		map_.clear();
 	}
 

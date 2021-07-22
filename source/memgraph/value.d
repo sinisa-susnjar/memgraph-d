@@ -24,7 +24,7 @@ struct Value {
 			mg_value_destroy(ptr_);
 	}
 
-	/// Creates a Null value.
+	// Creates a Null value.
 	// TODO: not sure this is worth the trouble atm
 	// this(typeof(null)) { this(mg_value_make_null()); }
 	// @disable this();
