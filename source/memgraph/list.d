@@ -74,7 +74,21 @@ struct List {
 	}
 	*/
 
-	// inout Value[] toArray() { return list_; }
+	/*
+	auto opOpAssign(op)(const Value v) {
+		static if (op == "~=") {
+			list_ ~= v;
+		}
+		static assert(0);
+	}
+	*/
+	// @property auto list() inout { return list_; }
+	// @property auto length(size_t len) { list_.length = len; }
+	// @property auto length() { return list_.length; }
+
+	@property @safe @nogc ref inout(Value[]) list() inout pure nothrow {
+		return list_;
+	}
 
 package:
 	/// Create a List using the given `mg_list`.
@@ -110,15 +124,18 @@ private:
 	// Copy the contents from the `Value` array into the mg_list
 	// when requested.
 	void arrayToList() {
+		import std.stdio;
+		writefln("arrayToList: ptr: %s len: %s", ptr_, list_.length);
 		if (ptr_ == null) {
 			ptr_ = mg_list_make_empty(to!uint(list_.length));
 			foreach (v; list_)
 				mg_list_append(ptr_, mg_value_copy(v.ptr));
 		}
+		writefln("copied %s values to list %s", list_.length, ptr_);
 	}
 
 	Value[] list_;
-	alias list_ this;
+	alias list this;
 	mg_list *ptr_;
 }
 

@@ -1,7 +1,7 @@
 /// Provides a map (i.e. key/value) tuple.
 module memgraph.map;
 
-import std.string, std.conv, std.stdio;
+import std.string, std.conv;
 
 import memgraph.mgclient, memgraph.detail, memgraph.value;
 
@@ -55,6 +55,7 @@ struct Map {
 
 	/// Remove given `key` from map.
 	/// Return: true if key was removed, false otherwise.
+	/*
 	auto remove(const string key) {
 		return map_.remove(key);
 	}
@@ -62,6 +63,7 @@ struct Map {
 	void clear() {
 		map_.clear();
 	}
+	*/
 
 	/*
 	auto opDispatch(string name, T...)(T vals) {
@@ -74,7 +76,11 @@ struct Map {
 	}
 	*/
 
-	@property auto toAA() const { return map_; }
+	// @property auto toAA() const { return map_; }
+
+	@property @safe @nogc ref inout(Value[string]) toAA() inout pure nothrow {
+		return map_;
+	}
 
 package:
 	/// Create a Map using the given `mg_map`.

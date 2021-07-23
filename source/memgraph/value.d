@@ -3,7 +3,7 @@ module memgraph.value;
 
 import std.conv, std.string;
 
-import memgraph.mgclient, memgraph.detail, memgraph.node, memgraph.enums;
+import memgraph.mgclient, memgraph.detail, memgraph.node, memgraph.enums, memgraph.list;
 
 /// A Bolt value, encapsulating all other values.
 struct Value {
@@ -47,6 +47,13 @@ struct Value {
 		this(mg_value_make_string(toStringz(value)));
 	}
 
+	/// Make a new `Value` from a `List`.
+	this(ref List value) {
+		import std.stdio;
+		writefln("this(List)");
+		this(mg_value_make_list(mg_list_copy(value.ptr)));
+		writefln("done this(List)");
+	}
 
 	/// \brief Constructs a list value and takes the ownership of the `list`.
 	/// \note
@@ -146,6 +153,7 @@ struct Value {
 		typeid(long):	tuple(Type.Int,		"mg_value_integer(ptr_)",	"mg_value_make_integer"),
 		typeid(bool):	tuple(Type.Bool,	"mg_value_bool(ptr_)",		"mg_value_make_bool"),
 		typeid(Node):	tuple(Type.Node,	"Node(mg_value_node(ptr_))", ""),
+		typeid(List):	tuple(Type.List,	"List(mg_value_list(ptr_))", ""),
 		typeid(string):	tuple(Type.String,	"Detail.convertString(mg_value_string(ptr_))", ""),
 	];
 
@@ -163,7 +171,7 @@ struct Value {
 	}
 
 	/// Assignment operator for type `T`.
-	void opAssign(T)(const T value) {
+	void opAssign(T)(inout T value) {
 		if (ptr_ != null)
 			mg_value_destroy(ptr_);
 		ptr_ = mixin(ops[typeid(T)][2])(value);
@@ -399,4 +407,21 @@ unittest {
 
 	assert(to!double(v1) == 3.1415926);
 	assert(v1 == 3.1415926);
+}
+
+// list tests
+unittest {
+	List l;
+	l ~= Value(123);
+	l ~= Value("Hello");
+	l ~= Value(3.21);
+	l ~= Value(true);
+	assert(l.length == 4);
+
+	auto v = Value(l);
+	assert(v.type == Type.List);
+
+	assert(v == l);
+
+	// TODO: auto l2 = to!List(v);
 }
