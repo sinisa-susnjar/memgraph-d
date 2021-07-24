@@ -4,6 +4,7 @@ module memgraph.value;
 import std.conv, std.string;
 
 import memgraph.mgclient, memgraph.detail, memgraph.node, memgraph.enums, memgraph.list;
+import memgraph.relationship;
 
 /// A Bolt value, encapsulating all other values.
 struct Value {
@@ -73,17 +74,17 @@ struct Value {
 		this(mg_value_make_node(vertex.ptr));
 		// vertex.ptr = null;
 	}
+*/
 
-	/// Constructs a vertex value and copies the given `vertex`.
+	/// Constructs a new vertex value from the given `vertex`.
 	this(const ref Node vertex) {
 		this(mg_value_make_node(mg_node_copy(vertex.ptr)));
 	}
-*/
 
-	/// \brief Constructs an edge value and takes the ownership of the given
-	/// `edge`. \note Behaviour of accessing the `edge` after performing this
-	/// operation is considered undefined.
-	// explicit Value(Relationship &&edge);
+	/// Constructs a new edge value from the given `edge`.
+	this(const ref Relationship edge) {
+		this(mg_value_make_relationship(mg_relationship_copy(edge.ptr)));
+	}
 
 	/// \brief Constructs an unbounded edge value and takes the ownership of the
 	/// given `edge`. \note Behaviour of accessing the `edge` after performing
@@ -154,6 +155,7 @@ struct Value {
 		typeid(bool):	tuple(Type.Bool,	"mg_value_bool(ptr_)",		"mg_value_make_bool"),
 		typeid(Node):	tuple(Type.Node,	"Node(mg_value_node(ptr_))", ""),
 		typeid(List):	tuple(Type.List,	"List(mg_value_list(ptr_))", ""),
+		typeid(Relationship):	tuple(Type.Relationship,	"Relationship(mg_value_relationship(ptr_))", ""),
 		typeid(string):	tuple(Type.String,	"Detail.convertString(mg_value_string(ptr_))", ""),
 	];
 

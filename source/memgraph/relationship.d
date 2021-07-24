@@ -3,7 +3,7 @@ module memgraph.relationship;
 
 // import std.string, std.conv;
 
-import memgraph.mgclient, memgraph.detail, memgraph.map;
+import memgraph.mgclient, memgraph.detail, memgraph.map, memgraph.value;
 
 /// Represents a relationship from a labeled property graph.
 ///
@@ -24,6 +24,11 @@ struct Relationship {
 	/// Create a copy of `other` relationship.
 	this(const ref Relationship other) {
 		this(mg_relationship_copy(other.ptr_));
+	}
+
+	/// Create a relationship from a Value.
+	this(const ref Value value) {
+		this(mg_relationship_copy(mg_value_relationship(value.ptr)));
 	}
 
 	/// Destructor. Destroys the internal `mg_relationship`.
@@ -83,6 +88,44 @@ private:
 }
 
 unittest {
-	import std.stdio;
+	import std.stdio : writefln;
 	writefln("testing relationship...");
+
+	import testutils : connectContainer, createTestData;
+	import memgraph; // : Client, Optional, Type, Value;
+	import std.algorithm : count;
+	import std.conv; // : to;
+
+	auto client = connectContainer();
+	assert(client);
+
+	createTestData(client);
+
+	auto res = client.execute(
+					"MATCH (a:Person)-[r:IS_MANAGER]->(b:Person) " ~
+						"RETURN a.name, r, b.name;");
+	assert(res, client.error);
+	foreach (r; res) {
+		// writefln("columns: %s", res.columns);
+		// writefln("type: %s", r.type);
+		if (r.type == Type.Relationship) {
+			auto rel = to!Relationship(r);
+			writefln("rel.type: %s id: %s start: %s end: %s props: %s",
+					rel.type, rel.id, rel.startId, rel.endId, rel.properties);
+
+			auto rel2 = rel;
+			assert(rel2 == rel);
+
+			auto rel3 = Relationship(rel);
+			assert(rel3 == rel);
+
+			auto rel4 = Relationship(rel.ptr);
+			assert(rel4 == rel);
+		} else if (r.type == Type.String) {
+			auto s = to!string(r);
+			writefln("s: %s", s);
+		}
+	}
+	// assert(res.count == 1);
+
 }

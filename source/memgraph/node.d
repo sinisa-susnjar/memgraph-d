@@ -89,7 +89,7 @@ package:
 	/// Create a Node from a copy of the given `mg_node`.
 	this(const mg_node *const_ptr) { this(mg_node_copy(const_ptr)); }
 
-	// auto ptr() inout { return ptr_; }
+	auto ptr() const { return ptr_; }
 
 private:
 	/// Pointer to `mg_node` instance.
@@ -119,7 +119,7 @@ unittest {
 	assert(result, client.error);
 	assert(!result.empty());
 	auto value = result.front;
-	assert(result.count == 1);
+	assert(result.count == 5);
 
 	assert(value.type() == Type.Node);
 

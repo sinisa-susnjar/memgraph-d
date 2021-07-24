@@ -108,7 +108,27 @@ version (unittest) {
 
 	// Create some test data.
 	void createTestData(ref Optional!Client client) {
-		assert(client.run("CREATE (:Person:Entrepreneur {id: 0, age: 40, name: 'John', isStudent: false, score: 5.0});"), client.error);
+		// Create a few nodes.
+		assert(client.run(
+			"CREATE (:Person:Entrepreneur {id: 0, age: 40, name: 'John', " ~
+				"isStudent: false, score: 5.0});"), client.error);
+		assert(client.run(
+			"CREATE (:Person:Entrepreneur {id: 1, age: 20, name: 'Valery', " ~
+				"isStudent: true, score: 5.0});"), client.error);
+		assert(client.run(
+			"CREATE (:Person:Entrepreneur {id: 2, age: 50, name: 'Peter', " ~
+				"isStudent: false, score: 4.0});"), client.error);
+		assert(client.run(
+			"CREATE (:Person:Entrepreneur {id: 3, age: 30, name: 'Ray', " ~
+				"isStudent: false, score: 9.0});"), client.error);
+		assert(client.run(
+			"CREATE (:Person:Entrepreneur {id: 4, age: 25, name: 'Olaf', " ~
+				"isStudent: true, score: 10.0});"), client.error);
+
+		// Create some relationships.
+		assert(client.run(
+			"MATCH (a:Person), (b:Person) WHERE a.name = 'John' AND b.name = 'Valery' " ~
+				"CREATE (a)-[r:IS_MANAGER]->(b);"), client.error);
 	}	// createTestData()
 
 }

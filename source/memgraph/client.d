@@ -189,7 +189,7 @@ unittest {
 	// Inside the transaction the row count should be 1.
 	auto result = client.execute("MATCH (n) RETURN n;");
 	assert(result, client.error);
-	assert(result.count == 1);
+	assert(result.count == 5);
 
 	client.rollback();
 
@@ -206,21 +206,21 @@ unittest {
 	// Inside the transaction the row count should be 1.
 	result = client.execute("MATCH (n) RETURN n;");
 	assert(result, client.error);
-	assert(result.count == 1);
+	assert(result.count == 5);
 
 	client.commit();
 
 	// Outside the transaction the row count should still be 1.
 	result = client.execute("MATCH (n) RETURN n;");
 	assert(result, client.error);
-	assert(result.count == 1);
+	assert(result.count == 5);
 
 	// Just some test for execute() using Map parameters.
 	Map m;
 	m["test"] = 42;
 	result = client.execute("MATCH (n) RETURN n;", m);
 	assert(result, client.error);
-	assert(result.count == 1);
+	assert(result.count == 5);
 
 	// Just for coverage at the moment
 	assert(client.error.length >= 0);

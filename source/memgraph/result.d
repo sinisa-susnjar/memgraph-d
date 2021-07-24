@@ -37,6 +37,8 @@ struct Result {
 		if (values.length == 0) {
 			assert(result != null);
 			immutable status = mg_session_fetch(session, result);
+			// import std.stdio;
+			// writefln("fetch: %s", status);
 			if (status != 1)
 				return true;
 			const (mg_list) *list = mg_result_row(*result);
