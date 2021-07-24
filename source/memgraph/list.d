@@ -124,14 +124,14 @@ private:
 	// Copy the contents from the `Value` array into the mg_list
 	// when requested.
 	void arrayToList() {
-		import std.stdio;
-		writefln("arrayToList: ptr: %s len: %s", ptr_, list_.length);
+		// import std.stdio;
+		// writefln("arrayToList: ptr: %s len: %s", ptr_, list_.length);
 		if (ptr_ == null) {
 			ptr_ = mg_list_make_empty(to!uint(list_.length));
 			foreach (v; list_)
 				mg_list_append(ptr_, mg_value_copy(v.ptr));
 		}
-		writefln("copied %s values to list %s", list_.length, ptr_);
+		// writefln("copied %s values to list %s", list_.length, ptr_);
 	}
 
 	Value[] list_;

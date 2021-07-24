@@ -49,10 +49,10 @@ struct Value {
 
 	/// Make a new `Value` from a `List`.
 	this(ref List value) {
-		import std.stdio;
-		writefln("this(List)");
+		// import std.stdio;
+		// writefln("this(List)");
 		this(mg_value_make_list(mg_list_copy(value.ptr)));
-		writefln("done this(List)");
+		// writefln("done this(List)");
 	}
 
 	/// \brief Constructs a list value and takes the ownership of the `list`.
