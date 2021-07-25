@@ -49,7 +49,7 @@ struct Map {
 
 	/// Compares this map with `other`.
 	/// Return: true if same, false otherwise.
-	bool opEquals(const ref Map other) const {
+	bool opEquals(const Map other) const {
 		return map_ == other.map_;
 	}
 
@@ -80,6 +80,13 @@ struct Map {
 
 	@property @safe @nogc ref inout(Value[string]) toAA() inout pure nothrow {
 		return map_;
+	}
+
+	/// Return a printable string representation of this map.
+	const (string) toString() const {
+		import std.algorithm : map;
+		import std.range : join;
+		return "{" ~ map_.byKeyValue.map!(p => p.key ~ ":" ~ to!string(p.value)).join(" ") ~ "}";
 	}
 
 package:
@@ -135,17 +142,18 @@ unittest {
 	assert("answer_to_life_the_universe_and_everything" in m);
 	assert(m["answer_to_life_the_universe_and_everything"] == 42);
 	assert(m.length == 1);
+	assert(to!string(m) == "{answer_to_life_the_universe_and_everything:42}");
 
 	assert(m.remove("answer_to_life_the_universe_and_everything"));
 	assert("answer_to_life_the_universe_and_everything" ! in m);
 	assert(m.length == 0);
+	assert(to!string(m) == "{}");
 
 	m["id"] = 0;
 	m["age"] = 40;
 	m["name"] = "John";
 	m["isStudent"] = false;
 	m["score"] = 5.0;
-
 	assert(m.length == 5);
 
 	assert("id" in m);

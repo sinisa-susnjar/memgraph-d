@@ -37,6 +37,11 @@ struct Relationship {
 			mg_relationship_destroy(ptr_);
 	}
 
+	/// Return a printable string representation of this relationship.
+	const (string) toString() const {
+		return type();
+	}
+
 	/// Compares this relationship with `other`.
 	/// Return: true if same, false otherwise.
 	bool opEquals(const ref Relationship other) const {
@@ -103,29 +108,49 @@ unittest {
 
 	auto res = client.execute(
 					"MATCH (a:Person)-[r:IS_MANAGER]->(b:Person) " ~
-						"RETURN a.name, r, b.name;");
+						"RETURN a, r, b;");
 	assert(res, client.error);
-	foreach (r; res) {
-		// writefln("columns: %s", res.columns);
-		// writefln("type: %s", r.type);
+	foreach (c; res) {
+		assert(c[0].type == Type.Node);
+		assert(c[1].type == Type.Relationship);
+		assert(c[2].type == Type.Node);
+		auto a = to!Node(c[0]);
+		auto r = to!Relationship(c[1]);
+		auto b = to!Node(c[2]);
+		assert(to!string(a) == to!string(c[0]));
+		assert(to!string(r) == to!string(c[1]));
+		assert(to!string(b) == to!string(c[2]));
+		// writefln("c: %s", c);
+
+		auto r2 = r;
+		assert(r2 == r);
+
+		auto r3 = Relationship(r);
+		assert(r3 == r);
+
+		auto r4 = Relationship(r.ptr);
+		assert(r4 == r);
+
+		assert(r.id == r2.id);
+		assert(r.startId == r2.startId);
+		assert(r.endId == r2.endId);
+		assert(r.properties == r2.properties);
+
+		auto v = Value(r);
+		assert(v == r);
+		assert(r == v);
+
+		/*
 		if (r.type == Type.Relationship) {
 			auto rel = to!Relationship(r);
 			writefln("rel.type: %s id: %s start: %s end: %s props: %s",
 					rel.type, rel.id, rel.startId, rel.endId, rel.properties);
 
-			auto rel2 = rel;
-			assert(rel2 == rel);
-
-			auto rel3 = Relationship(rel);
-			assert(rel3 == rel);
-
-			auto rel4 = Relationship(rel.ptr);
-			assert(rel4 == rel);
 		} else if (r.type == Type.String) {
 			auto s = to!string(r);
 			writefln("s: %s", s);
 		}
+		*/
 	}
-	// assert(res.count == 1);
-
+	assert(to!string(res.columns) == `["a", "r", "b"]`);
 }

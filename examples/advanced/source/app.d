@@ -51,8 +51,9 @@ int main(string[] args) {
 
 	size_t resultCount;
 	foreach (r; results) {
-		if (r.type() == Type.Node) {
-			const auto node = to!Node(r);
+		assert(r.length == 1);
+		if (r[0].type() == Type.Node) {
+			const auto node = to!Node(r[0]);
 			writefln("%s {%s}", node.labels.join(":"),
 					node.properties.byKeyValue.map!(p => p.key ~ ":" ~ to!string(p.value)).join(" "));
 		}

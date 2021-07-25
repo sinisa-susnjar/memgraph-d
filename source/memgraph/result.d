@@ -43,9 +43,11 @@ struct Result {
 				return true;
 			const (mg_list) *list = mg_result_row(*result);
 			const size_t list_length = mg_list_size(list);
-			values.length = list_length;
+			Value[] data;
+			data.length = list_length;
 			for (uint i = 0; i < list_length; ++i)
-				values[i] = Value(mg_list_at(list, i));
+				data[i] = Value(mg_list_at(list, i));
+			values ~= data;
 		}
 		return values.length == 0;
 	}
@@ -102,5 +104,5 @@ private:
 	/// Reference count for `mg_result` pointer. Needed for ranges.
 	size_t n = 1;
 	/// Temporary value store.
-	Value[] values;
+	Value[][] values;
 }

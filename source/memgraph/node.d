@@ -50,6 +50,12 @@ struct Node {
 		uint idx_;
 	}
 
+	/// Return a printable string representation of this node.
+	const (string) toString() const {
+		import std.range : join;
+		return labels.join(":") ~ " " ~ to!string(properties());
+	}
+
 	/// Create a Node from a copy of the given `node`.
 	this(const ref Node other) {
 		this(mg_node_copy(other.ptr_));
@@ -121,9 +127,9 @@ unittest {
 	auto value = result.front;
 	assert(result.count == 5);
 
-	assert(value.type() == Type.Node);
+	assert(value[0].type() == Type.Node);
 
-	const auto node = to!Node(value);
+	const auto node = to!Node(value[0]);
 
 	auto labels = node.labels();
 
@@ -151,11 +157,18 @@ unittest {
 	assert(props["isStudent"] == false);
 	assert(props["score"] == 5.0);
 
+	assert(to!string(node) == labels.join(":") ~ " " ~ to!string(props));
+
 	const otherProps = props;
 	assert(otherProps == props);
 
 	// this is a package internal method
+	assert(node.ptr != null);
 	// const auto otherProps2 = Map(cast(const(mg_map*))(otherProps.ptr));
 	// const auto otherProps2 = Map(otherProps.ptr);
 	// assert(otherProps2 == otherProps);
+
+	auto v = Value(node);
+	assert(v == node);
+	assert(node == v);
 }

@@ -202,13 +202,14 @@ struct Value {
 	/// If the value held is not of type `Type.String`, then
 	/// it will be first converted into the appropriate string
 	/// representation.
-	auto toString() const {
+	const (string) toString() const {
 		switch (type()) {
 			case Type.Double:	return to!string(to!double(this));
 			case Type.Node:		return to!string(to!Node(this));
 			case Type.Bool:		return to!string(to!bool(this));
 			case Type.Int:		return to!string(to!int(this));
 			case Type.String:	return Detail.convertString(mg_value_string(ptr_));
+			case Type.Relationship:		return to!string(to!Relationship(this));
 			default: assert(0, "unhandled type: " ~ to!string(type()));
 		}
 	}
