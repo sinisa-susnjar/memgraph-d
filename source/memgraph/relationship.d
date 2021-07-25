@@ -93,9 +93,6 @@ private:
 }
 
 unittest {
-	import std.stdio : writefln;
-	writefln("testing relationship...");
-
 	import testutils : connectContainer, createTestData, deleteTestData;
 	import memgraph : Client, Optional, Type, Value, Node, Relationship;
 	import std.conv : to;
