@@ -12,6 +12,7 @@ public import memgraph.enums;
 public import memgraph.params;
 public import memgraph.result;
 public import memgraph.list;
+public import memgraph.relationship;
 
 import memgraph.detail;
 

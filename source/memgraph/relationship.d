@@ -96,13 +96,14 @@ unittest {
 	import std.stdio : writefln;
 	writefln("testing relationship...");
 
-	import testutils : connectContainer, createTestData;
-	import memgraph; // : Client, Optional, Type, Value;
-	import std.algorithm : count;
-	import std.conv; // : to;
+	import testutils : connectContainer, createTestData, deleteTestData;
+	import memgraph : Client, Optional, Type, Value, Node, Relationship;
+	import std.conv : to;
 
 	auto client = connectContainer();
 	assert(client);
+
+	deleteTestData(client);
 
 	createTestData(client);
 
@@ -120,7 +121,6 @@ unittest {
 		assert(to!string(a) == to!string(c[0]));
 		assert(to!string(r) == to!string(c[1]));
 		assert(to!string(b) == to!string(c[2]));
-		// writefln("c: %s", c);
 
 		auto r2 = r;
 		assert(r2 == r);
@@ -139,18 +139,6 @@ unittest {
 		auto v = Value(r);
 		assert(v == r);
 		assert(r == v);
-
-		/*
-		if (r.type == Type.Relationship) {
-			auto rel = to!Relationship(r);
-			writefln("rel.type: %s id: %s start: %s end: %s props: %s",
-					rel.type, rel.id, rel.startId, rel.endId, rel.properties);
-
-		} else if (r.type == Type.String) {
-			auto s = to!string(r);
-			writefln("s: %s", s);
-		}
-		*/
 	}
 	assert(to!string(res.columns) == `["a", "r", "b"]`);
 }

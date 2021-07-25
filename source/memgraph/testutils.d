@@ -19,8 +19,6 @@ version (unittest) {
 		int status = mg_connect(params, &session);
 		mg_session_params_destroy(params);
 
-		// writefln("canConnect: %s", fromStringz(mg_session_error(session)));
-
 		mg_session_destroy(session);
 
 		return status == 0;
@@ -54,18 +52,12 @@ version (unittest) {
 				startContainer = true;
 		}
 
-		// writefln("startContainer(): %s", startContainer);
-
 		if (startContainer) {
 			import std.conv;
-
-			// writefln("startContainer(): pull");
 
 			// Pull the latest memgraph docker image.
 			auto pull = execute(["docker", "pull", "memgraph/memgraph"]);
 			assert(pull.status == 0);
-
-			// writefln("startContainer(): run");
 
 			// Start a new memgraph docker container.
 			auto containerIdFile = File(containerIdFileName, "w");
@@ -77,12 +69,9 @@ version (unittest) {
 			containerIdFile.write(containerId);
 			containerIdFile.close();
 
-			// writefln("startContainer(): %s", containerId);
-
 			// Need to wait a while until the container is spun up, otherwise connecting will fail.
 			while (!canConnect()) {
 				import core.thread.osthread, core.time;
-				// writefln("can't connect yet");
 				Thread.sleep(dur!("msecs")(250));
 			}
 		}
