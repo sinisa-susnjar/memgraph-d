@@ -210,6 +210,7 @@ struct Value {
 			case Type.Int:		return to!string(to!int(this));
 			case Type.String:	return Detail.convertString(mg_value_string(ptr_));
 			case Type.Relationship:		return to!string(to!Relationship(this));
+			case Type.List:		return "TODO"; // to!string(to!List(this));
 			default: assert(0, "unhandled type: " ~ to!string(type()));
 		}
 	}
@@ -427,4 +428,48 @@ unittest {
 	assert(v == l);
 
 	// TODO: auto l2 = to!List(v);
+
+	string[] sl;
+	sl ~= "A";
+	sl ~= "B";
+	sl ~= "C";
+	assert(sl.length == 3);
+	auto x = sl.join();
+	assert(x == "ABC");
+
+	struct CustomStruct {
+		this(int v) { val = v; }
+		int val;
+	}
+
+	CustomStruct[] cl;
+	cl ~= CustomStruct(1);
+	cl ~= CustomStruct(2);
+	cl ~= CustomStruct(3);
+	assert(cl.length == 3);
+
+	// import std.traits, std.stdio, std.range, std.array, std.algorithm;
+	// import std.traits, std.stdio, std.range, std.array, std.algorithm;
+
+	// writefln("element type: %s", ElementType!(CustomStruct[]).stringof);
+	// writefln("element type: %s", ElementType!(double[]).stringof);
+	// writefln("unqual type: %s", Unqual!(ElementType!(CustomStruct[])).stringof);
+	// writefln("unqual type: %s", Unqual!(ElementType!(double[])).stringof);
+	// writefln("range type: %s", isInputRange!(CustomStruct[]).stringof);
+	// writefln("range type: %s", isInputRange!(double[]).stringof);
+	// isInputRange!(Unqual!(ElementType!RoR))
+
+	// auto cc = join(cl);
+	// auto cc = cl.join();
+
+	Value[] vl;
+	vl ~= Value(123);
+	vl ~= Value("Hello");
+	vl ~= Value(3.21);
+	vl ~= Value(true);
+	import std.stdio;
+	writefln("vl: %s", vl);
+	assert(vl.length == 4);
+	// auto s = vl.join(" ");
+	// writefln("s: %s", s);
 }

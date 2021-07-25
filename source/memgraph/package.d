@@ -13,6 +13,8 @@ public import memgraph.params;
 public import memgraph.result;
 public import memgraph.list;
 public import memgraph.relationship;
+public import memgraph.unboundrelationship;
+public import memgraph.path;
 
 import memgraph.detail;
 

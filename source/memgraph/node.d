@@ -34,7 +34,7 @@ struct Node {
 			idx_++;
 		}
 
-		bool opEquals(const string[] labels) {
+		bool opEquals(const string[] labels) const {
 			if (labels.length != size())
 				return false;
 			foreach (idx, label; labels) {

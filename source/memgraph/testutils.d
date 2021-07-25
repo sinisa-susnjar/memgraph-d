@@ -16,7 +16,7 @@ version (unittest) {
 		mg_session_params_set_sslmode(params, mg_sslmode.MG_SSLMODE_DISABLE);
 
 		mg_session *session = null;
-		int status = mg_connect(params, &session);
+		immutable status = mg_connect(params, &session);
 		mg_session_params_destroy(params);
 
 		mg_session_destroy(session);
@@ -56,12 +56,12 @@ version (unittest) {
 			import std.conv;
 
 			// Pull the latest memgraph docker image.
-			auto pull = execute(["docker", "pull", "memgraph/memgraph"]);
+			immutable pull = execute(["docker", "pull", "memgraph/memgraph"]);
 			assert(pull.status == 0);
 
 			// Start a new memgraph docker container.
 			auto containerIdFile = File(containerIdFileName, "w");
-			auto run = execute(["docker", "run", "-d", "-p", to!string(MEMGRAPH_PORT) ~ ":7687", "-d", "memgraph/memgraph"]);
+			immutable run = execute(["docker", "run", "-d", "-p", to!string(MEMGRAPH_PORT) ~ ":7687", "-d", "memgraph/memgraph"]);
 			assert(run.status == 0);
 
 			// Store container id.

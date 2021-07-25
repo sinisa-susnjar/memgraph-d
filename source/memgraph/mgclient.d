@@ -389,7 +389,7 @@ extern (C) {
 	@safe @nogc mg_value *mg_value_make_point_3d(mg_point_3d *point_3d) pure nothrow;
 
 	/// Returns the type of the given `mg_value`.
-	enum mg_value_type mg_value_get_type(const mg_value *val);
+	mg_value_type mg_value_get_type(const mg_value *val);
 
 	/// Returns non-zero value if value contains true, zero otherwise.
 	///
@@ -1037,7 +1037,7 @@ extern (C) {
 		MG_SSLMODE_DISABLE,
 		/// Only try a SSL connection.
 		MG_SSLMODE_REQUIRE,
-	};
+	}
 
 	/// An object encapsulating a Bolt session.
 	struct mg_session;

@@ -51,6 +51,13 @@ struct List {
 		return list_ == other.list_;
 	}
 
+	/// Return a printable string representation of this list.
+	const (string) toString() const {
+		import std.range : join;
+		// return "[" ~ list_.join(",") ~ "]";
+		return "TODO";
+	}
+
 	/*
 	/// Remove given `key` from map.
 	/// Return: true if key was removed, false otherwise.
