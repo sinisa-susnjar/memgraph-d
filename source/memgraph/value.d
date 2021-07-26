@@ -4,7 +4,7 @@ module memgraph.value;
 import std.conv, std.string;
 
 import memgraph.mgclient, memgraph.detail, memgraph.node, memgraph.enums, memgraph.list;
-import memgraph.relationship;
+import memgraph.relationship, memgraph.path, memgraph.unboundrelationship;
 
 /// A Bolt value, encapsulating all other values.
 struct Value {
@@ -86,16 +86,15 @@ struct Value {
 		this(mg_value_make_relationship(mg_relationship_copy(edge.ptr)));
 	}
 
-	/// \brief Constructs an unbounded edge value and takes the ownership of the
-	/// given `edge`. \note Behaviour of accessing the `edge` after performing
-	/// this operation is considered undefined.
-	// explicit Value(UnboundRelationship &&edge);
+	/// Constructs an unbounded edge value from the given `edge`.
+	this(const ref UnboundRelationship edge) {
+		this(mg_value_make_unbound_relationship(mg_unbound_relationship_copy(edge.ptr)));
+	}
 
-	/// \brief Constructs a path value and takes the ownership of the given
-	/// `path`. \note Behaviour of accessing the `path` after performing this
-	/// operation is considered undefined.
-	// explicit Value(Path &&path);
-
+	/// Constructs a path value from the given `path`.
+	this(const ref Path path) {
+		this(mg_value_make_path(mg_path_copy(path.ptr)));
+	}
 
 	/// \brief Constructs a date value and takes the ownership of the given
 	/// `date`. \note Behaviour of accessing the `date` after performing this
@@ -165,8 +164,12 @@ struct Value {
 									"Node(mg_value_node(ptr_))", ""),
 		typeid(List):			tuple(Type.List,
 									"List(mg_value_list(ptr_))", ""),
+		typeid(Path):			tuple(Type.Path,
+									"Path(mg_value_path(ptr_))", ""),
 		typeid(Relationship):	tuple(Type.Relationship,
 									"Relationship(mg_value_relationship(ptr_))", ""),
+		typeid(UnboundRelationship):	tuple(Type.UnboundRelationship,
+									"UnboundRelationship(mg_value_unbound_relationship(ptr_))", ""),
 		typeid(string):			tuple(Type.String,
 									"Detail.convertString(mg_value_string(ptr_))", ""),
 	];
@@ -223,7 +226,9 @@ struct Value {
 			case Type.Int:		return to!string(to!int(this));
 			case Type.String:	return Detail.convertString(mg_value_string(ptr_));
 			case Type.Relationship:		return to!string(to!Relationship(this));
+			case Type.UnboundRelationship:		return to!string(to!UnboundRelationship(this));
 			case Type.List:		return to!string(to!List(this));
+			case Type.Path:		return to!string(to!Path(this));
 			default: assert(0, "unhandled type: " ~ to!string(type()));
 		}
 	}

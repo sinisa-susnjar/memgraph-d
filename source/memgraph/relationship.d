@@ -136,6 +136,7 @@ unittest {
 		auto v = Value(r);
 		assert(v == r);
 		assert(r == v);
+		assert(v == c[1]);
 	}
 	assert(to!string(res.columns) == `["a", "r", "b"]`);
 }

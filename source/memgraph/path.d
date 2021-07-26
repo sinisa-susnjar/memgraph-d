@@ -99,13 +99,12 @@ private:
 	mg_path *ptr_;
 }
 
-/*
 unittest {
 	import std.stdio : writefln;
 	writefln("testing path...");
 
 	import testutils : connectContainer, createTestData, deleteTestData;
-	import memgraph : Client, Optional, Type, Value, Node, Relationship;
+	import memgraph : Client, Optional, Type, Value, Node, Relationship, List;
 	import std.conv : to;
 
 	auto client = connectContainer();
@@ -117,20 +116,63 @@ unittest {
 
 	// TODO: fix unit test, ie. use unbound relationship
 	auto res = client.execute(
-			"MATCH (a:Person {name: 'John'})-[edge_list:IS_MANAGER *bfs..10]-(b:Person {name: 'Valery'}) RETURN *;");
+			"MATCH p = ()-[*]-() RETURN p");
 	assert(res, client.error);
 	foreach (c; res) {
 		writefln("c: %s", c);
-		assert(c[0].type == Type.Node);
-		assert(c[1].type == Type.Relationship);
-		assert(c[2].type == Type.Node);
-		auto a = to!Node(c[0]);
-		auto r = to!Relationship(c[1]);
-		auto b = to!Node(c[2]);
-		assert(to!string(a) == to!string(c[0]));
-		assert(to!string(r) == to!string(c[1]));
-		assert(to!string(b) == to!string(c[2]));
+		writefln("type: %s", c[0].type);
 
+		assert(c[0].type == Type.Path);
+		auto p = to!Path(c[0]);
+
+		auto p2 = p;
+		auto p3 = c[0];
+		assert(p2 == p3);
+		auto p4 = Path(p);
+		assert(p4 == p);
+
+		auto p5 = Value(p);
+
+		assert(p3 == p5);
+
+		foreach (i; 0..p.length) {
+			assert(p2.isReversedRelationshipAt(to!uint(i)) ==
+					p4.isReversedRelationshipAt(to!uint(i)));
+		}
+
+		writefln("p.length: %s", p.length);
+
+		foreach (i; 0..p.length) {
+			auto n = p.getNodeAt(to!uint(i));
+			writefln("n(%s): %s", i, n);
+			auto r = p.getRelationshipAt(to!uint(i));
+			writefln("r(%s): %s", i, r);
+
+			auto r2 = r;
+			auto r3 = Value(r);
+			assert(r2 == r3);
+			auto r4 = UnboundRelationship(r);
+			assert(r4 == r);
+			auto r5 = UnboundRelationship(r3);
+			assert(r5 == r);
+
+			assert(r5.id == r.id);
+			assert(r5.type == r.type);
+			assert(r5.properties == r.properties);
+
+			auto r6 = Value(r);
+			assert(r3 == r6);
+
+		}
+
+		assert(p.ptr != null);
+
+
+		// assert(to!string(l) == to!string(c[0]));
+
+		// foreach (e; l) { writefln("type: %s: %s", e.type, e); }
+
+		/*
 		auto r2 = r;
 		assert(r2 == r);
 
@@ -148,7 +190,8 @@ unittest {
 		auto v = Value(r);
 		assert(v == r);
 		assert(r == v);
+		*/
 	}
-	assert(to!string(res.columns) == `["a", "r", "b"]`);
 }
+/*
 */

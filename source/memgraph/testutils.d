@@ -116,7 +116,13 @@ version (unittest) {
 
 		// Create some relationships.
 		assert(client.run(
-			"MATCH (a:Person), (b:Person) WHERE a.name = 'John' AND b.name = 'Valery' " ~
+			"MATCH (a:Person), (b:Person) WHERE a.name = 'John' AND b.name = 'Peter' " ~
+				"CREATE (a)-[r:IS_MANAGER]->(b);"), client.error);
+		assert(client.run(
+			"MATCH (a:Person), (b:Person) WHERE a.name = 'Peter' AND b.name = 'Valery' " ~
+				"CREATE (a)-[r:IS_MANAGER]->(b);"), client.error);
+		assert(client.run(
+			"MATCH (a:Person), (b:Person) WHERE a.name = 'Valery' AND b.name = 'Olaf' " ~
 				"CREATE (a)-[r:IS_MANAGER]->(b);"), client.error);
 	}	// createTestData()
 
