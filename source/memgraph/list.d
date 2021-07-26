@@ -14,10 +14,12 @@ import memgraph.mgclient, memgraph.detail, memgraph.value, memgraph.enums;
 struct List {
 
 	/// Create a copy of `other` list. Will copy all values into this list from `other`.
-	this(const ref List other) {
+	this(inout ref List other) {
+		writefln("List copy ctor: sz: %s this: %s other: %s", other.list_.length, &this, &other);
 		list_.length = other.list_.length;
 		foreach (i, v; other.list_)
 			list_[i] = v;
+		ptr_ = null;
 		this(mg_list_copy(other.ptr_));
 	}
 
@@ -27,24 +29,6 @@ struct List {
 			mg_list_destroy(ptr_);
 	}
 
-	/// Returns the value at index `idx`.
-	/// Will throw if the given `idx` is out of range.
-	/// The time complexity is constant.
-	/*
-	inout ref Value opIndex(const uint idx) {
-		return list_[idx];
-	}
-	*/
-
-	/*
-	/// Returns the value associated with the given `key`.
-	/// This method will `assert` that the `key` exists.
-	const Value opIndex(const string key) {
-		assert(key in map_);
-		return map_[key];
-	}
-	*/
-
 	/// Compares this list with `other`.
 	/// Return: true if same, false otherwise.
 	bool opEquals(const ref List other) const {
@@ -53,45 +37,13 @@ struct List {
 
 	/// Return a printable string representation of this list.
 	const (string) toString() const {
+		import std.algorithm : map;
 		import std.range : join;
-		// return "[" ~ list_.join(",") ~ "]";
-		return "TODO";
+		import std.stdio;
+		foreach (i, v; list_)
+			writefln("toString: %s %s: %s", &this, i, v);
+		return "[" ~ list_.map!(v => to!string(v)).join(",") ~ "]";
 	}
-
-	/*
-	/// Remove given `key` from map.
-	/// Return: true if key was removed, false otherwise.
-	auto remove(const string key) {
-		return map_.remove(key);
-	}
-	/// Clears the map.
-	void clear() {
-		map_.clear();
-	}
-	*/
-
-	/*
-	auto opDispatch(string name, T...)(T vals) {
-		return mixin("map_." ~ name)(vals);
-	}
-
-	auto opBinary(string op)(const string key) {
-		static assert(op == "in");
-		return key in map_;
-	}
-	*/
-
-	/*
-	auto opOpAssign(op)(const Value v) {
-		static if (op == "~=") {
-			list_ ~= v;
-		}
-		static assert(0);
-	}
-	*/
-	// @property auto list() inout { return list_; }
-	// @property auto length(size_t len) { list_.length = len; }
-	// @property auto length() { return list_.length; }
 
 	@property @safe @nogc ref inout(Value[]) list() inout pure nothrow {
 		return list_;
@@ -149,12 +101,12 @@ private:
 unittest {
 	List l;
 
-	l.length = 5;
+	l.length = 4;
 	l[0] = Value(42);
 	l[1] = Value(23L);
 	l[2] = Value(5.43210);
 	l[3] = Value(true);
-	l[4] = Value("Hi");
+	l ~= Value("Hi");
 	assert(l.length == 5);
 
 	assert(l[0].type == Type.Int);
@@ -185,14 +137,23 @@ unittest {
 
 	assert(l3 == l);
 
-	foreach (i, v; l3) {
+	foreach (i, v; l) {
 		assert(l[i].type == l3[i].type);
 		assert(l[i] == l3[i]);
+		writefln("%s: %s", i, v);
 	}
+	writeln;
 
 	l ~= Value(123_456);
 	l ~= Value("Bok!");
 	l ~= Value(true);
 
 	assert(l.length == 8);
+
+	foreach (i, v; l) {
+		writefln("%s: %s", i, v);
+	}
+
+	writefln("before toString");
+	writefln("l (%s): %s, %s", l.length, &l, to!string(l));
 }

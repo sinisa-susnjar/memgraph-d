@@ -148,21 +148,34 @@ struct Value {
 	// Fr@k repetition :)
 	import std.typecons : tuple;
 	private static immutable enum auto ops = [
-		// D type		memgraph type		opCast/opEquals
-		typeid(double):	tuple(Type.Double,	"mg_value_float(ptr_)",		"mg_value_make_float"),
-		typeid(int):	tuple(Type.Int,		"mg_value_integer(ptr_)",	"mg_value_make_integer"),
-		typeid(long):	tuple(Type.Int,		"mg_value_integer(ptr_)",	"mg_value_make_integer"),
-		typeid(bool):	tuple(Type.Bool,	"mg_value_bool(ptr_)",		"mg_value_make_bool"),
-		typeid(Node):	tuple(Type.Node,	"Node(mg_value_node(ptr_))", ""),
-		typeid(List):	tuple(Type.List,	"List(mg_value_list(ptr_))", ""),
-		typeid(Relationship):	tuple(Type.Relationship,	"Relationship(mg_value_relationship(ptr_))", ""),
-		typeid(string):	tuple(Type.String,	"Detail.convertString(mg_value_string(ptr_))", ""),
+		// D type		memgraph type		opCast/opEquals		opAssign
+		typeid(double):			tuple(Type.Double,
+									"mg_value_float(ptr_)",
+									"mg_value_make_float"),
+		typeid(int):			tuple(Type.Int,
+									"to!int(mg_value_integer(ptr_))",
+									"mg_value_make_integer"),
+		typeid(long):			tuple(Type.Int,
+									"mg_value_integer(ptr_)",
+									"mg_value_make_integer"),
+		typeid(bool):			tuple(Type.Bool,
+									"to!bool(mg_value_bool(ptr_))",
+									"mg_value_make_bool"),
+		typeid(Node):			tuple(Type.Node,
+									"Node(mg_value_node(ptr_))", ""),
+		typeid(List):			tuple(Type.List,
+									"List(mg_value_list(ptr_))", ""),
+		typeid(Relationship):	tuple(Type.Relationship,
+									"Relationship(mg_value_relationship(ptr_))", ""),
+		typeid(string):			tuple(Type.String,
+									"Detail.convertString(mg_value_string(ptr_))", ""),
 	];
 
 	/// Cast this value to type `T`.
 	auto opCast(T)() const {
 		assert(type() == ops[typeid(T)][0]);
-		return to!T(mixin(ops[typeid(T)][1]));
+		// return to!T(mixin(ops[typeid(T)][1]));
+		return mixin(ops[typeid(T)][1]);
 	}
 
 	/// Comparison operator for type `T`.
@@ -210,7 +223,7 @@ struct Value {
 			case Type.Int:		return to!string(to!int(this));
 			case Type.String:	return Detail.convertString(mg_value_string(ptr_));
 			case Type.Relationship:		return to!string(to!Relationship(this));
-			case Type.List:		return "TODO"; // to!string(to!List(this));
+			case Type.List:		return to!string(to!List(this));
 			default: assert(0, "unhandled type: " ~ to!string(type()));
 		}
 	}
@@ -427,49 +440,6 @@ unittest {
 
 	assert(v == l);
 
-	// TODO: auto l2 = to!List(v);
-
-	string[] sl;
-	sl ~= "A";
-	sl ~= "B";
-	sl ~= "C";
-	assert(sl.length == 3);
-	auto x = sl.join();
-	assert(x == "ABC");
-
-	struct CustomStruct {
-		this(int v) { val = v; }
-		int val;
-	}
-
-	CustomStruct[] cl;
-	cl ~= CustomStruct(1);
-	cl ~= CustomStruct(2);
-	cl ~= CustomStruct(3);
-	assert(cl.length == 3);
-
-	// import std.traits, std.stdio, std.range, std.array, std.algorithm;
-	// import std.traits, std.stdio, std.range, std.array, std.algorithm;
-
-	// writefln("element type: %s", ElementType!(CustomStruct[]).stringof);
-	// writefln("element type: %s", ElementType!(double[]).stringof);
-	// writefln("unqual type: %s", Unqual!(ElementType!(CustomStruct[])).stringof);
-	// writefln("unqual type: %s", Unqual!(ElementType!(double[])).stringof);
-	// writefln("range type: %s", isInputRange!(CustomStruct[]).stringof);
-	// writefln("range type: %s", isInputRange!(double[]).stringof);
-	// isInputRange!(Unqual!(ElementType!RoR))
-
-	// auto cc = join(cl);
-	// auto cc = cl.join();
-
-	Value[] vl;
-	vl ~= Value(123);
-	vl ~= Value("Hello");
-	vl ~= Value(3.21);
-	vl ~= Value(true);
-	import std.stdio;
-	writefln("vl: %s", vl);
-	assert(vl.length == 4);
-	// auto s = vl.join(" ");
-	// writefln("s: %s", s);
+	auto l2 = to!List(v);
+	// auto l2 = to!List(List(mg_value_list(v.ptr_)));
 }
