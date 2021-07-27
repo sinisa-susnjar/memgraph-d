@@ -224,7 +224,13 @@ extern (C) {
 	/// Represents a date.
 	///
 	/// Date is defined with number of days since the Unix epoch.
-	struct mg_date;
+	version(unittest) {
+		struct mg_date {
+			long days;
+		}
+	} else {
+		struct mg_date;
+	}
 
 	/// Represents time with its time zone.
 	///

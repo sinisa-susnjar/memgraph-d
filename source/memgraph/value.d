@@ -4,7 +4,7 @@ module memgraph.value;
 import std.conv, std.string;
 
 import memgraph.mgclient, memgraph.detail, memgraph.node, memgraph.enums, memgraph.list;
-import memgraph.relationship, memgraph.path, memgraph.unboundrelationship;
+import memgraph.relationship, memgraph.path, memgraph.unboundrelationship, memgraph.date;
 
 /// A Bolt value, encapsulating all other values.
 struct Value {
@@ -96,10 +96,10 @@ struct Value {
 		this(mg_value_make_path(mg_path_copy(path.ptr)));
 	}
 
-	/// \brief Constructs a date value and takes the ownership of the given
-	/// `date`. \note Behaviour of accessing the `date` after performing this
-	/// operation is considered undefined.
-	// explicit Value(Date &&date);
+	/// Constructs a date value from the given `date`.
+	this(const ref Date date) {
+		this(mg_value_make_date(mg_date_copy(date.ptr)));
+	}
 
 	/// \brief Constructs a time value and takes the ownership of the given
 	/// `time`. \note Behaviour of accessing the `time` after performing this
@@ -172,6 +172,8 @@ struct Value {
 									"UnboundRelationship(mg_value_unbound_relationship(ptr_))", ""),
 		typeid(string):			tuple(Type.String,
 									"Detail.convertString(mg_value_string(ptr_))", ""),
+		typeid(Date):			tuple(Type.Date,
+									"Date(mg_value_date(ptr_))", ""),
 	];
 
 	/// Cast this value to type `T`.
@@ -229,6 +231,7 @@ struct Value {
 			case Type.UnboundRelationship:		return to!string(to!UnboundRelationship(this));
 			case Type.List:		return to!string(to!List(this));
 			case Type.Path:		return to!string(to!Path(this));
+			case Type.Date:		return to!string(to!Date(this));
 			default: assert(0, "unhandled type: " ~ to!string(type()));
 		}
 	}
