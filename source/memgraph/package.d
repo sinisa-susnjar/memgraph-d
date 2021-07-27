@@ -15,6 +15,8 @@ public import memgraph.list;
 public import memgraph.relationship;
 public import memgraph.unboundrelationship;
 public import memgraph.path;
+public import memgraph.date;
+public import memgraph.time;
 
 import memgraph.detail;
 

@@ -69,14 +69,6 @@ private:
 	mg_date *ptr_;
 }
 
-// Extern C definitions for allocation of memgraph internal types.
-extern (C) {
-	// Need at least an empty definition for extern struct.
-	struct mg_allocator {}
-	extern shared mg_allocator mg_system_allocator;
-	@safe @nogc mg_date *mg_date_alloc(shared mg_allocator *alloc) pure nothrow;
-}
-
 unittest {
 	import std.conv : to;
 

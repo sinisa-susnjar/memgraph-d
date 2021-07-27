@@ -236,39 +236,84 @@ extern (C) {
 	///
 	/// Time is defined with nanoseconds since midnight.
 	/// Timezone is defined with seconds from UTC.
-	struct mg_time;
+	version(unittest) {
+		struct mg_time {
+			long nanoseconds;
+			long tz_offset_seconds;
+		}
+	} else {
+		struct mg_time;
+	}
 
 	/// Represents local time.
 	///
 	/// Time is defined with nanoseconds since midnight.
-	struct mg_local_time;
+	version(unittest) {
+		struct mg_local_time {
+			long nanoseconds;
+		}
+	} else {
+		struct mg_local_time;
+	}
 
 	/// Represents date and time with its time zone.
 	///
 	/// Date is defined with seconds since the adjusted Unix epoch.
 	/// Time is defined with nanoseconds since midnight.
 	/// Time zone is defined with minutes from UTC.
-	struct mg_date_time;
+	version(unittest) {
+		struct mg_date_time {
+			long seconds;
+			long nanoseconds;
+			long tz_offset_minutes;
+		}
+	} else {
+		struct mg_date_time;
+	}
 
 	/// Represents date and time with its time zone.
 	///
 	/// Date is defined with seconds since the adjusted Unix epoch.
 	/// Time is defined with nanoseconds since midnight.
 	/// Timezone is defined with an identifier for a specific time zone.
-	struct mg_date_time_zone_id;
+	version(unittest) {
+		struct mg_date_time_zone_id {
+			long seconds;
+			long nanoseconds;
+			long tz_id;
+		}
+	} else {
+		struct mg_date_time_zone_id;
+	}
 
 	/// Represents date and time without its time zone.
 	///
 	/// Date is defined with seconds since the Unix epoch.
 	/// Time is defined with nanoseconds since midnight.
-	struct mg_local_date_time;
+	version(unittest) {
+		struct mg_local_date_time {
+			long seconds;
+			long nanoseconds;
+		}
+	} else {
+		struct mg_local_date_time;
+	}
 
 	/// Represents a temporal amount which captures the difference in time
 	/// between two instants.
 	///
 	/// Duration is defined with months, days, seconds, and nanoseconds.
 	/// Note: Duration can be negative.
-	struct mg_duration;
+	version(unittest) {
+		struct mg_duration {
+			long months;
+			long days;
+			long seconds;
+			long nanoseconds;
+		}
+	} else {
+		struct mg_duration;
+	}
 
 	/// Represents a single location in 2-dimensional space.
 	///
@@ -1312,6 +1357,23 @@ extern (C) {
 
 	/// Returns query execution summary.
 	const (mg_map) *mg_result_summary(const mg_result *result);
+}
+
+version(unittest) {
+	// Extern C definitions for allocation of memgraph internal types.
+	extern (C) {
+		// Need at least an empty definition for extern struct.
+		struct mg_allocator {}
+		extern shared mg_allocator mg_system_allocator;
+
+		@safe @nogc mg_date *mg_date_alloc(shared mg_allocator *alloc) pure nothrow;
+		@safe @nogc mg_time *mg_time_alloc(shared mg_allocator *alloc) pure nothrow;
+		@safe @nogc mg_local_time *mg_local_time_alloc(shared mg_allocator *alloc) pure nothrow;
+		@safe @nogc mg_date_time *mg_date_time_alloc(shared mg_allocator *alloc) pure nothrow;
+		@safe @nogc mg_date_time_zone_id *mg_date_time_zone_id_alloc(shared mg_allocator *alloc) pure nothrow;
+		@safe @nogc mg_local_date_time *mg_local_date_time_alloc(shared mg_allocator *alloc) pure nothrow;
+		@safe @nogc mg_duration *mg_duration_alloc(shared mg_allocator *alloc) pure nothrow;
+	}
 }
 
 unittest {

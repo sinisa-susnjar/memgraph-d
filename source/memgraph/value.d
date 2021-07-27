@@ -5,6 +5,7 @@ import std.conv, std.string;
 
 import memgraph.mgclient, memgraph.detail, memgraph.node, memgraph.enums, memgraph.list;
 import memgraph.relationship, memgraph.path, memgraph.unboundrelationship, memgraph.date;
+import memgraph.time;
 
 /// A Bolt value, encapsulating all other values.
 struct Value {
@@ -101,10 +102,10 @@ struct Value {
 		this(mg_value_make_date(mg_date_copy(date.ptr)));
 	}
 
-	/// \brief Constructs a time value and takes the ownership of the given
-	/// `time`. \note Behaviour of accessing the `time` after performing this
-	/// operation is considered undefined.
-	// explicit Value(Time &&time);
+	/// Constructs a time value from the given `time`.
+	this(const ref Time time) {
+		this(mg_value_make_time(mg_time_copy(time.ptr)));
+	}
 
 	/// \brief Constructs a LocalTime value and takes the ownership of the given
 	/// `localTime`. \note Behaviour of accessing the `localTime` after performing
@@ -174,6 +175,8 @@ struct Value {
 									"Detail.convertString(mg_value_string(ptr_))", ""),
 		typeid(Date):			tuple(Type.Date,
 									"Date(mg_value_date(ptr_))", ""),
+		typeid(Time):			tuple(Type.Time,
+									"Time(mg_value_time(ptr_))", ""),
 	];
 
 	/// Cast this value to type `T`.
@@ -232,6 +235,7 @@ struct Value {
 			case Type.List:		return to!string(to!List(this));
 			case Type.Path:		return to!string(to!Path(this));
 			case Type.Date:		return to!string(to!Date(this));
+			case Type.Time:		return to!string(to!Time(this));
 			default: assert(0, "unhandled type: " ~ to!string(type()));
 		}
 	}
