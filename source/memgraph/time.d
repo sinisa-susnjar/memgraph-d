@@ -10,24 +10,36 @@ import memgraph.mgclient, memgraph.detail, memgraph.value;
 struct Time {
 	import core.atomic : atomicOp, atomicStore, atomicLoad;
 
-	private struct Impl(T)
+	/// Thread-safe atomic reference counted pointer to T.
+	private struct AtomicRef(T, alias Dtor)
 	{
+		@disable this();
+
+		this(T *ptr, uint count = 1) {
+			ptr_ = ptr;
+			atomicStore(refs_, count);
+		}
+
+		~this() {
+			import std.stdio;
+			writefln("AtomicRef.~this(%s): ptr: %s refs: %s", &this, ptr_, refs_);
+			if (atomicOp!"-="(refs_, 1) == 0) {
+				Dtor(ptr_);
+				ptr_ = null;
+			}
+		}
+
+		pragma(inline, true)
+		auto inc() nothrow {
+			assert(atomicLoad(refs_));
+			return atomicOp!"+="(refs_, 1);
+		}
+
+	private:
 		T *ptr_ = null;
-		shared uint refs = 1;
-
-		pragma(inline, true)
-		auto inc() nothrow { return atomicOp!"+="(refs, 1); }
-
-		pragma(inline, true)
-		auto dec() nothrow { return atomicOp!"-="(refs, 1); }
-
-		pragma(inline, true)
-		auto store(uint cnt) nothrow { atomicStore(refs, cnt); }
-
-		pragma(inline, true)
-		auto load() nothrow { return atomicLoad(refs); }
+		shared uint refs_ = 1;
 	}
-	private Impl!mg_time *_p;
+	private AtomicRef!(mg_time, mg_time_destroy) *_p;
 
 	/// Disable default constructor, to guarantee that this always has a valid ptr_.
 	@disable this();
@@ -36,13 +48,11 @@ struct Time {
 	this(this) @safe // nothrow
 	{
 		if (!_p) return;
-		assert(_p.load());
 		_p.inc();
 	}
 
 	/// Create a copy of `other` time.
 	this(ref Time other) {
-		assert(other._p.load());
 		other._p.inc();
 		_p = other._p;
 	}
@@ -55,17 +65,9 @@ struct Time {
 	/// Destructor. Detaches from the underlying `mg_time`.
 	/// If the sole owner, calls `mg_time_destroy`.
 	~this() @trusted {
-		import core.stdc.stdlib : free;
-		if (!_p) return;
-		scope(exit) _p = null;
-		if (_p.dec() == 0)
-		{
-			scope(exit) free(_p);
-			mg_time_destroy(_p.ptr_);
-			_p.ptr_ = null;
-		}
+		// Pointer to AtomicRef not needed any more. GC will take care of it.
+		_p = null;
 	}
-
 
 	/// Assigns a time to another. The target of the assignment gets detached from
 	/// whatever time it was attached to, and attaches itself to the new time.
@@ -109,16 +111,15 @@ package:
 		import core.stdc.stdlib : malloc;
 		import std.exception : enforce;
 		assert(!_p);
-		_p = cast(Impl!mg_time*) enforce(malloc(Impl!mg_time.sizeof), "Out of memory");
+		_p = enforce(new AtomicRef!(mg_time, mg_time_destroy)(ptr, 1), "Out of memory");
 		assert(_p);
-		_p.ptr_ = ptr;
-		_p.store(1);
 	}
 
 	auto ptr() const { return _p.ptr_; }
 }
 
 unittest {
+	{
 	import std.conv : to;
 
 	auto tm = mg_time_alloc(&mg_system_allocator);
@@ -146,4 +147,8 @@ unittest {
 	assert(t4 == t);
 
 	t2 = t;
+	}
+	// Force garbage collection for full code coverage
+	import core.memory;
+	GC.collect();
 }
