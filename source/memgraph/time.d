@@ -13,16 +13,16 @@ struct Time {
 	@disable this();
 
 	/// Postblit, create a copy of the time from source.
-	this(this) @safe // nothrow
+	this(this) @safe nothrow
 	{
-		if (!_p) return;
-		_p.inc();
+		if (!ref_) return;
+		ref_.inc();
 	}
 
 	/// Create a copy of `other` time.
 	this(ref Time other) {
-		other._p.inc();
-		_p = other._p;
+		other.ref_.inc();
+		ref_ = other.ref_;
 	}
 
 	/// Create a time from a Value.
@@ -31,10 +31,9 @@ struct Time {
 	}
 
 	/// Destructor. Detaches from the underlying `mg_time`.
-	/// If the sole owner, calls `mg_time_destroy`.
-	~this() @trusted {
+	@safe @nogc ~this() pure nothrow {
 		// Pointer to AtomicRef not needed any more. GC will take care of it.
-		_p = null;
+		ref_ = null;
 	}
 
 	/// Assigns a time to another. The target of the assignment gets detached from
@@ -55,14 +54,14 @@ struct Time {
 	/// Compares this time with `other`.
 	/// Return: true if same, false otherwise.
 	bool opEquals(const ref Time other) const {
-		return Detail.areTimesEqual(_p.ptr, other._p.ptr);
+		return Detail.areTimesEqual(ref_.ptr, other.ref_.ptr);
 	}
 
 	/// Returns nanoseconds since midnight.
-	const (long) nanoseconds() const { return mg_time_nanoseconds(_p.ptr); }
+	const (long) nanoseconds() const { return mg_time_nanoseconds(ref_.ptr); }
 
 	/// Returns time zone offset in seconds from UTC.
-	const (long) tz_offset_seconds() const { return mg_time_tz_offset_seconds(_p.ptr); }
+	const (long) tz_offset_seconds() const { return mg_time_tz_offset_seconds(ref_.ptr); }
 
 package:
 	/*
@@ -78,46 +77,46 @@ package:
 	{
 		import core.stdc.stdlib : malloc;
 		import std.exception : enforce;
-		assert(!_p);
-		_p = enforce(new AtomicRef!(mg_time, mg_time_destroy)(ptr, 1), "Out of memory");
-		assert(_p);
+		assert(!ref_);
+		ref_ = enforce(new AtomicRef!(mg_time, mg_time_destroy)(ptr, 1), "Out of memory");
+		assert(ref_);
 	}
 
-	auto ptr() const { return _p.ptr; }
+	auto ptr() const { return ref_.ptr; }
 
 private:
-	AtomicRef!(mg_time, mg_time_destroy) *_p;
+	AtomicRef!(mg_time, mg_time_destroy) *ref_;
 }
 
 unittest {
 	{
-	import std.conv : to;
+		import std.conv : to;
 
-	auto tm = mg_time_alloc(&mg_system_allocator);
-	assert(tm != null);
-	tm.nanoseconds = 42;
-	tm.tz_offset_seconds = 23;
+		auto tm = mg_time_alloc(&mg_system_allocator);
+		assert(tm != null);
+		tm.nanoseconds = 42;
+		tm.tz_offset_seconds = 23;
 
-	auto t = Time(tm);
-	assert(t.nanoseconds == 42);
-	assert(t.tz_offset_seconds == 23);
+		auto t = Time(tm);
+		assert(t.nanoseconds == 42);
+		assert(t.tz_offset_seconds == 23);
 
-	const t1 = t;
-	assert(t1 == t);
+		const t1 = t;
+		assert(t1 == t);
 
-	assert(to!string(t) == "42 23");
+		assert(to!string(t) == "42 23");
 
-	auto t2 = Time(mg_time_copy(t.ptr));
-	assert(t2 == t);
+		auto t2 = Time(mg_time_copy(t.ptr));
+		assert(t2 == t);
 
-	const t3 = Time(t2);
-	assert(t3 == t);
+		const t3 = Time(t2);
+		assert(t3 == t);
 
-	const v = Value(t);
-	const t4 = Time(v);
-	assert(t4 == t);
+		const v = Value(t);
+		const t4 = Time(v);
+		assert(t4 == t);
 
-	t2 = t;
+		t2 = t;
 	}
 	// Force garbage collection for full code coverage
 	import core.memory;
