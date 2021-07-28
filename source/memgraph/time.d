@@ -2,45 +2,13 @@
 module memgraph.time;
 
 import memgraph.mgclient, memgraph.detail, memgraph.value;
+import memgraph.atomic;
 
 /// Represents time with its time zone.
 ///
 /// Time is defined with nanoseconds since midnight.
 /// Timezone is defined with seconds from UTC.
 struct Time {
-	import core.atomic : atomicOp, atomicStore, atomicLoad;
-
-	/// Thread-safe atomic reference counted pointer to T.
-	private struct AtomicRef(T, alias Dtor)
-	{
-		@disable this();
-
-		this(T *ptr, uint count = 1) {
-			ptr_ = ptr;
-			atomicStore(refs_, count);
-		}
-
-		~this() {
-			import std.stdio;
-			writefln("AtomicRef.~this(%s): ptr: %s refs: %s", &this, ptr_, refs_);
-			if (atomicOp!"-="(refs_, 1) == 0) {
-				Dtor(ptr_);
-				ptr_ = null;
-			}
-		}
-
-		pragma(inline, true)
-		auto inc() nothrow {
-			assert(atomicLoad(refs_));
-			return atomicOp!"+="(refs_, 1);
-		}
-
-	private:
-		T *ptr_ = null;
-		shared uint refs_ = 1;
-	}
-	private AtomicRef!(mg_time, mg_time_destroy) *_p;
-
 	/// Disable default constructor, to guarantee that this always has a valid ptr_.
 	@disable this();
 
@@ -87,14 +55,14 @@ struct Time {
 	/// Compares this time with `other`.
 	/// Return: true if same, false otherwise.
 	bool opEquals(const ref Time other) const {
-		return Detail.areTimesEqual(_p.ptr_, other._p.ptr_);
+		return Detail.areTimesEqual(_p.ptr, other._p.ptr);
 	}
 
 	/// Returns nanoseconds since midnight.
-	const (long) nanoseconds() const { return mg_time_nanoseconds(_p.ptr_); }
+	const (long) nanoseconds() const { return mg_time_nanoseconds(_p.ptr); }
 
 	/// Returns time zone offset in seconds from UTC.
-	const (long) tz_offset_seconds() const { return mg_time_tz_offset_seconds(_p.ptr_); }
+	const (long) tz_offset_seconds() const { return mg_time_tz_offset_seconds(_p.ptr); }
 
 package:
 	/*
@@ -115,7 +83,10 @@ package:
 		assert(_p);
 	}
 
-	auto ptr() const { return _p.ptr_; }
+	auto ptr() const { return _p.ptr; }
+
+private:
+	AtomicRef!(mg_time, mg_time_destroy) *_p;
 }
 
 unittest {
