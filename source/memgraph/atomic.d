@@ -3,6 +3,101 @@ module memgraph.atomic;
 
 import core.atomic : atomicOp, atomicStore, atomicLoad;
 
+import std.stdio;
+
+/// Thread-safe atomic shared pointer to T.
+struct SharedPtr(T)
+{
+	shared struct Control {
+		this(Args...)(Args args) {
+			data_ = T(args);
+		}
+		T data_;
+		uint refs_ = 1;
+		alias data_ this;
+	}
+
+	Control *ctrl_;
+
+	alias ctrl_ this;
+
+	/// Checks if the stored pointer is not `null`.
+	bool opCast(T : bool)() const nothrow {
+		return ctrl_ != null;
+	}
+
+	ref SharedPtr!T opAssign(SharedPtr!T rhs) @safe return {
+		writefln("SharedPtr.opAssign");
+		atomicStore(ctrl_, rhs.ctrl_);
+		atomicOp!"+="(ctrl_.refs_, 1);
+		return this;
+	}
+
+	this(this) @safe {
+		atomicOp!"+="(ctrl_.refs_, 1);
+		writefln("SharedPtr.this[%s](this)(%s)", ctrl_, ctrl_.refs_);
+	}
+
+	this(SharedPtr!T rhs) @safe {
+		writefln("SharedPtr.copyCTOR");
+		atomicStore(ctrl_, rhs.ctrl_);
+		atomicOp!"+="(ctrl_.refs_, 1);
+	}
+
+	this(Control *ptr) {
+		writefln("SharedPtr.this");
+		atomicStore(ctrl_, ptr);
+	}
+
+	auto useCount() {
+		assert(atomicLoad(ctrl_));
+		return ctrl_.refs_;
+	}
+
+	~this() {
+		if (ctrl_ == null)
+			return;
+		writefln("SharedPtr.~this[%s](%s)", ctrl_, ctrl_.refs_);
+		if (atomicOp!"-="(ctrl_.refs_, 1) == 0)
+			ctrl_ = null;
+	}
+
+	static auto make(Args...)(Args args) {
+		// import core.stdc.stdlib : malloc;
+		import std.exception : enforce;
+		// assert(!ref_);
+		return SharedPtr!T(enforce(new Control(args), "Out of memory"));
+		// assert(ref_);
+	}
+}
+
+unittest {
+	struct Dummy {
+		string greeting;
+	}
+	import core.stdc.stdlib : malloc, free;
+	import std.stdio;
+
+	{
+		auto p = SharedPtr!Dummy.make();
+		p.greeting = "Live long and prosper";
+		writefln("p: %s", p.useCount);
+		{
+			auto p2 = p;
+			writefln("p2: %s", p2.useCount);
+			writefln("p: %s", p.useCount);
+		}
+		writefln("p: %s", p.useCount);
+	}
+
+	// auto p = SharedPtr!Dummy.make("Live long and prosper");
+
+	// writefln("p: %s", p.greeting);
+
+	// AtomicRef can be used with scope memory
+	// auto a1 = AtomicRef!(Dummy, free)(p);
+}
+
 /// Thread-safe atomic reference counted pointer to T.
 struct AtomicRef(T, alias Dtor)
 {
