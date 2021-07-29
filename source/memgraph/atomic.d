@@ -50,6 +50,8 @@ struct SharedPtr(T)
 	}
 
 	auto useCount() {
+		if (ctrl_ == null)
+			return 0;
 		assert(atomicLoad(ctrl_));
 		return ctrl_.refs_;
 	}
@@ -88,6 +90,23 @@ unittest {
 			writefln("p: %s", p.useCount);
 		}
 		writefln("p: %s", p.useCount);
+
+		auto p3 = SharedPtr!Dummy();
+		writefln("p3: %s", p3.useCount);
+		p3 = p;
+		writefln("p3: %s", p3.useCount);
+		writefln("p: %s", p.useCount);
+
+		{
+			auto p4 = SharedPtr!Dummy(p3);
+			writefln("p4: %s", p4.useCount);
+			writefln("p3: %s", p3.useCount);
+			writefln("p: %s", p.useCount);
+		}
+		writefln("p3: %s", p3.useCount);
+		writefln("p: %s", p.useCount);
+
+		auto p5 = SharedPtr!Dummy();
 	}
 
 	// auto p = SharedPtr!Dummy.make("Live long and prosper");
