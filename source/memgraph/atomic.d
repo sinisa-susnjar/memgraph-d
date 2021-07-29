@@ -9,8 +9,8 @@ import std.stdio;
 struct SharedPtr(T)
 {
 	shared struct Control {
-		this(Args...)(Args args) {
-			data_ = T(args);
+		this(T args) {
+			data_ = args;
 		}
 		T data_;
 		uint refs_ = 1;
@@ -68,7 +68,7 @@ struct SharedPtr(T)
 		// import core.stdc.stdlib : malloc;
 		import std.exception : enforce;
 		// assert(!ref_);
-		return SharedPtr!T(enforce(new Control(args), "Out of memory"));
+		return SharedPtr!T(enforce(new Control(T(args)), "Out of memory"));
 		// assert(ref_);
 	}
 }
@@ -81,13 +81,17 @@ unittest {
 	import std.stdio;
 
 	{
-		auto p = SharedPtr!Dummy.make();
-		p.greeting = "Live long and prosper";
-		writefln("p: %s", p.useCount);
+		auto p = SharedPtr!Dummy.make("Live long and prosper");
+		assert(p.useCount == 1);
+		assert(p.greeting == "Live long and prosper");
+		// writefln("p: %s %s", p.useCount, p.greeting);
 		{
 			auto p2 = p;
-			writefln("p2: %s", p2.useCount);
-			writefln("p: %s", p.useCount);
+			// writefln("p2: %s", p2.useCount);
+			// writefln("p: %s", p.useCount);
+			assert(p.useCount == 2);
+			assert(p2.useCount == 2);
+			assert(p2.greeting == "Live long and prosper");
 		}
 		writefln("p: %s", p.useCount);
 
