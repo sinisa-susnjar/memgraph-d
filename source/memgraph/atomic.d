@@ -6,7 +6,7 @@ import core.atomic : atomicOp, atomicStore, atomicLoad;
 import std.stdio;
 
 /// Thread-safe atomic shared pointer to T.
-struct SharedPtr(T)
+struct SharedPtr(T, alias Dtor = null)
 {
 	shared struct Control {
 		@disable this();
@@ -25,7 +25,7 @@ struct SharedPtr(T)
 		return ctrl_ != null;
 	}
 
-	ref SharedPtr!T opAssign(SharedPtr!T rhs) @safe return {
+	ref SharedPtr!(T, Dtor) opAssign(SharedPtr!(T, Dtor) rhs) @safe return {
 		// writefln("SharedPtr.opAssign");
 		atomicStore(ctrl_, rhs.ctrl_);
 		atomicOp!"+="(ctrl_.refs_, 1);
@@ -37,7 +37,7 @@ struct SharedPtr(T)
 		// writefln("SharedPtr.this[%s](this)(%s)", ctrl_, ctrl_.refs_);
 	}
 
-	this(SharedPtr!T rhs) @safe {
+	this(SharedPtr!(T, Dtor) rhs) @safe {
 		// writefln("SharedPtr.copyCTOR");
 		atomicStore(ctrl_, rhs.ctrl_);
 		atomicOp!"+="(ctrl_.refs_, 1);
@@ -168,6 +168,24 @@ unittest {
 	}
 	// writefln("p.useCount: %s", p.useCount);
 	assert(p.useCount == 1);
+}
+
+unittest {
+	{
+		struct Dummy {
+			string greeting;
+		}
+		import core.stdc.stdlib : malloc, free;
+		auto p = cast(shared Dummy *)malloc(Dummy.sizeof);
+		import std.stdio;
+		p.greeting = "Live long and prosper";
+		// writefln("p: %s", p.greeting);
+
+		auto a = SharedPtr!(typeof(p)).make(p);
+	}
+	// Force garbage collection for full code coverage
+	import core.memory;
+	GC.collect();
 }
 
 /// Thread-safe atomic reference counted pointer to T.
