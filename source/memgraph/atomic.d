@@ -25,6 +25,10 @@ struct SharedPtr(T, alias Dtor = null)
 		return ctrl_ != null;
 	}
 
+	void dump() const {
+		writefln("ctrl: %s data: %s", ctrl_, ctrl_.data_);
+	}
+
 	ref SharedPtr!(T, Dtor) opAssign(SharedPtr!(T, Dtor) rhs) @safe return {
 		// writefln("SharedPtr.opAssign");
 		atomicStore(ctrl_, rhs.ctrl_);
@@ -154,20 +158,91 @@ unittest {
 					assert(p.question == "What is the answer to life, the universe and everything?");
 					assert(p.answer == 0);
 					p.answer = 42;
-					// writefln("p.useCount: %s", p.useCount);
-					send(ownerTid, p.useCount);
+					writefln("child useCount: %s answer: %s", p.useCount, p.answer);
+					p.dump;
+					// send(ownerTid, p.useCount);
 				});
 		}
 		auto childTid = spawn(&deepThought, thisTid);
 		// writefln("childTid: %s", childTid);
 		send(childTid, p);
-		auto useCount = receiveOnly!uint;
-		// writefln("child useCount: %s", useCount);
-		assert(useCount == 3);
-		assert(p.answer == 42);
+		// auto useCount = receiveOnly!uint;
+		writefln("parent useCount: %s answer: %s", p.useCount, p.answer);
+		thread_joinAll();
+		p.dump;
+		// assert(p.useCount == 3);
+		// assert(p.answer == 42);
 	}
-	// writefln("p.useCount: %s", p.useCount);
+	writefln("final p.useCount: %s answer: %s", p.useCount, p.answer);
 	assert(p.useCount == 1);
+	assert(p.answer == 42);
+	// Force garbage collection for full code coverage
+	// import core.memory;
+	// GC.collect();
+	// assert(p.useCount == 1);
+}
+
+unittest {
+	import std.concurrency;
+	import core.thread;
+	import std.stdio;
+
+	struct Dummy {
+		string question;
+		int answer;
+	}
+
+	auto p = SharedPtr!Dummy.make("What is the answer to life, the universe and everything?");
+
+	assert(p.useCount == 1);
+	assert(p.question == "What is the answer to life, the universe and everything?");
+	assert(p.answer == 0);
+
+	writefln("start unittest");
+
+	{
+		// writefln("thisTid: %s", thisTid);
+		static void stressTest(Tid ownerTid) {
+			// writefln("thisTid: %s ownerTid: %s", thisTid, ownerTid);
+			receive((SharedPtr!Dummy p) {
+					// writefln("before array");
+					SharedPtr!Dummy[] sp;
+					// writefln("after array");
+					// sp.reserve = 10;
+					// writefln("before loop");
+					foreach (i; 0..43) {
+						// SharedPtr!Dummy sp;
+						p.answer = i;
+						sp ~= p;
+						// writefln("loop...");
+					}
+					writefln("child p.useCount: %s answer: %s", p.useCount, p.answer);
+					send(ownerTid, p.useCount);
+				});
+			// writefln("end of stressTest");
+			// Force garbage collection for full code coverage
+			// import core.memory;
+			// GC.collect();
+		}
+		foreach (n; 0..10) {
+			auto childTid = spawn(&stressTest, thisTid);
+			// writefln("childTid: %s", childTid);
+			send(childTid, p);
+		}
+		foreach (n; 0..10) {
+			auto useCount = receiveOnly!uint;
+			writefln("child #%s useCount: %s %s %s", n, useCount, p.useCount, p.answer);
+		}
+		// assert(useCount == 3);
+		// assert(p.answer == 42);
+	}
+	// Force garbage collection so dynamic SharedPtr arrays are collected.
+	import core.memory;
+	GC.collect();
+	writefln("final p.useCount: %s answer: %s", p.useCount, p.answer);
+	assert(p.useCount == 1);
+	assert(p.answer == 42);
+	// assert(p.useCount == 1);
 }
 
 unittest {
