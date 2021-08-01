@@ -10,29 +10,17 @@ import memgraph.atomic;
 struct LocalTime {
 	/// Disable default constructor, to guarantee that this always has a valid ptr_.
 	@disable this();
-
-	/// Postblit, create a copy of the local time from source.
-	this(this) @safe nothrow
-	{
-		if (!ref_) return;
-		ref_.inc();
-	}
+	/// Disable postblit in favour of copy-ctor.
+	@disable this(this);
 
 	/// Create a copy of `other` local time.
 	this(ref LocalTime other) {
-		other.ref_.inc();
 		ref_ = other.ref_;
 	}
 
 	/// Create a local time from a Value.
 	this(const ref Value value) {
 		this(mg_local_time_copy(mg_value_local_time(value.ptr)));
-	}
-
-	/// Destructor. Detaches from the underlying `mg_local_time`.
-	@safe @nogc ~this() pure nothrow {
-		// Pointer to AtomicRef not needed any more. GC will take care of it.
-		ref_ = null;
 	}
 
 	/// Assigns a local time to another. The target of the assignment gets detached from
@@ -53,27 +41,23 @@ struct LocalTime {
 	/// Compares this local time with `other`.
 	/// Return: true if same, false otherwise.
 	bool opEquals(const ref LocalTime other) const {
-		return Detail.areLocalTimesEqual(ref_.ptr, other.ref_.ptr);
+		return Detail.areLocalTimesEqual(ref_.data, other.ref_.data);
 	}
 
 	/// Returns nanoseconds since midnight.
-	const (long) nanoseconds() const { return mg_local_time_nanoseconds(ref_.ptr); }
+	const (long) nanoseconds() const { return mg_local_time_nanoseconds(ref_.data); }
 
 package:
 	/// Create a LocalTime using the given `mg_local_time`.
 	this(mg_local_time *ptr) @trusted
 	{
-		import core.stdc.stdlib : malloc;
-		import std.exception : enforce;
-		assert(!ref_);
-		ref_ = enforce(new AtomicRef!(mg_local_time, mg_local_time_destroy)(ptr, 1), "Out of memory");
-		assert(ref_);
+		ref_ = SharedPtr!mg_local_time.make(ptr, (p) { mg_local_time_destroy(p); });
 	}
 
-	auto ptr() const { return ref_.ptr; }
+	auto ptr() const { return ref_.data; }
 
 private:
-	AtomicRef!(mg_local_time, mg_local_time_destroy) *ref_;
+	SharedPtr!mg_local_time ref_;
 }
 
 unittest {
