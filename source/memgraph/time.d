@@ -9,31 +9,19 @@ import memgraph.atomic;
 /// Time is defined with nanoseconds since midnight.
 /// Timezone is defined with seconds from UTC.
 struct Time {
-	/// Disable default constructor, to guarantee that this always has a valid ptr_.
+	/// Disable default constructor to guarantee that this always has a valid ptr_.
 	@disable this();
-
-	/// Postblit, create a copy of the time from source.
-	this(this) @safe nothrow
-	{
-		// if (!ref_) return;
-		// ref_.inc();
-	}
+	/// Disable postblit in favour of copy-ctor.
+	@disable this(this);
 
 	/// Create a copy of `other` time.
 	this(ref Time other) {
-		// other.ref_.inc();
 		ref_ = other.ref_;
 	}
 
 	/// Create a time from a Value.
 	this(const ref Value value) {
 		this(mg_time_copy(mg_value_time(value.ptr)));
-	}
-
-	/// Destructor. Detaches from the underlying `mg_time`.
-	@safe @nogc ~this() pure nothrow {
-		// Pointer to AtomicRef not needed any more. GC will take care of it.
-		// ref_ = null;
 	}
 
 	/// Assigns a time to another. The target of the assignment gets detached from
@@ -64,30 +52,15 @@ struct Time {
 	const (long) tz_offset_seconds() const { return mg_time_tz_offset_seconds(ref_.ptr); }
 
 package:
-	/*
-	/// Create a Time from a copy of the given `mg_time`.
-	this(const mg_time *const_ptr) {
-		assert(const_ptr != null);
-		this(mg_time_copy(const_ptr));
-	}
-	*/
-
 	/// Create a Time using the given `mg_time`.
 	this(mg_time *ptr) @trusted
 	{
-		// import core.stdc.stdlib : malloc;
-		// import std.exception : enforce;
-		// assert(!ref_);
-		// ref_ = enforce(new AtomicRef!(mg_time, mg_time_destroy)(ptr, 1), "Out of memory");
-		// ref_ = SharedPtr!(typeof(ptr)).make(ptr, (p) { mg_time_destroy(cast(mg_time*)p); });
 		ref_ = SharedPtr!mg_time.make(ptr, (p) { mg_time_destroy(p); });
-		// assert(ref_);
 	}
 
 	auto ptr() const { return ref_.ptr; }
 
 private:
-	// AtomicRef!(mg_time, mg_time_destroy) *ref_;
 	SharedPtr!mg_time ref_;
 }
 
