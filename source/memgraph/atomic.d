@@ -8,30 +8,34 @@ import std.stdio;
 /// Thread-safe atomic shared pointer to T.
 struct SharedPtr(T)
 {
+	import std.traits;
+
+	alias PtrType = Unqual!T *;
+
 	shared struct Control {
 		@disable this();
 		@disable this(this);
-		this(T data) {
-			data_ = data;
+		this(T* data) {
+			data_ = cast(shared(T*))data;
 		}
-		this(T data, void delegate(T t) dtor) {
-			data_ = data;
+		this(T* data, void delegate(PtrType t) dtor) {
+			data_ = cast(shared(T*))data;
 			dtor_ = dtor;
 		}
 		~this() {
 			if (dtor_) {
 				writefln("calling Dtor for %s (%s)", T.stringof, data_);
-				dtor_(data_);
+				dtor_(cast(PtrType)data_);
 			}
 		}
 	private:
-		T data_;
-		void delegate(T t) dtor_;
+		T* data_;
+		void delegate(PtrType t) dtor_;
 		uint refs_ = 1;
 		alias data_ this;
 	}
 
-	auto ptr() const { return ctrl_.data_; }
+	auto ptr() const { return cast(PtrType)ctrl_.data_; }
 
 	/// Checks if the stored pointer is not `null`.
 	bool opCast(T : bool)() const nothrow {
@@ -79,12 +83,12 @@ struct SharedPtr(T)
 
 	static auto make(Args...)(Args args) {
 		import std.exception : enforce;
-		return SharedPtr!T(enforce(new Control(T(args)), "Out of memory"));
+		return SharedPtr!T(enforce(new Control(new T(args)), "Out of memory"));
 	}
 
-	static auto make(Args...)(Args args, void delegate(T t) dtor) {
+	static auto make(PtrType ptr, void delegate(PtrType t) dtor) {
 		import std.exception : enforce;
-		return SharedPtr!T(enforce(new Control(T(args), dtor), "Out of memory"));
+		return SharedPtr!T(enforce(new Control(ptr, dtor), "Out of memory"));
 	}
 
 private:
@@ -264,10 +268,10 @@ unittest {
 			string greeting;
 		}
 		import core.stdc.stdlib : malloc, free;
-		auto p = cast(shared Dummy *)malloc(Dummy.sizeof);
+		auto p = cast(Dummy *)malloc(Dummy.sizeof);
 		import std.stdio;
 		p.greeting = "Live long and prosper";
-		auto a = SharedPtr!(typeof(p)).make(p, (ptr) { free(cast(void*)ptr); });
+		auto a = SharedPtr!Dummy.make(p, (ptr) { free(cast(void*)ptr); });
 	}
 	// Force garbage collection for full code coverage
 	// import core.memory;

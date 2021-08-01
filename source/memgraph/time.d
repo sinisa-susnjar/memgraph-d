@@ -80,7 +80,7 @@ package:
 		// assert(!ref_);
 		// ref_ = enforce(new AtomicRef!(mg_time, mg_time_destroy)(ptr, 1), "Out of memory");
 		// ref_ = SharedPtr!(typeof(ptr)).make(ptr, (p) { mg_time_destroy(cast(mg_time*)p); });
-		ref_ = SharedPtr!(shared mg_time*).make(cast(shared mg_time *)ptr, (p) { mg_time_destroy(cast(mg_time*)p); });
+		ref_ = SharedPtr!mg_time.make(ptr, (p) { mg_time_destroy(p); });
 		// assert(ref_);
 	}
 
@@ -88,7 +88,7 @@ package:
 
 private:
 	// AtomicRef!(mg_time, mg_time_destroy) *ref_;
-	SharedPtr!(shared mg_time*) ref_;
+	SharedPtr!mg_time ref_;
 }
 
 unittest {
