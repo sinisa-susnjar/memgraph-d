@@ -5,103 +5,109 @@ import core.atomic : atomicOp, atomicStore, atomicLoad;
 
 import std.stdio;
 
-/// Thread-safe atomic shared pointer to T.
+/// Thread-safe lock-free atomic shared pointer to T.
 struct SharedPtr(T)
 {
 	import std.traits;
 
+	/// Unqualified pointer type for dealing with custom deleters.
 	alias PtrType = Unqual!T *;
 
+	/// Control block for shared pointer. Contains pointer to the "pointee" and the reference count.
 	shared struct Control {
 		@disable this();
 		@disable this(this);
 		this(T* data) {
-			data_ = cast(shared(T*))data;
+			atomicStore(data_, cast(shared(T*))data);
 		}
 		this(T* data, void delegate(PtrType t) dtor) {
-			data_ = cast(shared(T*))data;
+			atomicStore(data_, cast(shared(T*))data);
 			dtor_ = dtor;
 		}
 		~this() {
-			if (dtor_) {
-				writefln("calling Dtor for %s (%s)", T.stringof, data_);
+			if (dtor_)
 				dtor_(cast(PtrType)data_);
-			}
 		}
 	private:
-		T* data_;
 		void delegate(PtrType t) dtor_;
-		uint refs_ = 1;
 		alias data_ this;
+		uint refs_ = 1;
+		T* data_;
 	}
-
-	auto ptr() const { return cast(PtrType)ctrl_.data_; }
 
 	/// Checks if the stored pointer is not `null`.
 	bool opCast(T : bool)() const nothrow {
 		return ctrl_ != null;
 	}
 
-	// void dump() const { writefln("ctrl: %s data: %s", ctrl_, ctrl_.data_); }
-
+	/// Assigns another shared pointer to this one, increasing the reference count.
 	ref SharedPtr!(T) opAssign(SharedPtr!T rhs) @safe return {
-		// writefln("SharedPtr.opAssign");
 		atomicStore(ctrl_, rhs.ctrl_);
 		atomicOp!"+="(ctrl_.refs_, 1);
 		return this;
 	}
 
+	/// Postblit. Increase reference count.
 	this(this) @safe {
 		atomicOp!"+="(ctrl_.refs_, 1);
-		// writefln("SharedPtr.this[%s](this)(%s)", ctrl_, ctrl_.refs_);
 	}
 
+	/// Copy ctor. Increase reference count.
 	this(SharedPtr!T rhs) @safe {
-		// writefln("SharedPtr.copyCTOR");
 		atomicStore(ctrl_, rhs.ctrl_);
 		atomicOp!"+="(ctrl_.refs_, 1);
 	}
 
-	this(Control *ptr) {
-		// writefln("SharedPtr.this");
-		atomicStore(ctrl_, ptr);
-	}
-
+	/// Returns the use count of this shared pointer, i.e. how many references are in use.
 	uint useCount() {
 		if (ctrl_ == null)
 			return 0;
 		return atomicLoad(ctrl_.refs_);
 	}
 
+	/// Return pointer to "pointee" of type `T`.
+	auto data() const {
+		if (ctrl_ == null)
+			return null;
+		return cast(PtrType)ctrl_.data_;
+	}
+
 	~this() {
 		if (ctrl_ == null)
 			return;
-		// writefln("SharedPtr.~this[%s](%s)", ctrl_, ctrl_.refs_);
 		if (atomicOp!"-="(ctrl_.refs_, 1) == 0)
 			ctrl_ = null;
 	}
 
+	/// Create a new pointee of type `T` using the given `Args...`.
 	static auto make(Args...)(Args args) {
 		import std.exception : enforce;
 		return SharedPtr!T(enforce(new Control(new T(args)), "Out of memory"));
 	}
 
+	/// Use the previously created pointee of type `T` and delete it using `dtor` once the usage reaches zero.
 	static auto make(PtrType ptr, void delegate(PtrType t) dtor) {
 		import std.exception : enforce;
 		return SharedPtr!T(enforce(new Control(ptr, dtor), "Out of memory"));
 	}
 
 private:
+	/// Pointer to control block.
 	Control *ctrl_;
 	alias ctrl_ this;
+
+	/// Create from a control block. Only for internal use.
+	this(Control *ptr) {
+		atomicStore(ctrl_, ptr);
+	}
 }
 
+// Unit-test shared pointer within different scopes.
 unittest {
 	struct Dummy {
 		string greeting;
 		int value;
 	}
-	import std.stdio;
 
 	{
 		auto p = SharedPtr!Dummy.make("Live long and prosper", 23);
@@ -109,38 +115,26 @@ unittest {
 			assert(p.useCount == 1);
 			assert(p.greeting == "Live long and prosper");
 			assert(p.value == 23);
-			// writefln("p: %s %s", p.useCount, p.greeting);
 			{
 				auto p2 = p;
-				// writefln("p2: %s", p2.useCount);
-				// writefln("p: %s", p.useCount);
 				assert(p.useCount == 2);
 				assert(p2.useCount == 2);
 				assert(p2.greeting == "Live long and prosper");
 			}
 			assert(p.useCount == 1);
-			// writefln("p: %s", p.useCount);
 
 			auto p3 = SharedPtr!Dummy();
-			// writefln("p3: %s", p3.useCount);
 			assert(p3.useCount == 0);
 			p3 = p;
-			// writefln("p3: %s", p3.useCount);
-			// writefln("p: %s", p.useCount);
 			assert(p.useCount == 2);
 			assert(p3.useCount == 2);
 
 			{
 				auto p4 = SharedPtr!Dummy(p3);
-				// writefln("p4: %s", p4.useCount);
-				// writefln("p3: %s", p3.useCount);
-				// writefln("p: %s", p.useCount);
 				assert(p4.useCount == 3);
 				assert(p3.useCount == 3);
 				assert(p.useCount == 3);
 			}
-			// writefln("p3: %s", p3.useCount);
-			// writefln("p: %s", p.useCount);
 			assert(p3.useCount == 2);
 			assert(p.useCount == 2);
 		}
@@ -150,10 +144,10 @@ unittest {
 	}
 }
 
+// Unit-test passing of shared pointer to a single thread.
 unittest {
 	import std.concurrency;
 	import core.thread;
-	import std.stdio;
 
 	struct Dummy {
 		string question;
@@ -167,30 +161,18 @@ unittest {
 	assert(p.answer == 0);
 
 	{
-		// writefln("thisTid: %s", thisTid);
 		static void deepThought(Tid ownerTid) {
-			// writefln("thisTid: %s ownerTid: %s", thisTid, ownerTid);
 			receive((SharedPtr!Dummy p) {
 					assert(p.useCount == 3); // one copy for send(), another for receive()
 					assert(p.question == "What is the answer to life, the universe and everything?");
 					assert(p.answer == 0);
 					p.answer = 42;
-					// writefln("child useCount: %s answer: %s", p.useCount, p.answer);
-					// p.dump;
-					// send(ownerTid, p.useCount);
 				});
 		}
 		auto childTid = spawn(&deepThought, thisTid);
-		// writefln("childTid: %s", childTid);
 		send(childTid, p);
-		// auto useCount = receiveOnly!uint;
-		// writefln("parent useCount: %s answer: %s", p.useCount, p.answer);
 		thread_joinAll();
-		// p.dump;
-		// assert(p.useCount == 3);
-		// assert(p.answer == 42);
 	}
-	// writefln("final p.useCount: %s answer: %s", p.useCount, p.answer);
 	assert(p.useCount == 1);
 	assert(p.answer == 42);
 	// Force garbage collection for full code coverage
@@ -199,10 +181,10 @@ unittest {
 	// assert(p.useCount == 1);
 }
 
+// Unit-test passing of shared pointer to multiple threads.
 unittest {
 	import std.concurrency;
 	import core.thread;
-	import std.stdio;
 
 	struct Dummy {
 		string question;
@@ -215,67 +197,43 @@ unittest {
 	assert(p.question == "What is the answer to life, the universe and everything?");
 	assert(p.answer == 0);
 
-	writefln("start unittest");
-
 	{
-		// writefln("thisTid: %s", thisTid);
 		static void stressTest(Tid ownerTid) {
-			// writefln("thisTid: %s ownerTid: %s", thisTid, ownerTid);
 			receive((SharedPtr!Dummy p) {
-					// writefln("before array");
 					SharedPtr!Dummy[] sp;
-					// writefln("after array");
-					// sp.reserve = 10;
-					// writefln("before loop");
 					foreach (i; 0..43) {
-						// SharedPtr!Dummy sp;
 						p.answer = i;
 						sp ~= p;
-						// writefln("loop...");
 					}
-					// writefln("child p.useCount: %s answer: %s", p.useCount, p.answer);
 					send(ownerTid, p.useCount);
 				});
-			// writefln("end of stressTest");
-			// Force garbage collection for full code coverage
-			// import core.memory;
-			// GC.collect();
 		}
 		foreach (n; 0..10) {
 			auto childTid = spawn(&stressTest, thisTid);
-			// writefln("childTid: %s", childTid);
 			send(childTid, p);
 		}
 		foreach (n; 0..10) {
 			auto useCount = receiveOnly!uint;
-			// writefln("child #%s useCount: %s %s %s", n, useCount, p.useCount, p.answer);
 		}
-		// assert(useCount == 3);
-		// assert(p.answer == 42);
 	}
 	// Force garbage collection so dynamic SharedPtr arrays are collected.
 	import core.memory;
 	GC.collect();
-	// writefln("final p.useCount: %s answer: %s", p.useCount, p.answer);
 	assert(p.useCount == 1);
 	assert(p.answer == 42);
-	// assert(p.useCount == 1);
 }
 
+// Unit-test shared pointer with custom destructor.
 unittest {
-	{
-		struct Dummy {
-			string greeting;
-		}
-		import core.stdc.stdlib : malloc, free;
-		auto p = cast(Dummy *)malloc(Dummy.sizeof);
-		import std.stdio;
-		p.greeting = "Live long and prosper";
-		auto a = SharedPtr!Dummy.make(p, (ptr) { free(cast(void*)ptr); });
+	struct Dummy {
+		string greeting;
 	}
-	// Force garbage collection for full code coverage
-	// import core.memory;
-	// GC.collect();
+	import core.stdc.stdlib : malloc, free;
+	auto p = cast(Dummy *)malloc(Dummy.sizeof);
+	p.greeting = "Live long and prosper";
+	auto a = SharedPtr!Dummy.make(p, (ptr) { free(cast(void*)ptr); });
+	assert(a.useCount == 1);
+	assert(a.greeting == "Live long and prosper");
 }
 
 /// Thread-safe atomic reference counted pointer to T.
