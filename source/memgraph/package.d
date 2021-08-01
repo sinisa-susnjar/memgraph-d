@@ -18,5 +18,6 @@ public import memgraph.path;
 public import memgraph.date;
 public import memgraph.time;
 public import memgraph.local_time;
+public import memgraph.date_time;
 
 import memgraph.detail;
