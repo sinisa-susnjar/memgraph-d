@@ -6,30 +6,41 @@ import core.atomic : atomicOp, atomicStore, atomicLoad;
 import std.stdio;
 
 /// Thread-safe atomic shared pointer to T.
-struct SharedPtr(T, alias Dtor = null)
+struct SharedPtr(T)
 {
 	shared struct Control {
 		@disable this();
 		@disable this(this);
-		this(T args) {
-			data_ = args;
+		this(T data) {
+			data_ = data;
+		}
+		this(T data, void delegate(T t) dtor) {
+			data_ = data;
+			dtor_ = dtor;
+		}
+		~this() {
+			if (dtor_) {
+				writefln("calling Dtor for %s (%s)", T.stringof, data_);
+				dtor_(data_);
+			}
 		}
 	private:
 		T data_;
+		void delegate(T t) dtor_;
 		uint refs_ = 1;
 		alias data_ this;
 	}
+
+	auto ptr() const { return ctrl_.data_; }
 
 	/// Checks if the stored pointer is not `null`.
 	bool opCast(T : bool)() const nothrow {
 		return ctrl_ != null;
 	}
 
-	void dump() const {
-		writefln("ctrl: %s data: %s", ctrl_, ctrl_.data_);
-	}
+	// void dump() const { writefln("ctrl: %s data: %s", ctrl_, ctrl_.data_); }
 
-	ref SharedPtr!(T, Dtor) opAssign(SharedPtr!(T, Dtor) rhs) @safe return {
+	ref SharedPtr!(T) opAssign(SharedPtr!T rhs) @safe return {
 		// writefln("SharedPtr.opAssign");
 		atomicStore(ctrl_, rhs.ctrl_);
 		atomicOp!"+="(ctrl_.refs_, 1);
@@ -41,7 +52,7 @@ struct SharedPtr(T, alias Dtor = null)
 		// writefln("SharedPtr.this[%s](this)(%s)", ctrl_, ctrl_.refs_);
 	}
 
-	this(SharedPtr!(T, Dtor) rhs) @safe {
+	this(SharedPtr!T rhs) @safe {
 		// writefln("SharedPtr.copyCTOR");
 		atomicStore(ctrl_, rhs.ctrl_);
 		atomicOp!"+="(ctrl_.refs_, 1);
@@ -67,11 +78,13 @@ struct SharedPtr(T, alias Dtor = null)
 	}
 
 	static auto make(Args...)(Args args) {
-		// import core.stdc.stdlib : malloc;
 		import std.exception : enforce;
-		// assert(!ref_);
 		return SharedPtr!T(enforce(new Control(T(args)), "Out of memory"));
-		// assert(ref_);
+	}
+
+	static auto make(Args...)(Args args, void delegate(T t) dtor) {
+		import std.exception : enforce;
+		return SharedPtr!T(enforce(new Control(T(args), dtor), "Out of memory"));
 	}
 
 private:
@@ -158,8 +171,8 @@ unittest {
 					assert(p.question == "What is the answer to life, the universe and everything?");
 					assert(p.answer == 0);
 					p.answer = 42;
-					writefln("child useCount: %s answer: %s", p.useCount, p.answer);
-					p.dump;
+					// writefln("child useCount: %s answer: %s", p.useCount, p.answer);
+					// p.dump;
 					// send(ownerTid, p.useCount);
 				});
 		}
@@ -167,13 +180,13 @@ unittest {
 		// writefln("childTid: %s", childTid);
 		send(childTid, p);
 		// auto useCount = receiveOnly!uint;
-		writefln("parent useCount: %s answer: %s", p.useCount, p.answer);
+		// writefln("parent useCount: %s answer: %s", p.useCount, p.answer);
 		thread_joinAll();
-		p.dump;
+		// p.dump;
 		// assert(p.useCount == 3);
 		// assert(p.answer == 42);
 	}
-	writefln("final p.useCount: %s answer: %s", p.useCount, p.answer);
+	// writefln("final p.useCount: %s answer: %s", p.useCount, p.answer);
 	assert(p.useCount == 1);
 	assert(p.answer == 42);
 	// Force garbage collection for full code coverage
@@ -216,7 +229,7 @@ unittest {
 						sp ~= p;
 						// writefln("loop...");
 					}
-					writefln("child p.useCount: %s answer: %s", p.useCount, p.answer);
+					// writefln("child p.useCount: %s answer: %s", p.useCount, p.answer);
 					send(ownerTid, p.useCount);
 				});
 			// writefln("end of stressTest");
@@ -231,7 +244,7 @@ unittest {
 		}
 		foreach (n; 0..10) {
 			auto useCount = receiveOnly!uint;
-			writefln("child #%s useCount: %s %s %s", n, useCount, p.useCount, p.answer);
+			// writefln("child #%s useCount: %s %s %s", n, useCount, p.useCount, p.answer);
 		}
 		// assert(useCount == 3);
 		// assert(p.answer == 42);
@@ -239,7 +252,7 @@ unittest {
 	// Force garbage collection so dynamic SharedPtr arrays are collected.
 	import core.memory;
 	GC.collect();
-	writefln("final p.useCount: %s answer: %s", p.useCount, p.answer);
+	// writefln("final p.useCount: %s answer: %s", p.useCount, p.answer);
 	assert(p.useCount == 1);
 	assert(p.answer == 42);
 	// assert(p.useCount == 1);
@@ -254,13 +267,11 @@ unittest {
 		auto p = cast(shared Dummy *)malloc(Dummy.sizeof);
 		import std.stdio;
 		p.greeting = "Live long and prosper";
-		// writefln("p: %s", p.greeting);
-
-		auto a = SharedPtr!(typeof(p)).make(p);
+		auto a = SharedPtr!(typeof(p)).make(p, (ptr) { free(cast(void*)ptr); });
 	}
 	// Force garbage collection for full code coverage
-	import core.memory;
-	GC.collect();
+	// import core.memory;
+	// GC.collect();
 }
 
 /// Thread-safe atomic reference counted pointer to T.

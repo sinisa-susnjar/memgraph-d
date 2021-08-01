@@ -15,13 +15,13 @@ struct Time {
 	/// Postblit, create a copy of the time from source.
 	this(this) @safe nothrow
 	{
-		if (!ref_) return;
-		ref_.inc();
+		// if (!ref_) return;
+		// ref_.inc();
 	}
 
 	/// Create a copy of `other` time.
 	this(ref Time other) {
-		other.ref_.inc();
+		// other.ref_.inc();
 		ref_ = other.ref_;
 	}
 
@@ -33,7 +33,7 @@ struct Time {
 	/// Destructor. Detaches from the underlying `mg_time`.
 	@safe @nogc ~this() pure nothrow {
 		// Pointer to AtomicRef not needed any more. GC will take care of it.
-		ref_ = null;
+		// ref_ = null;
 	}
 
 	/// Assigns a time to another. The target of the assignment gets detached from
@@ -75,17 +75,20 @@ package:
 	/// Create a Time using the given `mg_time`.
 	this(mg_time *ptr) @trusted
 	{
-		import core.stdc.stdlib : malloc;
-		import std.exception : enforce;
-		assert(!ref_);
-		ref_ = enforce(new AtomicRef!(mg_time, mg_time_destroy)(ptr, 1), "Out of memory");
-		assert(ref_);
+		// import core.stdc.stdlib : malloc;
+		// import std.exception : enforce;
+		// assert(!ref_);
+		// ref_ = enforce(new AtomicRef!(mg_time, mg_time_destroy)(ptr, 1), "Out of memory");
+		// ref_ = SharedPtr!(typeof(ptr)).make(ptr, (p) { mg_time_destroy(cast(mg_time*)p); });
+		ref_ = SharedPtr!(shared mg_time*).make(cast(shared mg_time *)ptr, (p) { mg_time_destroy(cast(mg_time*)p); });
+		// assert(ref_);
 	}
 
 	auto ptr() const { return ref_.ptr; }
 
 private:
-	AtomicRef!(mg_time, mg_time_destroy) *ref_;
+	// AtomicRef!(mg_time, mg_time_destroy) *ref_;
+	SharedPtr!(shared mg_time*) ref_;
 }
 
 unittest {
