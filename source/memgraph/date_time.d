@@ -20,7 +20,7 @@ struct DateTime {
 		ref_ = other.ref_;
 	}
 
-	/// Create a time from a Value.
+	/// Create a date time from a Value.
 	this(const ref Value value) {
 		this(mg_date_time_copy(mg_value_date_time(value.ptr)));
 	}
@@ -34,7 +34,7 @@ struct DateTime {
 		return this;
 	}
 
-	/// Return a printable string representation of this time.
+	/// Return a printable string representation of this date time.
 	const (string) toString() const {
 		import std.conv : to;
 		return to!string(seconds) ~ " " ~ to!string(nanoseconds) ~ " " ~ to!string(tz_offset_minutes);

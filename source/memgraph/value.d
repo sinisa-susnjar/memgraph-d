@@ -5,7 +5,7 @@ import std.conv, std.string;
 
 import memgraph.mgclient, memgraph.detail, memgraph.node, memgraph.enums, memgraph.list;
 import memgraph.relationship, memgraph.path, memgraph.unboundrelationship, memgraph.date;
-import memgraph.time, memgraph.local_time, memgraph.date_time;
+import memgraph.time, memgraph.local_time, memgraph.date_time, memgraph.date_time_zone_id;
 
 /// A Bolt value, encapsulating all other values.
 struct Value {
@@ -117,20 +117,10 @@ struct Value {
 		this(mg_value_make_date_time(mg_date_time_copy(dateTime.ptr)));
 	}
 
-	/// \brief Constructs a LocalTime value and takes the ownership of the given
-	/// `localTime`. \note Behaviour of accessing the `localTime` after performing
-	/// this operation is considered undefined.
-	// explicit Value(LocalTime &&localTime);
-
-	/// \brief Constructs a DateTime value and takes the ownership of the given
-	/// `dateTime`. \note Behaviour of accessing the `dateTime` after performing
-	/// this operation is considered undefined.
-	// explicit Value(DateTime &&dateTime);
-
-	/// \brief Constructs a DateTimeZoneId value and takes the ownership of the
-	/// given `dateTimeZoneId`. \note Behaviour of accessing the `dateTimeZoneId`
-	/// after performing this operation is considered undefined.
-	// explicit Value(DateTimeZoneId &&dateTimeZoneId);
+	/// Constructs a date time zone id value from the given `dateTimeZoneId`.
+	this(const ref DateTimeZoneId dateTimeZoneId) {
+		this(mg_value_make_date_time_zone_id(mg_date_time_zone_id_copy(dateTimeZoneId.ptr)));
+	}
 
 	/// \brief Constructs a LocalDateTime value and takes the ownership of the
 	/// given `localDateTime`. \note Behaviour of accessing the `localDateTime`
@@ -191,6 +181,8 @@ struct Value {
 									"LocalTime(mg_value_local_time(ptr_))", ""),
 		typeid(DateTime):		tuple(Type.DateTime,
 									"DateTime(mg_value_date_time(ptr_))", ""),
+		typeid(DateTimeZoneId):	tuple(Type.DateTimeZoneId,
+									"DateTimeZoneId(mg_value_date_time_zone_id(ptr_))", ""),
 	];
 
 	/// Cast this value to type `T`.
@@ -252,6 +244,7 @@ struct Value {
 			case Type.Time:		return to!string(to!Time(this));
 			case Type.LocalTime:return to!string(to!LocalTime(this));
 			case Type.DateTime:	return to!string(to!DateTime(this));
+			case Type.DateTimeZoneId:	return to!string(to!DateTimeZoneId(this));
 			default: assert(0, "unhandled type: " ~ to!string(type()));
 		}
 	}

@@ -294,7 +294,7 @@ struct Detail {
 			const mg_date_time_zone_id *date_time_zone_id1,
 			const mg_date_time_zone_id *date_time_zone_id2) {
 		return mg_date_time_zone_id_seconds(date_time_zone_id1) ==
-			mg_date_time_zone_id_nanoseconds(date_time_zone_id2) &&
+			mg_date_time_zone_id_seconds(date_time_zone_id2) &&
 			mg_date_time_zone_id_nanoseconds(date_time_zone_id1) ==
 			mg_date_time_zone_id_nanoseconds(date_time_zone_id2) &&
 			mg_date_time_zone_id_tz_id(date_time_zone_id1) ==

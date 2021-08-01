@@ -19,5 +19,6 @@ public import memgraph.date;
 public import memgraph.time;
 public import memgraph.local_time;
 public import memgraph.date_time;
+public import memgraph.date_time_zone_id;
 
 import memgraph.detail;
