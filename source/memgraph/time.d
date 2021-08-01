@@ -42,14 +42,14 @@ struct Time {
 	/// Compares this time with `other`.
 	/// Return: true if same, false otherwise.
 	bool opEquals(const ref Time other) const {
-		return Detail.areTimesEqual(ref_.ptr, other.ref_.ptr);
+		return Detail.areTimesEqual(ref_.data, other.ref_.data);
 	}
 
 	/// Returns nanoseconds since midnight.
-	const (long) nanoseconds() const { return mg_time_nanoseconds(ref_.ptr); }
+	const (long) nanoseconds() const { return mg_time_nanoseconds(ref_.data); }
 
 	/// Returns time zone offset in seconds from UTC.
-	const (long) tz_offset_seconds() const { return mg_time_tz_offset_seconds(ref_.ptr); }
+	const (long) tz_offset_seconds() const { return mg_time_tz_offset_seconds(ref_.data); }
 
 package:
 	/// Create a Time using the given `mg_time`.
@@ -58,7 +58,7 @@ package:
 		ref_ = SharedPtr!mg_time.make(ptr, (p) { mg_time_destroy(p); });
 	}
 
-	auto ptr() const { return ref_.ptr; }
+	auto ptr() const { return ref_.data; }
 
 private:
 	SharedPtr!mg_time ref_;
