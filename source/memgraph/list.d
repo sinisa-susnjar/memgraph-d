@@ -170,12 +170,18 @@ unittest {
 
 	assert(l3 == l);
 
-	/*
-	*/
-
 	l ~= Value(123_456);
 	l ~= Value("Bok!");
 	l ~= Value(true);
 
 	assert(l.length == 8);
+
+	// TODO: why the heck does this fail?!?
+	// import std.stdio;
+	// writefln("l: %s", to!string(l));
+	// assert(to!string(l) == "[42,23,5.4321,true,Hi,123456,Bok!,true]");
+
+	auto v = Value(l);
+	assert(v == l);
+	assert(to!string(v) == to!string(l));
 }

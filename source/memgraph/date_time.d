@@ -62,6 +62,12 @@ package:
 		ref_ = SharedPtr!mg_date_time.make(ptr, (p) { mg_date_time_destroy(p); });
 	}
 
+	/// Create a DateTime from a copy of the given `mg_date_time`.
+	this(const mg_date_time *ptr) {
+		assert(ptr != null);
+		this(mg_date_time_copy(ptr));
+	}
+
 	auto ptr() const { return ref_.data; }
 
 private:
@@ -97,6 +103,8 @@ unittest {
 		const v = Value(t);
 		const t4 = DateTime(v);
 		assert(t4 == t);
+		assert(v == t);
+		assert(to!string(v) == to!string(t));
 
 		t2 = t;
 	}

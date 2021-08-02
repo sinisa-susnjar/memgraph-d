@@ -146,14 +146,21 @@ unittest {
 			auto r5 = UnboundRelationship(r3);
 			assert(r5 == r);
 
+			assert(to!string(r) == "IS_MANAGER");
+
 			assert(r5.id == r.id);
 			assert(r5.type == r.type);
 			assert(r5.properties == r.properties);
 
 			auto r6 = Value(r);
 			assert(r3 == r6);
+			assert(to!string(r6) == to!string(r));
 
 		}
 		assert(p.ptr != null);
+
+		auto v = Value(p);
+		assert(v == p);
+		assert(to!string(v) == to!string(p));
 	}
 }

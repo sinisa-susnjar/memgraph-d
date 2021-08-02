@@ -62,6 +62,12 @@ package:
 		ref_ = SharedPtr!mg_date_time_zone_id.make(ptr, (p) { mg_date_time_zone_id_destroy(p); });
 	}
 
+	/// Create a DateTimeZoneId from a copy of the given `mg_date_time_zone_id`.
+	this(const mg_date_time_zone_id *ptr) {
+		assert(ptr != null);
+		this(mg_date_time_zone_id_copy(ptr));
+	}
+
 	auto ptr() const { return ref_.data; }
 
 private:
@@ -97,6 +103,8 @@ unittest {
 		const v = Value(t);
 		const t4 = DateTimeZoneId(v);
 		assert(t4 == t);
+		assert(v == t);
+		assert(to!string(v) == to!string(t));
 
 		t2 = t;
 	}

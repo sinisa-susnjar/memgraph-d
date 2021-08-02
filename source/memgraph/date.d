@@ -55,6 +55,12 @@ package:
 		ref_ = SharedPtr!mg_date.make(ptr, (p) { mg_date_destroy(p); });
 	}
 
+	/// Create a Date from a copy of the given `mg_date`.
+	this(const mg_date *ptr) {
+		assert(ptr != null);
+		this(mg_date_copy(ptr));
+	}
+
 	auto ptr() const { return ref_.data; }
 
 private:
@@ -87,6 +93,8 @@ unittest {
 		const v = Value(d);
 		const d4 = Date(v);
 		assert(d4 == d);
+		assert(v == d);
+		assert(to!string(v) == to!string(d));
 
 		d2 = d;
 	}

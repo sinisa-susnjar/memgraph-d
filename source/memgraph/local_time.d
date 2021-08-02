@@ -54,6 +54,12 @@ package:
 		ref_ = SharedPtr!mg_local_time.make(ptr, (p) { mg_local_time_destroy(p); });
 	}
 
+	/// Create a LocalTime from a copy of the given `mg_local_time`.
+	this(const mg_local_time *ptr) {
+		assert(ptr != null);
+		this(mg_local_time_copy(ptr));
+	}
+
 	auto ptr() const { return ref_.data; }
 
 private:
@@ -85,6 +91,8 @@ unittest {
 		const v = Value(t);
 		const t4 = LocalTime(v);
 		assert(t4 == t);
+		assert(v == t);
+		assert(to!string(v) == to!string(t));
 
 		t2 = t;
 	}

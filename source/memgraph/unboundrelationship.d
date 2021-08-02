@@ -125,6 +125,7 @@ unittest {
 		auto v = Value(r);
 		assert(v == r);
 		assert(r == v);
+		assert(to!string(v) == to!string(r));
 	}
 	assert(to!string(res.columns) == `["a", "r", "b"]`);
 }
