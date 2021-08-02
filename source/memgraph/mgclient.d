@@ -1492,13 +1492,14 @@ version(unittest) {
 }
 
 unittest {
-	import testutils;
+	import testutils : startContainer;
 	startContainer();
 }
 
 /// Test connection to memgraph on localhost, port 7688.
 unittest {
-	import std.string, std.conv;
+	import std.string : toStringz, fromStringz;
+	import std.conv : to;
 
 	assert(mg_init() == 0);
 
