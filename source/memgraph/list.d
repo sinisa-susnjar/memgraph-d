@@ -1,7 +1,7 @@
 /// Provides a `Value` list.
 module memgraph.list;
 
-import std.string, std.conv, std.stdio;
+import std.string, std.conv;
 
 import memgraph.mgclient, memgraph.detail, memgraph.value, memgraph.enums;
 
@@ -15,7 +15,6 @@ struct List {
 
 	/// Create a copy of `other` list. Will copy all values into this list from `other`.
 	this(inout ref List other) {
-		writefln("List copy ctor: sz: %s this: %s other: %s", other.list_.length, &this, &other);
 		list_.length = other.list_.length;
 		foreach (i, v; other.list_)
 			list_[i] = v;
@@ -35,25 +34,65 @@ struct List {
 		return list_ == other.list_;
 	}
 
+	ref List opOpAssign(string op: "~")(Value value)
+	{
+		// import std.stdio;
+		// writefln("opOpAssign: val: %s", value);
+		list_ ~= value;
+		return this;
+	}
+
+	ref Value opIndexAssign(Value value, size_t idx) {
+		// import std.stdio;
+		// writefln("opIndexAssign: val: %s idx: %s", value, idx);
+		list_[idx] = value;
+		return list_[idx];
+	}
+
+	ref Value opIndex(size_t idx) {
+		// import std.stdio;
+		// writefln("opIndex: idx: %s", idx);
+		return list_[idx];
+	}
+
 	/// Return a printable string representation of this list.
-	const (string) toString() const {
+	string toString() const {
 		import std.algorithm : map;
 		import std.range : join;
-		import std.stdio;
-		foreach (i, v; list_)
-			writefln("toString: %s %s: %s", &this, i, v);
 		return "[" ~ list_.map!(v => to!string(v)).join(",") ~ "]";
 	}
 
-	@property @safe @nogc ref inout(Value[]) list() inout pure nothrow {
-		return list_;
+	// @property @safe @nogc ref inout(Value[]) list() inout pure nothrow {
+	// 	return list_;
+	// }
+
+	@property @safe @nogc size_t length() const pure nothrow {
+		return list_.length;
 	}
+
+	@property @safe void length(size_t len) pure nothrow {
+		list_.length = len;
+	}
+
+	/*
+	bool empty() const {
+		return idx_ >= list_.length;
+	}
+	auto front() const {
+		import std.typecons;
+		assert(idx_ < list_.length);
+		return list_[idx_];
+		// return tuple(idx_, list_[idx_]);
+	}
+	void popFront() {
+		idx_++;
+	}
+	*/
 
 package:
 	/// Create a List using the given `mg_list`.
 	this(mg_list *ptr) {
 		assert(ptr != null);
-		// writefln("map mg_map ctor");
 		ptr_ = ptr;
 		listToArray();
 	}
@@ -61,7 +100,6 @@ package:
 	/// Create a List from a copy of the given `mg_list`.
 	this(const mg_list *const_ptr) {
 		assert(const_ptr != null);
-		// writefln("map const mg_map ctor");
 		this(mg_list_copy(const_ptr));
 		listToArray();
 	}
@@ -83,19 +121,17 @@ private:
 	// Copy the contents from the `Value` array into the mg_list
 	// when requested.
 	void arrayToList() {
-		// import std.stdio;
-		// writefln("arrayToList: ptr: %s len: %s", ptr_, list_.length);
 		if (ptr_ == null) {
 			ptr_ = mg_list_make_empty(to!uint(list_.length));
 			foreach (v; list_)
 				mg_list_append(ptr_, mg_value_copy(v.ptr));
 		}
-		// writefln("copied %s values to list %s", list_.length, ptr_);
 	}
 
 	Value[] list_;
-	alias list this;
+	// alias list this;
 	mg_list *ptr_;
+	uint idx_;
 }
 
 unittest {
@@ -122,14 +158,11 @@ unittest {
 
 	assert(l.ptr != null);
 
+	assert(to!string(l) == "[42,23,5.4321,true,Hi]");
+
 	const List l2 = l;
 
-	// writefln("%s [%s] %s [%s]", l[0], l[0].ptr, l2[0], l2[0].ptr);
-
 	assert(l2 == l);
-
-	// l.length = 10;
-	// assert(l.length == 10);
 
 	assert(l2.ptr_ != null);
 
@@ -137,23 +170,12 @@ unittest {
 
 	assert(l3 == l);
 
-	foreach (i, v; l) {
-		assert(l[i].type == l3[i].type);
-		assert(l[i] == l3[i]);
-		writefln("%s: %s", i, v);
-	}
-	writeln;
+	/*
+	*/
 
 	l ~= Value(123_456);
 	l ~= Value("Bok!");
 	l ~= Value(true);
 
 	assert(l.length == 8);
-
-	foreach (i, v; l) {
-		writefln("%s: %s", i, v);
-	}
-
-	writefln("before toString");
-	writefln("l (%s): %s, %s", l.length, &l, to!string(l));
 }
