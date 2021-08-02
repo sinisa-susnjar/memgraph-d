@@ -6,6 +6,7 @@ import std.conv, std.string;
 import memgraph.mgclient, memgraph.detail, memgraph.node, memgraph.enums, memgraph.list;
 import memgraph.relationship, memgraph.path, memgraph.unboundrelationship, memgraph.date;
 import memgraph.time, memgraph.local_time, memgraph.date_time, memgraph.date_time_zone_id;
+import memgraph.local_date_time;
 
 /// A Bolt value, encapsulating all other values.
 struct Value {
@@ -110,10 +111,10 @@ struct Value {
 		this(mg_value_make_date_time_zone_id(mg_date_time_zone_id_copy(dateTimeZoneId.ptr)));
 	}
 
-	/// \brief Constructs a LocalDateTime value and takes the ownership of the
-	/// given `localDateTime`. \note Behaviour of accessing the `localDateTime`
-	/// after performing this operation is considered undefined.
-	// explicit Value(LocalDateTime &&localDateTime);
+	/// Constructs a local date time value from the given `localDateTime`.
+	this(const ref LocalDateTime localDateTime) {
+		this(mg_value_make_local_date_time(mg_local_date_time_copy(localDateTime.ptr)));
+	}
 
 	/// \brief Constructs a Duration value and takes the ownership of the given
 	/// `duration`. \note Behaviour of accessing the `duration` after performing
@@ -171,6 +172,8 @@ struct Value {
 									"DateTime(mg_value_date_time(ptr_))", ""),
 		typeid(DateTimeZoneId):	tuple(Type.DateTimeZoneId,
 									"DateTimeZoneId(mg_value_date_time_zone_id(ptr_))", ""),
+		typeid(LocalDateTime):	tuple(Type.LocalDateTime,
+									"LocalDateTime(mg_value_local_date_time(ptr_))", ""),
 	];
 
 	/// Cast this value to type `T`.
@@ -226,20 +229,21 @@ struct Value {
 	/// representation.
 	const (string) toString() const {
 		switch (type()) {
-			case Type.Double:	return to!string(to!double(this));
-			case Type.Node:		return to!string(to!Node(this));
-			case Type.Bool:		return to!string(to!bool(this));
-			case Type.Int:		return to!string(to!int(this));
-			case Type.String:	return Detail.convertString(mg_value_string(ptr_));
-			case Type.Relationship:		return to!string(to!Relationship(this));
-			case Type.UnboundRelationship:		return to!string(to!UnboundRelationship(this));
-			case Type.List:		return to!string(to!List(this));
-			case Type.Path:		return to!string(to!Path(this));
-			case Type.Date:		return to!string(to!Date(this));
-			case Type.Time:		return to!string(to!Time(this));
-			case Type.LocalTime:return to!string(to!LocalTime(this));
-			case Type.DateTime:	return to!string(to!DateTime(this));
-			case Type.DateTimeZoneId:	return to!string(to!DateTimeZoneId(this));
+			case Type.Double:				return to!string(to!double(this));
+			case Type.Node:					return to!string(to!Node(this));
+			case Type.Bool:					return to!string(to!bool(this));
+			case Type.Int:					return to!string(to!int(this));
+			case Type.String:				return Detail.convertString(mg_value_string(ptr_));
+			case Type.Relationship:			return to!string(to!Relationship(this));
+			case Type.UnboundRelationship:	return to!string(to!UnboundRelationship(this));
+			case Type.List:					return to!string(to!List(this));
+			case Type.Path:					return to!string(to!Path(this));
+			case Type.Date:					return to!string(to!Date(this));
+			case Type.Time:					return to!string(to!Time(this));
+			case Type.LocalTime:			return to!string(to!LocalTime(this));
+			case Type.DateTime:				return to!string(to!DateTime(this));
+			case Type.DateTimeZoneId:		return to!string(to!DateTimeZoneId(this));
+			case Type.LocalDateTime:		return to!string(to!LocalDateTime(this));
 			default: assert(0, "unhandled type: " ~ to!string(type()));
 		}
 	}
