@@ -10,16 +10,7 @@ import memgraph.time, memgraph.local_time, memgraph.date_time, memgraph.date_tim
 /// A Bolt value, encapsulating all other values.
 struct Value {
 
-	/// Creates a new Value from a copy of the given `Value`.
-	/*
-	@safe @nogc this(const ref Value other) {
-	// this(const ref Value other) {
-		// import std.stdio;
-		// writefln("this copy ctor: value: %s", other.toString);
-		this(mg_value_copy(other.ptr_));
-	}
-	*/
-	this(this) {
+	@nogc this(this) {
 		if (ptr_)
 			ptr_ = mg_value_copy(ptr_);
 	}
@@ -51,10 +42,7 @@ struct Value {
 
 	/// Make a new `Value` from a `List`.
 	this(ref List value) {
-		// import std.stdio;
-		// writefln("this(List)");
 		this(mg_value_make_list(mg_list_copy(value.ptr)));
-		// writefln("done this(List)");
 	}
 
 	/// \brief Constructs a list value and takes the ownership of the `list`.
@@ -186,10 +174,17 @@ struct Value {
 	];
 
 	/// Cast this value to type `T`.
+	// auto @nogc opCast(T)() const {
 	auto opCast(T)() const {
-		assert(type() == ops[typeid(T)][0]);
-		// return to!T(mixin(ops[typeid(T)][1]));
-		return mixin(ops[typeid(T)][1]);
+		/*
+		static if (is(T == Value)) {
+			return this;
+		} else {
+		*/
+			assert(type() == ops[typeid(T)][0]);
+			// return to!T(mixin(ops[typeid(T)][1]));
+			return mixin(ops[typeid(T)][1]);
+		// }
 	}
 
 	/// Comparison operator for type `T`.

@@ -1,4 +1,4 @@
-/// Provides a thread-safe atomic reference counted pointer.
+/// Provides an atomic lock-free reference counted pointer.
 module memgraph.atomic;
 
 import core.atomic : atomicOp, atomicStore, atomicLoad;

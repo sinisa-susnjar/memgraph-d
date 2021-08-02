@@ -100,9 +100,6 @@ private:
 }
 
 unittest {
-	import std.stdio : writefln;
-	writefln("testing path...");
-
 	import testutils : connectContainer, createTestData, deleteTestData;
 	import memgraph : Client, Optional, Type, Value, Node, Relationship, List;
 	import std.conv : to;
@@ -119,9 +116,6 @@ unittest {
 			"MATCH p = ()-[*]-() RETURN p");
 	assert(res, client.error);
 	foreach (c; res) {
-		writefln("c: %s", c);
-		writefln("type: %s", c[0].type);
-
 		assert(c[0].type == Type.Path);
 		auto p = to!Path(c[0]);
 
@@ -140,13 +134,9 @@ unittest {
 					p4.isReversedRelationshipAt(to!uint(i)));
 		}
 
-		writefln("p.length: %s", p.length);
-
 		foreach (i; 0..p.length) {
 			auto n = p.getNodeAt(to!uint(i));
-			writefln("n(%s): %s", i, n);
 			auto r = p.getRelationshipAt(to!uint(i));
-			writefln("r(%s): %s", i, r);
 
 			auto r2 = r;
 			auto r3 = Value(r);
@@ -164,32 +154,6 @@ unittest {
 			assert(r3 == r6);
 
 		}
-
 		assert(p.ptr != null);
-
-
-		// assert(to!string(l) == to!string(c[0]));
-
-		// foreach (e; l) { writefln("type: %s: %s", e.type, e); }
-
-		/*
-		auto r2 = r;
-		assert(r2 == r);
-
-		auto r3 = Relationship(r);
-		assert(r3 == r);
-
-		auto r4 = Relationship(r.ptr);
-		assert(r4 == r);
-
-		assert(r.id == r2.id);
-		assert(r.startId == r2.startId);
-		assert(r.endId == r2.endId);
-		assert(r.properties == r2.properties);
-
-		auto v = Value(r);
-		assert(v == r);
-		assert(r == v);
-		*/
 	}
 }

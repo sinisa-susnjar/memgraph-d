@@ -3,7 +3,6 @@ module memgraph.optional;
 
 /// Holds an optional value of type `V`.
 struct Optional(V) {
-	// TODO: wtf is going on with this?
 	@disable this(this);
 
 	/// Copy construct `this` from another `Optional` instance.

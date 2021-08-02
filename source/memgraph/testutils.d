@@ -31,7 +31,6 @@ version (unittest) {
 		import std.process, std.stdio, std.file, std.string;
 
 		import std.conv;
-		// writefln("startContainer() on localhost:%s", to!string(MEMGRAPH_PORT));
 
 		auto containerIdFileName = environment.get("TMP", "/tmp") ~ "/memgraph-d.container";
 

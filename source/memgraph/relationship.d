@@ -1,8 +1,6 @@
 /// Provides a wrapper around a `Relationship`.
 module memgraph.relationship;
 
-// import std.string, std.conv;
-
 import memgraph.mgclient, memgraph.detail, memgraph.map, memgraph.value;
 
 /// Represents a relationship from a labeled property graph.

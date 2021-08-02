@@ -81,9 +81,6 @@ private:
 }
 
 unittest {
-	import std.stdio : writefln;
-	writefln("testing unbound relationship...");
-
 	import testutils : connectContainer, createTestData, deleteTestData;
 	import memgraph : Client, Optional, Type, Value, Node, Relationship;
 	import std.conv : to;
@@ -95,13 +92,12 @@ unittest {
 
 	createTestData(client);
 
-	// TODO: fix unit test, ie. use unbound relationship
+	// TODO: fix unit test, ie. use unbound relationship, e.g. via Path
 	auto res = client.execute(
 					"MATCH (a:Person)-[r:IS_MANAGER]-(b:Person) " ~
 						"RETURN a, r, b;");
 	assert(res, client.error);
 	foreach (c; res) {
-		writefln("c: %s", c);
 		assert(c[0].type == Type.Node);
 		assert(c[1].type == Type.Relationship);
 		assert(c[2].type == Type.Node);
