@@ -304,7 +304,7 @@ struct Detail {
 	static bool areLocalDateTimesEqual(const mg_local_date_time *local_date_time1,
 			const mg_local_date_time *local_date_time2) {
 		return mg_local_date_time_seconds(local_date_time1) ==
-			mg_local_date_time_nanoseconds(local_date_time2) &&
+			mg_local_date_time_seconds(local_date_time2) &&
 			mg_local_date_time_nanoseconds(local_date_time1) ==
 			mg_local_date_time_nanoseconds(local_date_time2);
 	}
