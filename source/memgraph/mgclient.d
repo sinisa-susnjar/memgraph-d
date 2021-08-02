@@ -156,7 +156,34 @@ extern (C) {
 	}
 
 	/// A Bolt value, encapsulating all other values.
-	struct mg_value;
+	version(unittest) {
+		struct mg_value {
+			mg_value_type type;
+			union {
+				int bool_v;
+				long integer_v;
+				double float_v;
+				mg_string *string_v;
+				mg_list *list_v;
+				mg_map *map_v;
+				mg_node *node_v;
+				mg_relationship *relationship_v;
+				mg_unbound_relationship *unbound_relationship_v;
+				mg_path *path_v;
+				mg_date *date_v;
+				mg_time *time_v;
+				mg_local_time *local_time_v;
+				mg_date_time *date_time_v;
+				mg_date_time_zone_id *date_time_zone_id_v;
+				mg_local_date_time *local_date_time_v;
+				mg_duration *duration_v;
+				mg_point_2d *point_2d_v;
+				mg_point_3d *point_3d_v;
+			}
+		}
+	} else {
+		struct mg_value;
+	}
 
 	/// An UTF-8 encoded string.
 	///
@@ -170,7 +197,14 @@ extern (C) {
 	/// `mg_string`.
 	///
 	/// Maximum possible string length allowed by Bolt protocol is `uint.max`.
-	struct mg_string;
+	version(unittest) {
+		struct mg_string {
+			uint size;
+			char *data;
+		}
+	} else {
+		struct mg_string;
+	}
 
 	/// An ordered sequence of values.
 	///
@@ -178,7 +212,15 @@ extern (C) {
 	/// all values stored in it.
 	///
 	/// Maximum possible list length allowed by Bolt is `uint.max`.
-	struct mg_list;
+	version(unittest) {
+		struct mg_list {
+			uint size;
+			uint capacity;
+			mg_value **elements;
+		}
+	} else {
+		struct mg_list;
+	}
 
 	/// Sized sequence of pairs of keys and values.
 	///
@@ -186,7 +228,16 @@ extern (C) {
 	/// and values stored in it.
 	///
 	/// Maximum possible map size allowed by Bolt protocol is `uint.max`.
-	struct mg_map;
+	version(unittest) {
+		struct mg_map {
+			uint size;
+			uint capacity;
+			mg_string **keys;
+			mg_value **values;
+		}
+	} else {
+		struct mg_map;
+	}
 
 	/// Represents a node from a labeled property graph.
 	///
@@ -195,21 +246,48 @@ extern (C) {
 	/// properties.
 	///
 	/// Maximum possible number of labels allowed by Bolt protocol is `uint.max`.
-	struct mg_node;
+	version(unittest) {
+		struct mg_node {
+			long id;
+			uint label_count;
+			mg_string **labels;
+			mg_map *properties;
+		}
+	} else {
+		struct mg_node;
+	}
 
 	/// Represents a relationship from a labeled property graph.
 	///
 	/// Consists of a unique identifier (within the scope of its origin graph),
 	/// identifiers for the start and end nodes of that relationship, a type and a
 	/// map of properties. A relationship owns its type string and property map.
-	struct mg_relationship;
+	version(unittest) {
+		struct mg_relationship {
+			long id;
+			long start_id;
+			long end_id;
+			mg_string *type;
+			mg_map *properties;
+		}
+	} else {
+		struct mg_relationship;
+	}
 
 	/// Represents a relationship from a labeled property graph.
 	///
 	/// Like `mg_relationship`, but without identifiers for start and end nodes.
 	/// Mainly used as a supporting type for `mg_path`. An unbound relationship
 	/// owns its type string and property map.
-	struct mg_unbound_relationship;
+	version(unittest) {
+		struct mg_unbound_relationship {
+			long id;
+			mg_string *type;
+			mg_map *properties;
+		}
+	} else {
+		struct mg_unbound_relationship;
+	}
 
 	/// Represents a sequence of alternating nodes and relationships
 	/// corresponding to a walk in a labeled property graph.
@@ -219,7 +297,18 @@ extern (C) {
 	/// direction. A relationship is said to be reversed if it was traversed in the
 	/// direction opposite of the direction of the underlying relationship in the
 	/// data graph.
-	struct mg_path;
+	version(unittest) {
+		struct mg_path {
+			uint node_count;
+			uint relationship_count;
+			uint sequence_length;
+			mg_node **nodes;
+			mg_unbound_relationship **relationships;
+			long *sequence;
+		}
+	} else {
+		struct mg_path;
+	}
 
 	/// Represents a date.
 	///
@@ -318,12 +407,29 @@ extern (C) {
 	/// Represents a single location in 2-dimensional space.
 	///
 	/// Contains SRID along with its x and y coordinates.
-	struct mg_point_2d;
+	version(unittest) {
+		struct mg_point_2d {
+			long srid;
+			double x;
+			double y;
+		}
+	} else {
+		struct mg_point_2d;
+	}
 
 	/// Represents a single location in 3-dimensional space.
 	///
 	/// Contains SRID along with its x, y and z coordinates.
-	struct mg_point_3d;
+	version(unittest) {
+		struct mg_point_3d {
+			long srid;
+			double x;
+			double y;
+			double z;
+		}
+	} else {
+		struct mg_point_3d;
+	}
 
 	/// Constructs a nil `mg_value`.
 	///
@@ -1366,6 +1472,12 @@ version(unittest) {
 		struct mg_allocator {}
 		extern shared mg_allocator mg_system_allocator;
 
+		@safe @nogc mg_string *mg_string_alloc(uint size, mg_allocator *allocator);
+		@safe @nogc mg_list *mg_list_alloc(uint size, mg_allocator *allocator);
+		@safe @nogc mg_map *mg_map_alloc(uint size, mg_allocator *allocator);
+		@safe @nogc mg_node *mg_node_alloc(uint label_count, mg_allocator *allocator);
+		@safe @nogc mg_path *mg_path_alloc(uint node_count, uint relationship_count, uint sequence_length, mg_allocator *allocator);
+
 		@safe @nogc mg_date *mg_date_alloc(shared mg_allocator *alloc) pure nothrow;
 		@safe @nogc mg_time *mg_time_alloc(shared mg_allocator *alloc) pure nothrow;
 		@safe @nogc mg_local_time *mg_local_time_alloc(shared mg_allocator *alloc) pure nothrow;
@@ -1373,6 +1485,9 @@ version(unittest) {
 		@safe @nogc mg_date_time_zone_id *mg_date_time_zone_id_alloc(shared mg_allocator *alloc) pure nothrow;
 		@safe @nogc mg_local_date_time *mg_local_date_time_alloc(shared mg_allocator *alloc) pure nothrow;
 		@safe @nogc mg_duration *mg_duration_alloc(shared mg_allocator *alloc) pure nothrow;
+
+		@safe @nogc mg_point_2d *mg_point_2d_alloc(mg_allocator *allocator);
+		@safe @nogc mg_point_3d *mg_point_3d_alloc(mg_allocator *allocator);
 	}
 }
 
