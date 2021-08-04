@@ -13,6 +13,7 @@ struct Result {
 	/// Returns names of columns output by the current query execution.
 	auto columns() {
 		assert(result != null);
+		assert(*result != null);
 		const (mg_list) *list = mg_result_columns(*result);
 		const size_t list_length = mg_list_size(list);
 		string[] cols;
@@ -25,9 +26,8 @@ struct Result {
 	/// Returns query execution summary as a key/value `Map`.
 	auto summary() {
 		assert(result != null);
-		if (*result != null)
-			return Map(mg_result_summary(*result));
-		return Map();
+		assert(*result != null);
+		return Map(mg_result_summary(*result));
 	}
 
 	/// Check if the `Result` is empty.
