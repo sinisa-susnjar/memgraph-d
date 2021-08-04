@@ -6,7 +6,7 @@ import std.conv, std.string;
 import memgraph.mgclient, memgraph.detail, memgraph.node, memgraph.enums, memgraph.list;
 import memgraph.relationship, memgraph.path, memgraph.unboundrelationship, memgraph.date;
 import memgraph.time, memgraph.local_time, memgraph.date_time, memgraph.date_time_zone_id;
-import memgraph.local_date_time;
+import memgraph.local_date_time, memgraph.duration;
 
 /// A Bolt value, encapsulating all other values.
 struct Value {
@@ -116,10 +116,10 @@ struct Value {
 		this(mg_value_make_local_date_time(mg_local_date_time_copy(localDateTime.ptr)));
 	}
 
-	/// \brief Constructs a Duration value and takes the ownership of the given
-	/// `duration`. \note Behaviour of accessing the `duration` after performing
-	/// this operation is considered undefined.
-	// explicit Value(Duration &&duration);
+	/// Constructs a duration value from the given `duration`.
+	this(const ref Duration duration) {
+		this(mg_value_make_duration(mg_duration_copy(duration.ptr)));
+	}
 
 	/// \brief Constructs a Point2d value and takes the ownership of the given
 	/// `point2d`. \note Behaviour of accessing the `point2d` after performing
@@ -174,6 +174,8 @@ struct Value {
 									"DateTimeZoneId(mg_value_date_time_zone_id(ptr_))", ""),
 		typeid(LocalDateTime):	tuple(Type.LocalDateTime,
 									"LocalDateTime(mg_value_local_date_time(ptr_))", ""),
+		typeid(Duration):		tuple(Type.Duration,
+									"Duration(mg_value_duration(ptr_))", ""),
 	];
 
 	/// Cast this value to type `T`.
@@ -244,6 +246,7 @@ struct Value {
 			case Type.DateTime:				return to!string(to!DateTime(this));
 			case Type.DateTimeZoneId:		return to!string(to!DateTimeZoneId(this));
 			case Type.LocalDateTime:		return to!string(to!LocalDateTime(this));
+			case Type.Duration:				return to!string(to!Duration(this));
 			default: assert(0, "unhandled type: " ~ to!string(type()));
 		}
 	}
