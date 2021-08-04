@@ -56,9 +56,9 @@ struct Detail {
 			case mg_value_type.MG_VALUE_TYPE_POINT_3D:
 				return Type.Point3d;
 			case mg_value_type.MG_VALUE_TYPE_UNKNOWN:
-				throw new Exception("Unknown value type!");
+				assert(0, "unknown value type");
 			default:
-				assert(0, "unexpected type: " ~ to!string(type));
+				assert(0, "unexpected value type: " ~ to!string(type));
 		}
 	}
 
@@ -128,7 +128,7 @@ struct Detail {
 				return Detail.arePoint3dsEqual(mg_value_point_3d(value1),
 						mg_value_point_3d(value2));
 			case mg_value_type.MG_VALUE_TYPE_UNKNOWN:
-				throw new Exception("Comparing values of unknown types!");
+				assert(0, "comparing values of unknown types!");
 			default: assert(0, "unexpected type: " ~ to!string(mg_value_get_type(value1)));
 		}
 	}
