@@ -64,7 +64,7 @@ struct SharedPtr(T)
 	}
 
 	/// Return pointer to "pointee" of type `T`.
-	auto data() const {
+	auto data() inout {
 		if (ctrl_ == null)
 			return null;
 		return cast(PtrType)ctrl_.data_;
