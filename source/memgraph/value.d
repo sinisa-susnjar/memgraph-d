@@ -7,6 +7,7 @@ import memgraph.mgclient, memgraph.detail, memgraph.node, memgraph.enums, memgra
 import memgraph.relationship, memgraph.path, memgraph.unboundrelationship, memgraph.date;
 import memgraph.time, memgraph.local_time, memgraph.date_time, memgraph.date_time_zone_id;
 import memgraph.local_date_time, memgraph.duration, memgraph.point2d, memgraph.point3d;
+import memgraph.map;
 
 /// A Bolt value, encapsulating all other values.
 struct Value {
@@ -22,10 +23,8 @@ struct Value {
 			mg_value_destroy(ptr_);
 	}
 
-	// Creates a Null value.
-	// TODO: not sure this is worth the trouble atm
-	// this(typeof(null)) { this(mg_value_make_null()); }
-	// @disable this();
+	/// Creates a Null value.
+	this(typeof(null)) { this(mg_value_make_null()); }
 
 	/// Make a new `Value` from a bool.
 	this(bool value) { this(mg_value_make_bool(value)); }
@@ -36,35 +35,20 @@ struct Value {
 	/// Make a new `Value` from a double.
 	this(double value) { this(mg_value_make_float(value)); }
 
-	/// Make a new `Value` from a string.
+	/// Constructs a new `Value` from a string.
 	this(const string value) {
 		this(mg_value_make_string(toStringz(value)));
 	}
 
-	/// Make a new `Value` from a `List`.
+	/// Constructs a new `Value` from a `List`.
 	this(ref List value) {
 		this(mg_value_make_list(mg_list_copy(value.ptr)));
 	}
 
-	/// \brief Constructs a list value and takes the ownership of the `list`.
-	/// \note
-	/// Behaviour of accessing the `list` after performing this operation is
-	/// considered undefined.
-	// this(List &&list);
-
-	/// \brief Constructs a map value and takes the ownership of the `map`.
-	/// \note
-	/// Behaviour of accessing the `map` after performing this operation is
-	/// considered undefined.
-	// this(Map &&map);
-
-/* TODO
-	/// Constructs a vertex value and takes the ownership of the given `vertex`.
-	this(ref Node vertex) {
-		this(mg_value_make_node(vertex.ptr));
-		// vertex.ptr = null;
+	/// Constructs a new `Value` from a `Map`.
+	this(ref Map value) {
+		this(mg_value_make_map(mg_map_copy(value.ptr)));
 	}
-*/
 
 	/// Constructs a new vertex value from the given `vertex`.
 	this(const ref Node vertex) {
@@ -151,6 +135,8 @@ struct Value {
 									"Node(mg_value_node(ptr_))", ""),
 		typeid(List):			tuple(Type.List,
 									"List(mg_value_list(ptr_))", ""),
+		typeid(Map):			tuple(Type.Map,
+									"Map(mg_value_map(ptr_))", ""),
 		typeid(Path):			tuple(Type.Path,
 									"Path(mg_value_path(ptr_))", ""),
 		typeid(Relationship):	tuple(Type.Relationship,
@@ -240,6 +226,7 @@ struct Value {
 			case Type.Relationship:			return to!string(to!Relationship(this));
 			case Type.UnboundRelationship:	return to!string(to!UnboundRelationship(this));
 			case Type.List:					return to!string(to!List(this));
+			case Type.Map:					return to!string(to!Map(this));
 			case Type.Path:					return to!string(to!Path(this));
 			case Type.Date:					return to!string(to!Date(this));
 			case Type.Time:					return to!string(to!Time(this));
@@ -466,6 +453,75 @@ unittest {
 
 	assert(v == l);
 
+	auto v2 = Value(l);
+	assert(v == v2);
+
 	auto l2 = to!List(v);
 	// auto l2 = to!List(List(mg_value_list(v.ptr_)));
+}
+
+// map tests
+unittest {
+	Map m;
+	m["key1"] = 1;
+	m["key2"] = true;
+	m["key3"] = 2.71828;
+	m["key4"] = "test";
+
+	auto v1 = Value(m);
+	assert(v1.type == Type.Map);
+
+	auto v2 = Value(m);
+	assert(v2.type == Type.Map);
+
+	assert(v1 == v2);
+
+	auto m2 = to!Map(v1);
+	assert(m == m2);
+}
+
+// null tests
+unittest {
+	auto v1 = Value(null);
+	assert(v1.type == Type.Null);
+	auto v2 = Value(null);
+	assert(v2.type == Type.Null);
+
+	assert(v1 == v2);
+}
+
+// unknown value test
+unittest {
+	import std.exception, core.exception;
+
+	auto v = Value(1);
+	assert(v.type == Type.Int);
+
+	v.ptr_.type = mg_value_type.MG_VALUE_TYPE_UNKNOWN;
+
+	assertThrown!AssertError(v.type);
+
+	auto v2 = Value(1);
+	v2.ptr_.type = mg_value_type.MG_VALUE_TYPE_UNKNOWN;
+
+	assertThrown!AssertError(v == v2);
+
+	v.ptr_.type = cast(mg_value_type)-1;
+
+	assertThrown!AssertError(v.type);
+
+	v2.ptr_.type = cast(mg_value_type)-1;
+
+	assertThrown!AssertError(v == v2);
+}
+
+// comparison tests
+unittest {
+	auto v1 = Value(1);
+	assert(v1.type == Type.Int);
+	assert(v1 == v1);
+
+	auto v2 = Value(2.71828);
+	assert(v2.type == Type.Double);
+	assert(v1 != v2);
 }
