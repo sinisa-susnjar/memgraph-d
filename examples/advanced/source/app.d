@@ -43,12 +43,6 @@ int main(string[] args) {
 
 	auto results = client.execute("MATCH (n) RETURN n;");
 
-	/* TODO: calling summary on a non-fetched result crashes - why?
-	auto summary = results.summary();
-	writefln("map: ", summary);
-	writefln("summary: {%s}", summary.byKeyValue.map!(p => p.key ~ ":" ~ to!string(p.value)).join(" "));
-	*/
-
 	size_t resultCount;
 	foreach (r; results) {
 		assert(r.length == 1);
