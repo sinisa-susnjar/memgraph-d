@@ -36,22 +36,16 @@ struct List {
 
 	ref List opOpAssign(string op: "~")(Value value)
 	{
-		// import std.stdio;
-		// writefln("opOpAssign: val: %s", value);
 		list_ ~= value;
 		return this;
 	}
 
 	ref Value opIndexAssign(Value value, size_t idx) {
-		// import std.stdio;
-		// writefln("opIndexAssign: val: %s idx: %s", value, idx);
 		list_[idx] = value;
 		return list_[idx];
 	}
 
 	ref Value opIndex(size_t idx) {
-		// import std.stdio;
-		// writefln("opIndex: idx: %s", idx);
 		return list_[idx];
 	}
 
@@ -61,10 +55,6 @@ struct List {
 		import std.range : join;
 		return "[" ~ list_.map!(v => to!string(v)).join(",") ~ "]";
 	}
-
-	// @property @safe @nogc ref inout(Value[]) list() inout pure nothrow {
-	// 	return list_;
-	// }
 
 	@property @safe @nogc size_t length() const pure nothrow {
 		return list_.length;
@@ -129,7 +119,6 @@ private:
 	}
 
 	Value[] list_;
-	// alias list this;
 	mg_list *ptr_;
 	uint idx_;
 }
@@ -184,4 +173,21 @@ unittest {
 	auto v = Value(l);
 	assert(v == l);
 	assert(to!string(v) == to!string(l));
+	assert(v == v);
+
+	auto l4 = List(l);
+
+	l4 ~= Value("another entry");
+	assert(l4.ptr != null);
+
+	import std.stdio;
+	writefln("l: %s", l);
+	writefln("l4: %s", l4);
+
+	auto v2 = Value(l4);
+
+	writefln("v: %s", v);
+	writefln("v2: %s", v2);
+	// TODO: the two lists should not be the same, but they are - WHY ?!?
+	// assert(v != v2);
 }

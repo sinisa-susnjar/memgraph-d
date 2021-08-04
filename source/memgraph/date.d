@@ -70,6 +70,7 @@ private:
 unittest {
 	{
 		import std.conv : to;
+		import memgraph.enums;
 
 		auto dt = mg_date_alloc(&mg_system_allocator);
 		assert(dt != null);
@@ -97,6 +98,14 @@ unittest {
 		assert(to!string(v) == to!string(d));
 
 		d2 = d;
+		assert(d2 == d);
+
+		auto v1 = Value(d2);
+		assert(v1.type == Type.Date);
+		auto v2 = Value(d2);
+		assert(v2.type == Type.Date);
+
+		assert(v1 == v2);
 	}
 	// Force garbage collection for full code coverage
 	import core.memory;

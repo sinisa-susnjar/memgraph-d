@@ -69,6 +69,7 @@ private:
 unittest {
 	{
 		import std.conv : to;
+		import memgraph.enums;
 
 		auto tm = mg_local_time_alloc(&mg_system_allocator);
 		assert(tm != null);
@@ -95,6 +96,14 @@ unittest {
 		assert(to!string(v) == to!string(t));
 
 		t2 = t;
+		assert(t2 == t);
+
+		auto v1 = Value(t2);
+		assert(v1.type == Type.LocalTime);
+		auto v2 = Value(t2);
+		assert(v2.type == Type.LocalTime);
+
+		assert(v1 == v2);
 	}
 	// Force garbage collection for full code coverage
 	import core.memory;

@@ -164,11 +164,12 @@ unittest {
 
 	// this is a package internal method
 	assert(node.ptr != null);
-	// const auto otherProps2 = Map(cast(const(mg_map*))(otherProps.ptr));
-	// const auto otherProps2 = Map(otherProps.ptr);
-	// assert(otherProps2 == otherProps);
 
 	auto v = Value(node);
+	assert(v.type == Type.Node);
 	assert(v == node);
 	assert(node == v);
+
+	auto v2 = Value(node);
+	assert(v == v2);
 }
