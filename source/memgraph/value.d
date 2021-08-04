@@ -6,7 +6,7 @@ import std.conv, std.string;
 import memgraph.mgclient, memgraph.detail, memgraph.node, memgraph.enums, memgraph.list;
 import memgraph.relationship, memgraph.path, memgraph.unboundrelationship, memgraph.date;
 import memgraph.time, memgraph.local_time, memgraph.date_time, memgraph.date_time_zone_id;
-import memgraph.local_date_time, memgraph.duration, memgraph.point2d;
+import memgraph.local_date_time, memgraph.duration, memgraph.point2d, memgraph.point3d;
 
 /// A Bolt value, encapsulating all other values.
 struct Value {
@@ -126,13 +126,10 @@ struct Value {
 		this(mg_value_make_point_2d(mg_point_2d_copy(duration.ptr)));
 	}
 
-	/// \brief Constructs a Point3d value and takes the ownership of the given
-	/// `point3d`. \note Behaviour of accessing the `point3d` after performing
-	/// this operation is considered undefined.
-	// explicit Value(Point3d &&point3d);
-
-	// const ConstList ValueList() const;
-	// const ConstMap ValueMap() const;
+	/// Constructs a point 3d value from the given `Point3d`.
+	this(const ref Point3d duration) {
+		this(mg_value_make_point_3d(mg_point_3d_copy(duration.ptr)));
+	}
 
 	// Fr@k repetition :)
 	import std.typecons : tuple;
@@ -178,6 +175,8 @@ struct Value {
 									"Duration(mg_value_duration(ptr_))", ""),
 		typeid(Point2d):		tuple(Type.Point2d,
 									"Point2d(mg_value_point_2d(ptr_))", ""),
+		typeid(Point3d):		tuple(Type.Point3d,
+									"Point3d(mg_value_point_3d(ptr_))", ""),
 	];
 
 	/// Cast this value to type `T`.
@@ -250,6 +249,7 @@ struct Value {
 			case Type.LocalDateTime:		return to!string(to!LocalDateTime(this));
 			case Type.Duration:				return to!string(to!Duration(this));
 			case Type.Point2d:				return to!string(to!Point2d(this));
+			case Type.Point3d:				return to!string(to!Point3d(this));
 			default: assert(0, "unhandled type: " ~ to!string(type()));
 		}
 	}

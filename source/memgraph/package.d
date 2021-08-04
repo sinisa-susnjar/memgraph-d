@@ -22,5 +22,7 @@ public import memgraph.date_time;
 public import memgraph.date_time_zone_id;
 public import memgraph.local_date_time;
 public import memgraph.duration;
+public import memgraph.point2d;
+public import memgraph.point3d;
 
 import memgraph.detail;
