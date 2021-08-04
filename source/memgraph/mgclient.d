@@ -1486,8 +1486,8 @@ version(unittest) {
 		@safe @nogc mg_local_date_time *mg_local_date_time_alloc(shared mg_allocator *alloc) pure nothrow;
 		@safe @nogc mg_duration *mg_duration_alloc(shared mg_allocator *alloc) pure nothrow;
 
-		@safe @nogc mg_point_2d *mg_point_2d_alloc(mg_allocator *allocator);
-		@safe @nogc mg_point_3d *mg_point_3d_alloc(mg_allocator *allocator);
+		@safe @nogc mg_point_2d *mg_point_2d_alloc(shared mg_allocator *allocator) pure nothrow;
+		@safe @nogc mg_point_3d *mg_point_3d_alloc(shared mg_allocator *allocator) pure nothrow;
 	}
 }
 
