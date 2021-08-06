@@ -92,12 +92,14 @@ struct Map {
 package:
 	/// Create a Map using the given `mg_map`.
 	this(mg_map *ptr) {
+		assert(ptr != null);
 		ptr_ = ptr;
 		mapToAA();
 	}
 
 	/// Create a Map from a copy of the given `mg_map`.
 	this(const mg_map *const_ptr) {
+		assert(ptr != null);
 		this(mg_map_copy(const_ptr));
 		mapToAA();
 	}
