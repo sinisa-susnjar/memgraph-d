@@ -21,6 +21,7 @@ struct Time {
 
 	/// Create a time from a Value.
 	this(const ref Value value) {
+		assert(value.type == Type.Time);
 		this(mg_time_copy(mg_value_time(value.ptr)));
 	}
 
@@ -55,6 +56,7 @@ package:
 	/// Create a Time using the given `mg_time`.
 	this(mg_time *ptr) @trusted
 	{
+		assert(ptr != null);
 		ref_ = SharedPtr!mg_time.make(ptr, (p) { mg_time_destroy(p); });
 	}
 
