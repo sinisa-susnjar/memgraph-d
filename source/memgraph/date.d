@@ -52,6 +52,7 @@ struct Date {
 package:
 	/// Create a Date using the given `mg_date`.
 	this(mg_date *ptr) {
+		assert(ptr != null);
 		ref_ = SharedPtr!mg_date.make(ptr, (p) { mg_date_destroy(p); });
 	}
 
