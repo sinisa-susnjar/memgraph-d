@@ -70,6 +70,7 @@ package:
 	/// Allocate a reference counted `mg_result` pointer to be shared with all
 	/// future range copies.
 	this(mg_session *session) {
+		assert(session != null);
 		import core.stdc.stdlib : malloc, free;
 		this.session = session;
 		ref_ = SharedPtr!(mg_result*).make(cast(mg_result **)malloc((mg_result *).sizeof), (p) { free(p); });
