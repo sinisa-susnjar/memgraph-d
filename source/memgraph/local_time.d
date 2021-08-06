@@ -51,6 +51,7 @@ package:
 	/// Create a LocalTime using the given `mg_local_time`.
 	this(mg_local_time *ptr) @trusted
 	{
+		assert(ptr != null);
 		ref_ = SharedPtr!mg_local_time.make(ptr, (p) { mg_local_time_destroy(p); });
 	}
 
