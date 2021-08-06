@@ -2,6 +2,7 @@
 module memgraph.unboundrelationship;
 
 import memgraph.mgclient, memgraph.detail, memgraph.map, memgraph.value;
+import memgraph.enums;
 
 /// Represents a relationship from a labeled property graph.
 ///
@@ -26,6 +27,7 @@ struct UnboundRelationship {
 
 	/// Create a unbound relationship from a Value.
 	this(const ref Value value) {
+		assert(value.type == Type.UnboundRelationship);
 		this(mg_unbound_relationship_copy(mg_value_unbound_relationship(value.ptr)));
 	}
 
@@ -48,16 +50,19 @@ struct UnboundRelationship {
 
 	/// Returns the unbound relationship id.
 	const (long) id() const {
+		assert(ptr_ != null);
 		return mg_unbound_relationship_id(ptr_);
 	}
 
 	/// Returns the unbound relationship type.
 	const (string) type() const {
+		assert(ptr_ != null);
 		return Detail.convertString(mg_unbound_relationship_type(ptr_));
 	}
 
 	/// Returns the unbound relationship properties.
 	const (Map) properties() const {
+		assert(ptr_ != null);
 		return Map(mg_unbound_relationship_properties(ptr_));
 	}
 
