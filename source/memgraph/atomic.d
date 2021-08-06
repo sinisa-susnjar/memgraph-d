@@ -16,9 +16,11 @@ struct SharedPtr(T)
 		@disable this();
 		@disable this(this);
 		this(T* data) {
+			assert(data != null);
 			atomicStore(data_, cast(shared(T*))data);
 		}
 		this(T* data, void delegate(PtrType t) dtor) {
+			assert(data != null);
 			atomicStore(data_, cast(shared(T*))data);
 			dtor_ = dtor;
 		}
