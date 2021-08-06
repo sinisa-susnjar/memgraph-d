@@ -20,6 +20,7 @@ struct Point3d {
 
 	/// Create a point 3d from a Value.
 	this(const ref Value value) {
+		assert(value.type == Type.Point3d);
 		this(mg_point_3d_copy(mg_value_point_3d(value.ptr)));
 	}
 
@@ -57,6 +58,7 @@ package:
 	/// Create a Point3d using the given `mg_point_3d`.
 	this(mg_point_3d *ptr) @trusted
 	{
+		assert(ptr != null);
 		ref_ = SharedPtr!mg_point_3d.make(ptr, (p) { mg_point_3d_destroy(p); });
 	}
 
