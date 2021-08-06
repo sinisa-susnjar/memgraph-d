@@ -29,6 +29,7 @@ struct Path {
 
 	/// Create a path from a Value.
 	this(const ref Value value) {
+		assert(value.type == Type.Path);
 		this(mg_path_copy(mg_value_path(value.ptr)));
 	}
 
@@ -52,12 +53,14 @@ struct Path {
 	/// Returns the path length.
 	/// Length of the path is number of edges.
 	const (long) length() const {
+		assert(ptr_ != null);
 		return mg_path_length(ptr_);
 	}
 
 	/// Returns the vertex at the given `index`.
 	/// `index` should be less than or equal to length of the path.
 	const (Node) getNodeAt(uint index) const {
+		assert(ptr_ != null);
 		auto vertex_ptr = mg_path_node_at(ptr_, index);
 		assert(vertex_ptr != null);
 		return Node(vertex_ptr);
@@ -66,6 +69,7 @@ struct Path {
 	/// Returns the edge at the given `index`.
 	/// `index` should be less than length of the path.
 	const (UnboundRelationship) getRelationshipAt(uint index) const {
+		assert(ptr_ != null);
 		auto edge_ptr = mg_path_relationship_at(ptr_, index);
 		assert(edge_ptr != null);
 		return UnboundRelationship(edge_ptr);
@@ -75,6 +79,7 @@ struct Path {
 	/// `index` should be less than length of the path.
 	/// Return: True if the edge is reversed, false otherwise.
 	bool isReversedRelationshipAt(uint index) const {
+		assert(ptr_ != null);
 		auto is_reversed = mg_path_relationship_reversed_at(ptr_, index);
 		assert(is_reversed != -1);
 		return is_reversed == 1;
