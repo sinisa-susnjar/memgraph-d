@@ -280,6 +280,7 @@ struct Value {
 
 	/// Return the type of value being held.
 	@property Type type() const {
+		assert(ptr_ != null);
 		// if (ptr_ == null) return Type.Null;
 		return Detail.convertType(mg_value_get_type(ptr_));
 	}
