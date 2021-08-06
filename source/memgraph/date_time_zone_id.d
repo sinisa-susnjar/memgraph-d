@@ -59,6 +59,7 @@ package:
 	/// Create a DateTimeZoneId using the given `mg_date_time_zone_id`.
 	this(mg_date_time_zone_id *ptr) @trusted
 	{
+		assert(ptr != null);
 		ref_ = SharedPtr!mg_date_time_zone_id.make(ptr, (p) { mg_date_time_zone_id_destroy(p); });
 	}
 
