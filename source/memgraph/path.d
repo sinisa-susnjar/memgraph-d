@@ -2,6 +2,7 @@
 module memgraph.path;
 
 import memgraph.mgclient, memgraph.detail, memgraph.map, memgraph.value, memgraph.node, memgraph.unboundrelationship;
+import memgraph.enums;
 
 /// Represents a sequence of alternating nodes and relationships
 /// corresponding to a walk in a labeled property graph.

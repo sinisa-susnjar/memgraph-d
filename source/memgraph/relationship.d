@@ -2,6 +2,7 @@
 module memgraph.relationship;
 
 import memgraph.mgclient, memgraph.detail, memgraph.map, memgraph.value;
+import memgraph.enums;
 
 /// Represents a relationship from a labeled property graph.
 ///

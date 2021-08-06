@@ -2,7 +2,7 @@
 module memgraph.point2d;
 
 import memgraph.mgclient, memgraph.detail, memgraph.value;
-import memgraph.atomic;
+import memgraph.atomic, memgraph.enums;
 
 /// Represents a single location in 2-dimensional space.
 ///

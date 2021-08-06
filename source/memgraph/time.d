@@ -2,7 +2,7 @@
 module memgraph.time;
 
 import memgraph.mgclient, memgraph.detail, memgraph.value;
-import memgraph.atomic;
+import memgraph.atomic, memgraph.enums;
 
 /// Represents time with its time zone.
 ///

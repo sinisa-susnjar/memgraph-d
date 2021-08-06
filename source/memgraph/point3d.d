@@ -2,7 +2,7 @@
 module memgraph.point3d;
 
 import memgraph.mgclient, memgraph.detail, memgraph.value;
-import memgraph.atomic;
+import memgraph.atomic, memgraph.enums;
 
 /// Represents a single location in 3-dimensional space.
 ///
