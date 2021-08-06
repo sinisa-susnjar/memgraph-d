@@ -19,13 +19,14 @@ struct Client {
 
 	/// Obtains the error message stored in the current session (if any).
 	@property auto error() {
-		// TODO: mg_session_error() seems to randomly fill the first byte with garbage when there actually is no error.
+		assert(session != null);
 		return fromStringz(mg_session_error(session));
 	}
 
 	/// Returns the status of the current session.
 	/// Return: One of the session codes in `mg_session_code`.
 	@property auto status() inout {
+		assert(session != null);
 		return mg_session_status(session);
 	}
 
@@ -44,6 +45,7 @@ struct Client {
 	/// After executing the statement, the method is blocked until all incoming
 	/// data (execution results) are handled, i.e. until the returned `Result` has been completely processed.
 	Optional!Result execute(const string statement) {
+		assert(session != null);
 		auto status = mg_session_run(session, toStringz(statement), null, null, null, null);
 		if (status < 0)
 			return Optional!Result();
@@ -58,6 +60,7 @@ struct Client {
 	/// After executing the statement, the method is blocked until all incoming
 	/// data (execution results) are handled, i.e. until the returned `Result` has been completely processed.
 	Optional!Result execute(const string statement, ref Map params) {
+		assert(session != null);
 		int status = mg_session_run(session, toStringz(statement), params.ptr, null, null, null);
 		if (status < 0)
 			return Optional!Result();
@@ -105,12 +108,14 @@ struct Client {
 	/// Start a transaction.
 	/// Return: true when the transaction was successfully started, false otherwise.
 	bool begin() {
+		assert(session != null);
 		return mg_session_begin_transaction(session, null) == 0;
 	}
 
 	/// Commit current transaction.
 	/// Return: true when the transaction was successfully committed, false otherwise.
 	bool commit() {
+		assert(session != null);
 		mg_result *result;
 		return mg_session_commit_transaction(session, &result) == 0;
 	}
@@ -118,6 +123,7 @@ struct Client {
 	/// Rollback current transaction.
 	/// Return: true when the transaction was successfully rolled back, false otherwise.
 	bool rollback() {
+		assert(session != null);
 		mg_result *result;
 		return mg_session_rollback_transaction(session, &result) == 0;
 	}
@@ -144,11 +150,11 @@ struct Client {
 
 package:
 	this(mg_session *session) {
+		assert(session != null);
 		this.session = session;
 	}
 
 private:
-
 	mg_session *session;
 }
 
