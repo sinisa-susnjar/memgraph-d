@@ -87,6 +87,7 @@ struct List {
 	}
 
 	@property uint length() const {
+		assert(ptr_ != null);
 		return mg_list_size(ptr_);
 	}
 
