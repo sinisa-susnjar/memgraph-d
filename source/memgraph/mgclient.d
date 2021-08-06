@@ -728,7 +728,7 @@ extern (C) {
 	///
 	/// Return: The function returns non-zero value if insertion failed, zero
 	///         otherwise.
-	int mg_list_append(mg_list *list, mg_value *value);
+	mg_error mg_list_append(mg_list *list, mg_value *value);
 
 	/// Returns the number of elements in list `list`.
 	uint mg_list_size(const mg_list *list);
