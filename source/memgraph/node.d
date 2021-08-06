@@ -16,10 +16,14 @@ struct Node {
 	/// View of the node's labels.
 	struct Labels {
 		/// Returns the number of labels of node `node`.
-		size_t size() const { return mg_node_label_count(node_); }
+		size_t size() const {
+			assert(node_ != null);
+			return mg_node_label_count(node_);
+		}
 
 		/// Return node's label at the `index` position.
 		string opIndex(int index) const {
+			assert(node_ != null);
 			return Detail.convertString(mg_node_label_at(node_, index));
 		}
 
@@ -45,7 +49,10 @@ struct Node {
 		}
 
 	private:
-		this(const mg_node *node) { node_ = node; }
+		this(const mg_node *node) {
+			assert(node != null);
+			node_ = node;
+		}
 		const mg_node *node_;
 		uint idx_;
 	}
@@ -75,7 +82,10 @@ struct Node {
 	}
 
 	/// Returns the ID of this node.
-	long id() const { return mg_node_id(ptr_); }
+	long id() const {
+		assert(ptr_ != null);
+		return mg_node_id(ptr_);
+	}
 
 	/// Returns the labels belonging to this node.
 	Labels labels() const { return Labels(ptr_); }
@@ -90,10 +100,16 @@ struct Node {
 
 package:
 	/// Create a Node using the given `mg_node`.
-	this(mg_node *ptr) { ptr_ = ptr; }
+	this(mg_node *ptr) {
+		assert(ptr != null);
+		ptr_ = ptr;
+	}
 
 	/// Create a Node from a copy of the given `mg_node`.
-	this(const mg_node *const_ptr) { this(mg_node_copy(const_ptr)); }
+	this(const mg_node *const_ptr) {
+		assert(const_ptr != null);
+		this(mg_node_copy(const_ptr));
+	}
 
 	auto ptr() const { return ptr_; }
 
