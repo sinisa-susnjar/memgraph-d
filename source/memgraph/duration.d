@@ -62,6 +62,7 @@ package:
 	/// Create a Duration using the given `mg_duration`.
 	this(mg_duration *ptr) @trusted
 	{
+		assert(ptr != null);
 		ref_ = SharedPtr!mg_duration.make(ptr, (p) { mg_duration_destroy(p); });
 	}
 
