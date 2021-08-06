@@ -59,6 +59,7 @@ package:
 	/// Create a DateTime using the given `mg_date_time`.
 	this(mg_date_time *ptr) @trusted
 	{
+		assert(ptr != null);
 		ref_ = SharedPtr!mg_date_time.make(ptr, (p) { mg_date_time_destroy(p); });
 	}
 
