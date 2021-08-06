@@ -42,7 +42,10 @@ struct Value {
 
 	/// Constructs a new `Value` from a `List`.
 	this(ref List value) {
+		// import std.stdio;
+		// writefln("Value(List): %s", mg_list_size(value.ptr));
 		this(mg_value_make_list(mg_list_copy(value.ptr)));
+		// writefln("this(List):  %s", mg_list_size(mg_value_list(ptr_)));
 	}
 
 	/// Constructs a new `Value` from a `Map`.
@@ -173,6 +176,8 @@ struct Value {
 			return this;
 		} else {
 		*/
+		// import std.stdio;
+		// writefln("Value.opCast!%s", T.stringof);
 			assert(type() == ops[typeid(T)][0]);
 			// return to!T(mixin(ops[typeid(T)][1]));
 			return mixin(ops[typeid(T)][1]);
@@ -182,12 +187,16 @@ struct Value {
 	/// Comparison operator for type `T`.
 	/// Note: The code asserts that the current value holds a representation of type `T`.
 	bool opEquals(T)(const T val) const {
+		// import std.stdio;
+		// writefln("Value.opEquals!%s", T.stringof);
 		assert(type() == ops[typeid(T)][0]);
 		return mixin(ops[typeid(T)][1]) == val;
 	}
 
 	/// Assignment operator for type `T`.
 	void opAssign(T)(inout T value) {
+		// import std.stdio;
+		// writefln("Value.opAssign!%s", T.stringof);
 		if (ptr_ != null)
 			mg_value_destroy(ptr_);
 		ptr_ = mixin(ops[typeid(T)][2])(value);
@@ -195,6 +204,8 @@ struct Value {
 
 	/// Comparison operator for another `Value`.
 	bool opEquals(const ref Value other) const {
+		// import std.stdio;
+		// writefln("Value.opEquals");
 		return Detail.areValuesEqual(ptr_, other.ptr_);
 	}
 
@@ -284,7 +295,12 @@ package:
 	}
 
 	/// Creates a new Value from a copy of the given `mg_value`.
-	@safe @nogc this(const mg_value *const_ptr) {
+	// @safe @nogc this(const mg_value *const_ptr) {
+	this(const mg_value *const_ptr) {
+		// if (const_ptr == null) {
+			// import std.stdio;
+			// writefln("Oops, trouble!");
+		// }
 		assert(const_ptr != null);
 		this(mg_value_copy(const_ptr));
 	}
@@ -441,16 +457,23 @@ unittest {
 
 // list tests
 unittest {
-	List l;
+	auto l = List(8);
 	l ~= Value(123);
 	l ~= Value("Hello");
 	l ~= Value(3.21);
 	l ~= Value(true);
+	// import std.stdio;
+	// writefln("l: %s", l.length);
+
 	assert(l.length == 4);
 
 	auto v = Value(l);
 	assert(v.type == Type.List);
 
+	// import std.stdio;
+	// writefln("v: %s", to!string(v));
+	// writefln("l: %s", l);
+	assert(l == v);
 	assert(v == l);
 
 	auto v2 = Value(l);
