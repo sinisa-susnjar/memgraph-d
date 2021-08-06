@@ -26,6 +26,7 @@ struct Relationship {
 
 	/// Create a relationship from a Value.
 	this(const ref Value value) {
+		assert(value.type == Type.Relationship);
 		this(mg_relationship_copy(mg_value_relationship(value.ptr)));
 	}
 
