@@ -4,6 +4,7 @@ module memgraph.list;
 import std.string, std.conv;
 
 import memgraph.mgclient, memgraph.detail, memgraph.value, memgraph.enums;
+import memgraph.atomic;
 
 /// An ordered sequence of values.
 ///
@@ -12,56 +13,81 @@ import memgraph.mgclient, memgraph.detail, memgraph.value, memgraph.enums;
 ///
 /// Maximum possible list length allowed by Bolt is `uint.max`.
 struct List {
+	/// Disable default constructor to guarantee that this always has a valid ptr_.
+	// @disable this();
+	/// Disable postblit in favour of copy-ctor.
+	// @disable this(this);
+
+	this(this) {
+		if (ptr_)
+			ptr_ = mg_list_copy(ptr_);
+	}
+
+	/// Constructs a list that can hold at most `capacity` elements.
+	/// Params: capacity = The maximum number of elements that the newly constructed
+	///                    list can hold.
+	this(uint capacity) {
+		this(mg_list_make_empty(capacity));
+	}
+
+	/// Create a copy of `other` list.
+	/*
+	this(ref List other) {
+		import std.stdio;
+		writefln("List.copy(SharedPtr)");
+		ref_ = other.ref_;
+	}
+	*/
 
 	/// Create a copy of `other` list. Will copy all values into this list from `other`.
 	this(inout ref List other) {
-		list_.length = other.list_.length;
-		foreach (i, v; other.list_)
-			list_[i] = v;
-		ptr_ = null;
-		this(mg_list_copy(other.ptr_));
+		this(mg_list_copy(other.ptr));
 	}
 
-	/// Destructor. Destroys the internal `mg_list`.
-	@safe @nogc ~this() pure nothrow {
-		if (ptr_ != null)
-			mg_list_destroy(ptr_);
+	/// Create a list from a Value.
+	this(const ref Value value) {
+		assert(value.type == Type.List);
+		// this(mg_list_copy(mg_value_list(value.ptr)));
+		this(mg_value_list(value.ptr));
 	}
 
 	/// Compares this list with `other`.
 	/// Return: true if same, false otherwise.
 	bool opEquals(const ref List other) const {
-		return list_ == other.list_;
+		return Detail.areListsEqual(ptr_, other.ptr_);
 	}
 
-	ref List opOpAssign(string op: "~")(Value value)
+	ref List opOpAssign(string op: "~")(const Value value)
 	{
-		list_ ~= value;
+		auto rc = mg_list_append(ptr_, mg_value_copy(value.ptr));
+		assert(rc == mg_error.MG_SUCCESS);
 		return this;
 	}
 
-	ref Value opIndexAssign(Value value, size_t idx) {
-		list_[idx] = value;
-		return list_[idx];
-	}
-
-	ref Value opIndex(size_t idx) {
-		return list_[idx];
+	Value opIndex(uint idx) {
+		assert(ptr_ != null);
+		assert(idx < mg_list_size(ptr_));
+		return Value(mg_list_at(ptr_, idx));
 	}
 
 	/// Return a printable string representation of this list.
 	string toString() const {
 		import std.algorithm : map;
 		import std.range : join;
-		return "[" ~ list_.map!(v => to!string(v)).join(",") ~ "]";
+		string ret = "[";
+		for (uint i = 0; i < length; i++) {
+			auto v = Value(mg_list_at(ptr_, i));
+			// ret ~= to!string(Value(mg_list_at(ptr_, i)));
+			ret ~= to!string(v);
+			if (i < length-1)
+				ret ~= ",";
+		}
+		ret ~= "]";
+		return ret;
 	}
 
-	@property @safe @nogc size_t length() const pure nothrow {
-		return list_.length;
-	}
-
-	@property @safe void length(size_t len) pure nothrow {
-		list_.length = len;
+	@property uint length() const {
+		return mg_list_size(ptr_);
 	}
 
 	/*
@@ -79,58 +105,41 @@ struct List {
 	}
 	*/
 
+	@safe @nogc ~this() pure nothrow {
+		if (ptr_ != null)
+			mg_list_destroy(ptr_);
+	}
+
 package:
 	/// Create a List using the given `mg_list`.
-	this(mg_list *ptr) {
+	this(mg_list *ptr) @trusted
+	{
 		assert(ptr != null);
 		ptr_ = ptr;
-		listToArray();
 	}
 
 	/// Create a List from a copy of the given `mg_list`.
-	this(const mg_list *const_ptr) {
-		assert(const_ptr != null);
-		this(mg_list_copy(const_ptr));
-		listToArray();
+	this(const mg_list *ptr) {
+		assert(ptr != null);
+		// this(mg_list_copy(ptr));
+		ptr_ = mg_list_copy(ptr);
 	}
 
-	auto ptr() { arrayToList(); return ptr_; }
+	auto ptr() const { return ptr_; }
 
 private:
-	// Copy the contents from the mg_list into an array for
-	// faster processing and also to enable range semantics.
-	void listToArray() {
-		if (ptr_) {
-			const auto sz = mg_list_size(ptr_);
-			list_.length = sz;
-			for (auto i=0; i < sz; i++)
-				list_[i] = Value(mg_value_copy(mg_list_at(ptr_, i)));
-		}
-	}
-
-	// Copy the contents from the `Value` array into the mg_list
-	// when requested.
-	void arrayToList() {
-		if (ptr_ == null) {
-			ptr_ = mg_list_make_empty(to!uint(list_.length));
-			foreach (v; list_)
-				mg_list_append(ptr_, mg_value_copy(v.ptr));
-		}
-	}
-
-	Value[] list_;
 	mg_list *ptr_;
-	uint idx_;
+	// SharedPtr!mg_list ref_;
+	// uint idx_;
 }
 
 unittest {
-	List l;
+	auto l = List(42);
 
-	l.length = 4;
-	l[0] = Value(42);
-	l[1] = Value(23L);
-	l[2] = Value(5.43210);
-	l[3] = Value(true);
+	l ~= Value(42);
+	l ~= Value(23L);
+	l ~= Value(5.43210);
+	l ~= Value(true);
 	l ~= Value("Hi");
 	assert(l.length == 5);
 
@@ -153,9 +162,9 @@ unittest {
 
 	assert(l2 == l);
 
-	assert(l2.ptr_ != null);
+	assert(l2.ptr != null);
 
-	const List l3 = List(l2.ptr_);
+	const List l3 = List(l2.ptr);
 
 	assert(l3 == l);
 
@@ -164,11 +173,7 @@ unittest {
 	l ~= Value(true);
 
 	assert(l.length == 8);
-
-	// TODO: why the heck does this fail?!?
-	// import std.stdio;
-	// writefln("l: %s", to!string(l));
-	// assert(to!string(l) == "[42,23,5.4321,true,Hi,123456,Bok!,true]");
+	assert(to!string(l) == "[42,23,5.4321,true,Hi,123456,Bok!,true]");
 
 	auto v = Value(l);
 	assert(v == l);
@@ -176,18 +181,19 @@ unittest {
 	assert(v == v);
 
 	auto l4 = List(l);
-
-	l4 ~= Value("another entry");
 	assert(l4.ptr != null);
+	assert(l4.ptr != l.ptr);
+	assert(l4.length == 8);
+	assert(to!string(l4) == "[42,23,5.4321,true,Hi,123456,Bok!,true]");
 
-	import std.stdio;
-	writefln("l: %s", l);
-	writefln("l4: %s", l4);
+	l ~= Value("another entry");
+	assert(l.length == 9);
+	assert(to!string(l) == "[42,23,5.4321,true,Hi,123456,Bok!,true,another entry]");
+	v = Value(l);
 
 	auto v2 = Value(l4);
+	assert(v2 == l4);
+	assert(to!string(v2) == to!string(l4));
 
-	writefln("v: %s", v);
-	writefln("v2: %s", v2);
-	// TODO: the two lists should not be the same, but they are - WHY ?!?
-	// assert(v != v2);
+	assert(v != v2);
 }
