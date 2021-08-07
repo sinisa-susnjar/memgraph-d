@@ -15,10 +15,16 @@ struct SharedPtr(T)
 	shared struct Control {
 		@disable this();
 		@disable this(this);
+		/// Create a control object using the given `data` pointer.
+		/// When the control object goes out of scope, the GC will
+		/// cleanup the pointer.
 		this(T* data) {
 			assert(data != null);
 			atomicStore(data_, cast(shared(T*))data);
 		}
+		/// Create a control object using the given `data` pointer.
+		/// When the control object goes out of scope, the custom
+		/// destructor `dtor` will be called using `data` as parameter.
 		this(T* data, void delegate(PtrType t) dtor) {
 			assert(data != null);
 			atomicStore(data_, cast(shared(T*))data);
@@ -59,7 +65,7 @@ struct SharedPtr(T)
 	}
 
 	/// Returns the use count of this shared pointer, i.e. how many references are in use.
-	uint useCount() {
+	uint useCount() const {
 		if (ctrl_ == null)
 			return 0;
 		return atomicLoad(ctrl_.refs_);
@@ -116,7 +122,7 @@ unittest {
 			assert(p.greeting == "Live long and prosper");
 			assert(p.value == 23);
 			{
-				auto p2 = p;
+				const p2 = p;
 				assert(p.useCount == 2);
 				assert(p2.useCount == 2);
 				assert(p2.greeting == "Live long and prosper");
@@ -130,7 +136,7 @@ unittest {
 			assert(p3.useCount == 2);
 
 			{
-				auto p4 = SharedPtr!Dummy(p3);
+				const p4 = SharedPtr!Dummy(p3);
 				assert(p4.useCount == 3);
 				assert(p3.useCount == 3);
 				assert(p.useCount == 3);
@@ -140,7 +146,8 @@ unittest {
 		}
 		assert(p.useCount == 1);
 
-		auto p5 = SharedPtr!Dummy();
+		const p5 = SharedPtr!Dummy();
+		assert(p5.useCount == 0);
 	}
 }
 
@@ -161,7 +168,7 @@ unittest {
 	assert(p.answer == 0);
 
 	{
-		static void deepThought(Tid ownerTid) {
+		static void deepThought() {
 			receive((SharedPtr!Dummy p) {
 					assert(p.useCount == 3); // one copy for send(), another for receive()
 					assert(p.question == "What is the answer to life, the universe and everything?");
@@ -169,7 +176,7 @@ unittest {
 					p.answer = 42;
 				});
 		}
-		auto childTid = spawn(&deepThought, thisTid);
+		auto childTid = spawn(&deepThought);
 		send(childTid, p);
 		thread_joinAll();
 	}
@@ -213,7 +220,8 @@ unittest {
 			send(childTid, p);
 		}
 		foreach (n; 0..10) {
-			auto useCount = receiveOnly!uint;
+			const useCount = receiveOnly!uint;
+			assert(useCount != 0);
 		}
 	}
 	// Force garbage collection so dynamic SharedPtr arrays are collected.
@@ -240,7 +248,7 @@ unittest {
 	struct Dummy {
 		string greeting;
 	}
-	SharedPtr!Dummy emptyPtr;
+	const SharedPtr!Dummy emptyPtr;
 	assert(emptyPtr.useCount == 0);
 	assert(emptyPtr.data == null);
 	assert(!emptyPtr);

@@ -118,5 +118,5 @@ unittest {
 	p.sslTrustData = cast(void*)trustData;
 	p.sslTrustCallback = (hostname, ip_address, key_type, fingerprint, trust_data) { return 0; };
 
-	auto ptr = p.ptr();
+	assert(p.ptr() != null);
 }

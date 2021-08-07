@@ -102,7 +102,7 @@ struct Value {
 	}
 
 	import std.typecons : tuple;
-	private static immutable enum auto ops = [
+	private static immutable enum ops = [
 		// D type		memgraph type		opCast/opEquals		opAssign
 		typeid(double):			tuple(Type.Double,
 									"mg_value_float(ref_.data)",
@@ -152,6 +152,7 @@ struct Value {
 
 	/// Cast this value to type `T`.
 	auto opCast(T)() const {
+		assert(ref_.data != null);
 		assert(type() == ops[typeid(T)][0]);
 		return mixin(ops[typeid(T)][1]);
 	}
@@ -159,6 +160,7 @@ struct Value {
 	/// Comparison operator for type `T`.
 	/// Note: The code asserts that the current value holds a representation of type `T`.
 	bool opEquals(T)(const T val) const {
+		assert(ref_.data != null);
 		assert(type() == ops[typeid(T)][0]);
 		return mixin(ops[typeid(T)][1]) == val;
 	}
@@ -280,12 +282,12 @@ unittest {
 	assert(v1 == 42);
 	assert(v1 == 42L);
 
-	auto v2 = v1;
+	const v2 = v1;
 	assert(v1.type == v2.type);
 	assert(v1 == v2);
 	assert(v2 == 42);
 
-	auto v3 = Value(42);
+	const v3 = Value(42);
 	assert(v1.type == v3.type);
 	assert(v1 == v3);
 	assert(v3 == 42);
@@ -323,7 +325,7 @@ unittest {
 	assert(v1.type == Type.Bool);
 	assert(v1 == true);
 
-	auto v2 = v1;
+	const v2 = v1;
 	assert(v1.type == v2.type);
 	assert(v1 == v2);
 	assert(v2 == true);
@@ -356,7 +358,7 @@ unittest {
 	assert(v1.type == Type.Double);
 	assert(v1 == 3.1415926);
 
-	auto v2 = v1;
+	const v2 = v1;
 	assert(v1.type == v2.type);
 	assert(v1 == v2);
 	assert(v2 == 3.1415926);
@@ -390,25 +392,20 @@ unittest {
 	l ~= Value("Hello");
 	l ~= Value(3.21);
 	l ~= Value(true);
-	// import std.stdio;
-	// writefln("l: %s", l.length);
 
 	assert(l.length == 4);
 
 	auto v = Value(l);
 	assert(v.type == Type.List);
 
-	// import std.stdio;
-	// writefln("v: %s", to!string(v));
-	// writefln("l: %s", l);
 	assert(l == v);
 	assert(v == l);
 
-	auto v2 = Value(l);
+	const v2 = Value(l);
 	assert(v == v2);
 
-	auto l2 = to!List(v);
-	// auto l2 = to!List(List(mg_value_list(v.ptr_)));
+	const l2 = to!List(v);
+	assert(l2 == l);
 }
 
 // map tests
@@ -422,20 +419,20 @@ unittest {
 	auto v1 = Value(m);
 	assert(v1.type == Type.Map);
 
-	auto v2 = Value(m);
+	const v2 = Value(m);
 	assert(v2.type == Type.Map);
 
 	assert(v1 == v2);
 
-	auto m2 = to!Map(v1);
+	const m2 = to!Map(v1);
 	assert(m == m2);
 }
 
 // null tests
 unittest {
-	auto v1 = Value(null);
+	const v1 = Value(null);
 	assert(v1.type == Type.Null);
-	auto v2 = Value(null);
+	const v2 = Value(null);
 	assert(v2.type == Type.Null);
 
 	assert(v1 == v2);
@@ -468,11 +465,11 @@ unittest {
 
 // comparison tests
 unittest {
-	auto v1 = Value(1);
+	const v1 = Value(1);
 	assert(v1.type == Type.Int);
 	assert(v1 == v1);
 
-	auto v2 = Value(2.71828);
+	const v2 = Value(2.71828);
 	assert(v2.type == Type.Double);
 	assert(v1 != v2);
 }

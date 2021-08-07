@@ -106,7 +106,7 @@ module memgraph.mgclient;
 /// Initializes the client (the whole process).
 /// Module constructor used to initialise memgraph via a call to mg_init().
 static this() {
-	auto rc = mg_init();
+	const rc = mg_init();
 	assert(rc == mg_error.MG_SUCCESS);
 }
 
@@ -1302,7 +1302,7 @@ extern (C) {
 	const (char) *mg_session_params_get_username(const mg_session_params *);
 	const (char) *mg_session_params_get_password(const mg_session_params *);
 	const (char) *mg_session_params_get_user_agent(const mg_session_params *);
-	enum mg_sslmode mg_session_params_get_sslmode(const mg_session_params *);
+	mg_sslmode mg_session_params_get_sslmode(const mg_session_params *);
 	const (char) *mg_session_params_get_sslcert(const mg_session_params *);
 	const (char) *mg_session_params_get_sslkey(const mg_session_params *);
 	mg_trust_callback_type mg_session_params_get_trust_callback(const mg_session_params *params);

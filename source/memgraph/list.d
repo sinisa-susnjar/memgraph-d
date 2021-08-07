@@ -14,7 +14,7 @@ import memgraph.atomic;
 /// Maximum possible list length allowed by Bolt is `uint.max`.
 struct List {
 	/// Disable default constructor to guarantee that this always has a valid ptr_.
-	// @disable this();
+	@disable this();
 	/// Disable postblit in favour of copy-ctor.
 	// @disable this(this);
 
@@ -57,13 +57,15 @@ struct List {
 		return Detail.areListsEqual(ptr_, other.ptr_);
 	}
 
+	/// Append `value` to this list.
 	ref List opOpAssign(string op: "~")(const Value value)
 	{
-		auto rc = mg_list_append(ptr_, mg_value_copy(value.ptr));
+		immutable rc = mg_list_append(ptr_, mg_value_copy(value.ptr));
 		assert(rc == mg_error.MG_SUCCESS);
 		return this;
 	}
 
+	/// Return value at position `idx` of this list.
 	Value opIndex(uint idx) {
 		assert(ptr_ != null);
 		assert(idx < mg_list_size(ptr_));
@@ -86,6 +88,7 @@ struct List {
 		return ret;
 	}
 
+	/// Returns the number of values in this list.
 	@property uint length() const {
 		assert(ptr_ != null);
 		return mg_list_size(ptr_);

@@ -169,7 +169,7 @@ unittest {
 
 	// This is a package internal method, not for public consumption.
 	assert(m.ptr_ == null);
-	auto p = m.ptr();
+	const p = m.ptr();
 	assert(p != null);
 
 	m.clear();

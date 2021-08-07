@@ -60,7 +60,8 @@ version (unittest) {
 
 			// Start a new memgraph docker container.
 			auto containerIdFile = File(containerIdFileName, "w");
-			immutable run = execute(["docker", "run", "-d", "-p", to!string(MEMGRAPH_PORT) ~ ":7687", "-d", "memgraph/memgraph"]);
+			immutable run = execute(["docker", "run", "-d", "-p",
+								to!string(MEMGRAPH_PORT) ~ ":7687", "-d", "memgraph/memgraph"]);
 			assert(run.status == 0);
 
 			// Store container id.

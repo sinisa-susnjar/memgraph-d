@@ -113,13 +113,13 @@ unittest {
 		assert(to!string(r) == to!string(c[1]));
 		assert(to!string(b) == to!string(c[2]));
 
-		auto r2 = r;
+		const r2 = r;
 		assert(r2 == r);
 
-		auto r3 = Relationship(r);
+		const r3 = Relationship(r);
 		assert(r3 == r);
 
-		auto r4 = Relationship(r.ptr);
+		const r4 = Relationship(r.ptr);
 		assert(r4 == r);
 
 		assert(r.id == r2.id);

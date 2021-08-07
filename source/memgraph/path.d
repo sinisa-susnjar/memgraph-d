@@ -126,12 +126,12 @@ unittest {
 		auto p = to!Path(c[0]);
 
 		auto p2 = p;
-		auto p3 = c[0];
+		const p3 = c[0];
 		assert(p2 == p3);
 		auto p4 = Path(p);
 		assert(p4 == p);
 
-		auto p5 = Value(p);
+		const p5 = Value(p);
 
 		assert(p3 == p5);
 
@@ -141,15 +141,19 @@ unittest {
 		}
 
 		foreach (i; 0..p.length) {
-			auto n = p.getNodeAt(to!uint(i));
+			const n = p.getNodeAt(to!uint(i));
 			auto r = p.getRelationshipAt(to!uint(i));
 
-			auto r2 = r;
+			const n2 = n;
+			const n3 = Value(n);
+			assert(n2 == n3);
+
+			const r2 = r;
 			auto r3 = Value(r);
 			assert(r2 == r3);
-			auto r4 = UnboundRelationship(r);
+			const r4 = UnboundRelationship(r);
 			assert(r4 == r);
-			auto r5 = UnboundRelationship(r3);
+			const r5 = UnboundRelationship(r3);
 			assert(r5 == r);
 
 			assert(to!string(r) == "IS_MANAGER");

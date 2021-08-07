@@ -112,9 +112,9 @@ unittest {
 		t2 = t;
 		assert(t2 == t);
 
-		auto v1 = Value(t2);
+		const v1 = Value(t2);
 		assert(v1.type == Type.Point3d);
-		auto v2 = Value(t2);
+		const v2 = Value(t2);
 		assert(v2.type == Type.Point3d);
 
 		assert(v1 == v2);

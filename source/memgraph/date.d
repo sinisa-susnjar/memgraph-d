@@ -101,9 +101,9 @@ unittest {
 		d2 = d;
 		assert(d2 == d);
 
-		auto v1 = Value(d2);
+		const v1 = Value(d2);
 		assert(v1.type == Type.Date);
-		auto v2 = Value(d2);
+		const v2 = Value(d2);
 		assert(v2.type == Type.Date);
 
 		assert(v1 == v2);

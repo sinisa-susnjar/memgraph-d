@@ -27,13 +27,18 @@ struct Node {
 			return Detail.convertString(mg_node_label_at(node_, index));
 		}
 
+		/// Checks if the range is empty.
 		bool empty() const {
 			return idx_ >= size();
 		}
+
+		/// Returns the next element in the range.
 		auto front() const {
 			assert(idx_ < size());
 			return Detail.convertString(mg_node_label_at(node_, idx_));
 		}
+
+		/// Move to the next element in the range.
 		void popFront() {
 			idx_++;
 		}
@@ -181,11 +186,11 @@ unittest {
 	// this is a package internal method
 	assert(node.ptr != null);
 
-	auto v = Value(node);
+	const v = Value(node);
 	assert(v.type == Type.Node);
 	assert(v == node);
 	assert(node == v);
 
-	auto v2 = Value(node);
+	const v2 = Value(node);
 	assert(v == v2);
 }

@@ -25,6 +25,7 @@ struct Client {
 
 	/// Returns the status of the current session.
 	/// Return: One of the session codes in `mg_session_code`.
+	// @property auto status() inout {
 	@property auto status() inout {
 		assert(session != null);
 		return mg_session_status(session);
@@ -265,5 +266,7 @@ unittest {
 }
 
 unittest {
-	auto c = Client.connect();
+	// Just for coverage. It probably will fail - unless there happens
+	// to be a memgraph server running at localhost:7687
+	Client.connect();
 }
