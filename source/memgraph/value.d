@@ -3,25 +3,11 @@ module memgraph.value;
 
 import std.conv, std.string;
 
-import memgraph.mgclient, memgraph.detail, memgraph.node, memgraph.enums, memgraph.list;
-import memgraph.relationship, memgraph.path, memgraph.unboundrelationship, memgraph.date;
-import memgraph.time, memgraph.local_time, memgraph.date_time, memgraph.date_time_zone_id;
-import memgraph.local_date_time, memgraph.duration, memgraph.point2d, memgraph.point3d;
-import memgraph.map;
+import memgraph.detail;
+import memgraph;
 
 /// A Bolt value, encapsulating all other values.
 struct Value {
-
-	@nogc this(this) {
-		if (ptr_)
-			ptr_ = mg_value_copy(ptr_);
-	}
-
-	/// Destroys any value held.
-	@safe @nogc ~this() {
-		if (ptr_ != null)
-			mg_value_destroy(ptr_);
-	}
 
 	/// Creates a Null value.
 	this(typeof(null)) { this(mg_value_make_null()); }
@@ -42,10 +28,7 @@ struct Value {
 
 	/// Constructs a new `Value` from a `List`.
 	this(ref List value) {
-		// import std.stdio;
-		// writefln("Value(List): %s", mg_list_size(value.ptr));
 		this(mg_value_make_list(mg_list_copy(value.ptr)));
-		// writefln("this(List):  %s", mg_list_size(mg_value_list(ptr_)));
 	}
 
 	/// Constructs a new `Value` from a `Map`.
@@ -118,109 +101,88 @@ struct Value {
 		this(mg_value_make_point_3d(mg_point_3d_copy(duration.ptr)));
 	}
 
-	// Fr@k repetition :)
 	import std.typecons : tuple;
 	private static immutable enum auto ops = [
 		// D type		memgraph type		opCast/opEquals		opAssign
 		typeid(double):			tuple(Type.Double,
-									"mg_value_float(ptr_)",
+									"mg_value_float(ref_.data)",
 									"mg_value_make_float"),
 		typeid(int):			tuple(Type.Int,
-									"to!int(mg_value_integer(ptr_))",
+									"to!int(mg_value_integer(ref_.data))",
 									"mg_value_make_integer"),
 		typeid(long):			tuple(Type.Int,
-									"mg_value_integer(ptr_)",
+									"mg_value_integer(ref_.data)",
 									"mg_value_make_integer"),
 		typeid(bool):			tuple(Type.Bool,
-									"to!bool(mg_value_bool(ptr_))",
+									"to!bool(mg_value_bool(ref_.data))",
 									"mg_value_make_bool"),
 		typeid(Node):			tuple(Type.Node,
-									"Node(mg_value_node(ptr_))", ""),
+									"Node(mg_value_node(ref_.data))", ""),
 		typeid(List):			tuple(Type.List,
-									"List(mg_value_list(ptr_))", ""),
+									"List(mg_value_list(ref_.data))", ""),
 		typeid(Map):			tuple(Type.Map,
-									"Map(mg_value_map(ptr_))", ""),
+									"Map(mg_value_map(ref_.data))", ""),
 		typeid(Path):			tuple(Type.Path,
-									"Path(mg_value_path(ptr_))", ""),
+									"Path(mg_value_path(ref_.data))", ""),
 		typeid(Relationship):	tuple(Type.Relationship,
-									"Relationship(mg_value_relationship(ptr_))", ""),
+									"Relationship(mg_value_relationship(ref_.data))", ""),
 		typeid(UnboundRelationship):	tuple(Type.UnboundRelationship,
-									"UnboundRelationship(mg_value_unbound_relationship(ptr_))", ""),
+									"UnboundRelationship(mg_value_unbound_relationship(ref_.data))", ""),
 		typeid(string):			tuple(Type.String,
-									"Detail.convertString(mg_value_string(ptr_))", ""),
+									"Detail.convertString(mg_value_string(ref_.data))", ""),
 		typeid(Date):			tuple(Type.Date,
-									"Date(mg_value_date(ptr_))", ""),
+									"Date(mg_value_date(ref_.data))", ""),
 		typeid(Time):			tuple(Type.Time,
-									"Time(mg_value_time(ptr_))", ""),
+									"Time(mg_value_time(ref_.data))", ""),
 		typeid(LocalTime):		tuple(Type.LocalTime,
-									"LocalTime(mg_value_local_time(ptr_))", ""),
+									"LocalTime(mg_value_local_time(ref_.data))", ""),
 		typeid(DateTime):		tuple(Type.DateTime,
-									"DateTime(mg_value_date_time(ptr_))", ""),
+									"DateTime(mg_value_date_time(ref_.data))", ""),
 		typeid(DateTimeZoneId):	tuple(Type.DateTimeZoneId,
-									"DateTimeZoneId(mg_value_date_time_zone_id(ptr_))", ""),
+									"DateTimeZoneId(mg_value_date_time_zone_id(ref_.data))", ""),
 		typeid(LocalDateTime):	tuple(Type.LocalDateTime,
-									"LocalDateTime(mg_value_local_date_time(ptr_))", ""),
+									"LocalDateTime(mg_value_local_date_time(ref_.data))", ""),
 		typeid(Duration):		tuple(Type.Duration,
-									"Duration(mg_value_duration(ptr_))", ""),
+									"Duration(mg_value_duration(ref_.data))", ""),
 		typeid(Point2d):		tuple(Type.Point2d,
-									"Point2d(mg_value_point_2d(ptr_))", ""),
+									"Point2d(mg_value_point_2d(ref_.data))", ""),
 		typeid(Point3d):		tuple(Type.Point3d,
-									"Point3d(mg_value_point_3d(ptr_))", ""),
+									"Point3d(mg_value_point_3d(ref_.data))", ""),
 	];
 
 	/// Cast this value to type `T`.
-	// auto @nogc opCast(T)() const {
 	auto opCast(T)() const {
-		/*
-		static if (is(T == Value)) {
-			return this;
-		} else {
-		*/
-		// import std.stdio;
-		// writefln("Value.opCast!%s", T.stringof);
-			assert(type() == ops[typeid(T)][0]);
-			// return to!T(mixin(ops[typeid(T)][1]));
-			return mixin(ops[typeid(T)][1]);
-		// }
+		assert(type() == ops[typeid(T)][0]);
+		return mixin(ops[typeid(T)][1]);
 	}
 
 	/// Comparison operator for type `T`.
 	/// Note: The code asserts that the current value holds a representation of type `T`.
 	bool opEquals(T)(const T val) const {
-		// import std.stdio;
-		// writefln("Value.opEquals!%s", T.stringof);
 		assert(type() == ops[typeid(T)][0]);
 		return mixin(ops[typeid(T)][1]) == val;
 	}
 
 	/// Assignment operator for type `T`.
 	void opAssign(T)(inout T value) {
-		// import std.stdio;
-		// writefln("Value.opAssign!%s", T.stringof);
-		if (ptr_ != null)
-			mg_value_destroy(ptr_);
-		ptr_ = mixin(ops[typeid(T)][2])(value);
+		ref_ = SharedPtr!mg_value.make(mixin(ops[typeid(T)][2])(value), (p) { mg_value_destroy(p); });
 	}
 
 	/// Comparison operator for another `Value`.
 	bool opEquals(const ref Value other) const {
-		// import std.stdio;
-		// writefln("Value.opEquals");
-		return Detail.areValuesEqual(ptr_, other.ptr_);
+		return Detail.areValuesEqual(ref_.data, other.ref_.data);
 	}
 
 	/// Assignment operator for another `Value`.
-	void opAssign(const Value value) {
-		if (ptr_ != null)
-			mg_value_destroy(ptr_);
-		ptr_ = mg_value_copy(value.ptr);
+	ref Value opAssign(Value value) @safe return {
+		import std.algorithm.mutation : swap;
+		swap(this, value);
+		return this;
 	}
 
 	/// Assignment operator for a `string`.
 	void opAssign(const string value) {
-		if (ptr_ != null)
-			mg_value_destroy(ptr_);
-		ptr_ = mg_value_make_string(toStringz(value));
+		ref_ = SharedPtr!mg_value.make(mg_value_make_string(toStringz(value)), (p) { mg_value_destroy(p); });
 	}
 
 	/// Return this value as a string.
@@ -233,7 +195,7 @@ struct Value {
 			case Type.Node:					return to!string(to!Node(this));
 			case Type.Bool:					return to!string(to!bool(this));
 			case Type.Int:					return to!string(to!int(this));
-			case Type.String:				return Detail.convertString(mg_value_string(ptr_));
+			case Type.String:				return Detail.convertString(mg_value_string(ref_.data));
 			case Type.Relationship:			return to!string(to!Relationship(this));
 			case Type.UnboundRelationship:	return to!string(to!UnboundRelationship(this));
 			case Type.List:					return to!string(to!List(this));
@@ -252,64 +214,29 @@ struct Value {
 		}
 	}
 
-	/// \pre value type is Type::Relationship
-	// const ConstRelationship ValueRelationship() const;
-	/// \pre value type is Type::UnboundRelationship
-	// const ConstUnboundRelationship ValueUnboundRelationship() const;
-	/// \pre value type is Type::Path
-	// const ConstPath ValuePath() const;
-	/// \pre value type is Type::Date
-	// const ConstDate ValueDate() const;
-	/// \pre value type is Type::Time
-	// const ConstTime ValueTime() const;
-	/// \pre value type is Type::LocalTime
-	// const ConstLocalTime ValueLocalTime() const;
-	/// \pre value type is Type::DateTime
-	// const ConstDateTime ValueDateTime() const;
-	/// \pre value type is Type::DateTimeZoneId
-	// const ConstDateTimeZoneId ValueDateTimeZoneId() const;
-	/// \pre value type is Type::LocalDateTime
-	// const ConstLocalDateTime ValueLocalDateTime() const;
-
-	/// \pre value type is Type::Duration
-	//const ConstDuration ValueDuration() const;
-	/// \pre value type is Type::Point2d
-	//const ConstPoint2d ValuePoint2d() const;
-	/// \pre value type is Type::Point3d
-	//const ConstPoint3d ValuePoint3d() const;
-
 	/// Return the type of value being held.
 	@property Type type() const {
-		assert(ptr_ != null);
-		// if (ptr_ == null) return Type.Null;
-		return Detail.convertType(mg_value_get_type(ptr_));
+		return Detail.convertType(mg_value_get_type(ref_.data));
 	}
 
 package:
-	/// Constructs an object that becomes the owner of the given `value`.
-	/// `value` is destroyed when a `Value` object is destroyed.
-	/*
-	*/
-	@safe @nogc this(mg_value *ptr) {
+	/// Create a Value using the given `mg_value`.
+	this(mg_value *ptr)
+	{
 		assert(ptr != null);
-		ptr_ = ptr;
+		ref_ = SharedPtr!mg_value.make(ptr, (p) { mg_value_destroy(p); });
 	}
 
-	/// Creates a new Value from a copy of the given `mg_value`.
-	// @safe @nogc this(const mg_value *const_ptr) {
-	this(const mg_value *const_ptr) {
-		// if (const_ptr == null) {
-			// import std.stdio;
-			// writefln("Oops, trouble!");
-		// }
-		assert(const_ptr != null);
-		this(mg_value_copy(const_ptr));
+	/// Create a Value from a copy of the given `mg_value`.
+	this(const mg_value *ptr) {
+		assert(ptr != null);
+		this(mg_value_copy(ptr));
 	}
 
-	auto ptr() inout { return ptr_; }
+	auto ptr() const { return ref_.data; }
 
 private:
-	mg_value *ptr_;
+	SharedPtr!mg_value ref_;
 }
 
 // string tests
@@ -521,20 +448,20 @@ unittest {
 	auto v = Value(1);
 	assert(v.type == Type.Int);
 
-	v.ptr_.type = mg_value_type.MG_VALUE_TYPE_UNKNOWN;
+	v.ref_.data.type = mg_value_type.MG_VALUE_TYPE_UNKNOWN;
 
 	assertThrown!AssertError(v.type);
 
 	auto v2 = Value(1);
-	v2.ptr_.type = mg_value_type.MG_VALUE_TYPE_UNKNOWN;
+	v2.ref_.data.type = mg_value_type.MG_VALUE_TYPE_UNKNOWN;
 
 	assertThrown!AssertError(v == v2);
 
-	v.ptr_.type = cast(mg_value_type)-1;
+	v.ref_.data.type = cast(mg_value_type)-1;
 
 	assertThrown!AssertError(v.type);
 
-	v2.ptr_.type = cast(mg_value_type)-1;
+	v2.ref_.data.type = cast(mg_value_type)-1;
 
 	assertThrown!AssertError(v == v2);
 }
