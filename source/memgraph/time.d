@@ -27,8 +27,7 @@ struct Time {
 
 	/// Assigns a time to another. The target of the assignment gets detached from
 	/// whatever time it was attached to, and attaches itself to the new time.
-	ref Time opAssign(Time rhs) @safe return
-	{
+	ref Time opAssign(Time rhs) @safe return {
 		import std.algorithm.mutation : swap;
 		swap(this, rhs);
 		return this;
