@@ -42,8 +42,6 @@ struct List {
 	/// Create a copy of `other` list.
 	/*
 	this(ref List other) {
-		import std.stdio;
-		writefln("List.copy(SharedPtr)");
 		ref_ = other.ref_;
 	}
 	*/
@@ -112,7 +110,7 @@ struct List {
 
 	/// Returns the next element in the list range.
 	auto front() const {
-		import std.typecons;
+		import std.typecons : Tuple;
 		assert(idx_ < length);
 		return Tuple!(uint, "index", Value, "value")( idx_, Value(mg_list_at(ptr_, idx_)) );
 	}
