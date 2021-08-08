@@ -4,7 +4,6 @@ module memgraph.list;
 import std.string, std.conv;
 
 import memgraph.mgclient, memgraph.detail, memgraph.value, memgraph.enums;
-import memgraph.atomic;
 
 /// An ordered sequence of values.
 ///
@@ -13,11 +12,7 @@ import memgraph.atomic;
 ///
 /// Maximum possible list length allowed by Bolt is `uint.max`.
 struct List {
-	/// Disable default constructor to guarantee that this always has a valid ptr_.
-	// @disable this();
-	/// Disable postblit in favour of copy-ctor.
-	// @disable this(this);
-
+	/// Postblit
 	this(this) {
 		if (ptr_)
 			ptr_ = mg_list_copy(ptr_);
@@ -39,13 +34,6 @@ struct List {
 		this(mg_list_make_empty(capacity));
 	}
 
-	/// Create a copy of `other` list.
-	/*
-	this(ref List other) {
-		ref_ = other.ref_;
-	}
-	*/
-
 	/// Create a copy of `other` list. Will copy all values into this list from `other`.
 	this(inout ref List other) {
 		this(mg_list_copy(other.ptr));
@@ -60,7 +48,7 @@ struct List {
 	/// Compares this list with `other`.
 	/// Return: true if same, false otherwise.
 	bool opEquals(const ref List other) const {
-		return Detail.areListsEqual(ptr_, other.ptr_);
+		return Detail.areListsEqual(ptr_, ptr_);
 	}
 
 	/// Compares this list with an array of values.
@@ -78,7 +66,7 @@ struct List {
 	}
 
 	/// Return value at position `idx` of this list.
-	Value opIndex(size_t idx) {
+	auto opIndex(size_t idx) const {
 		assert(ptr_ != null);
 		assert(idx < mg_list_size(ptr_));
 		return Value(mg_list_at(ptr_, to!uint(idx)));
@@ -104,26 +92,17 @@ struct List {
 	}
 
 	/// Checks if the list as range is empty.
-	bool empty() const {
-		return idx_ >= length;
-	}
+	bool empty() const { return idx_ >= length; }
 
 	/// Returns the next element in the list range.
 	auto front() const {
 		import std.typecons : Tuple;
 		assert(idx_ < length);
-		return Tuple!(uint, "index", Value, "value")( idx_, Value(mg_list_at(ptr_, idx_)) );
+		return Tuple!(uint, "index", Value, "value")(idx_, Value(mg_list_at(ptr_, idx_)));
 	}
 
 	/// Move to the next element in the list range.
-	void popFront() {
-		idx_++;
-	}
-
-	@safe @nogc ~this() pure nothrow {
-		if (ptr_ != null)
-			mg_list_destroy(ptr_);
-	}
+	void popFront() { idx_++; }
 
 package:
 	/// Create a List using the given `mg_list`.
@@ -134,6 +113,7 @@ package:
 
 	/// Create a List from a copy of the given `mg_list`.
 	this(const mg_list *ptr) {
+		assert(ptr != null);
 		this(mg_list_copy(ptr));
 	}
 
@@ -141,7 +121,6 @@ package:
 
 private:
 	mg_list *ptr_;
-	// SharedPtr!mg_list ref_;
 	uint idx_;
 }
 
