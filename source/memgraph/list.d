@@ -12,11 +12,8 @@ import memgraph.mgclient, memgraph.detail, memgraph.value, memgraph.enums;
 ///
 /// Maximum possible list length allowed by Bolt is `uint.max`.
 struct List {
-	/// Postblit
-	this(this) {
-		if (ptr_)
-			ptr_ = mg_list_copy(ptr_);
-	}
+	/// Disable postblit.
+	@disable this(this);
 
 	/// Construct a list from an array of values.
 	this(const Value[] valueArray) {
@@ -103,6 +100,11 @@ struct List {
 
 	/// Move to the next element in the list range.
 	void popFront() { idx_++; }
+
+	@safe @nogc ~this() {
+		if (ptr_ != null)
+			mg_list_destroy(ptr_);
+	}
 
 package:
 	/// Create a List using the given `mg_list`.
