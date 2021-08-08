@@ -2,7 +2,6 @@
 module memgraph.date_time_zone_id;
 
 import memgraph.mgclient, memgraph.detail, memgraph.value;
-import memgraph.atomic;
 
 /// Represents date and time with its time zone.
 ///
@@ -17,7 +16,7 @@ struct DateTimeZoneId {
 
 	/// Create a copy of `other` date time zone id.
 	this(ref DateTimeZoneId other) {
-		ref_ = other.ref_;
+		this(mg_date_time_zone_id_copy(other.ptr));
 	}
 
 	/// Create a date time zone id from a Value.
@@ -35,7 +34,7 @@ struct DateTimeZoneId {
 	}
 
 	/// Return a printable string representation of this date time zone id.
-	const (string) toString() const {
+	string toString() const {
 		import std.conv : to;
 		return to!string(seconds) ~ " " ~ to!string(nanoseconds) ~ " " ~ to!string(tzId);
 	}
@@ -43,24 +42,28 @@ struct DateTimeZoneId {
 	/// Compares this date time zone id with `other`.
 	/// Return: true if same, false otherwise.
 	bool opEquals(const ref DateTimeZoneId other) const {
-		return Detail.areDateTimeZoneIdsEqual(ref_.data, other.ref_.data);
+		return Detail.areDateTimeZoneIdsEqual(ptr_, other.ptr_);
 	}
 
 	/// Returns seconds since Unix epoch.
-	const (long) seconds() const { return mg_date_time_zone_id_seconds(ref_.data); }
+	long seconds() const { return mg_date_time_zone_id_seconds(ptr_); }
 
 	/// Returns nanoseconds since midnight.
-	const (long) nanoseconds() const { return mg_date_time_zone_id_nanoseconds(ref_.data); }
+	long nanoseconds() const { return mg_date_time_zone_id_nanoseconds(ptr_); }
 
 	/// Returns time zone represented by the identifier.
-	const (long) tzId() const { return mg_date_time_zone_id_tz_id(ref_.data); }
+	long tzId() const { return mg_date_time_zone_id_tz_id(ptr_); }
+
+	@safe @nogc ~this() {
+		if (ptr_ != null)
+			mg_date_time_zone_id_destroy(ptr_);
+	}
 
 package:
 	/// Create a DateTimeZoneId using the given `mg_date_time_zone_id`.
-	this(mg_date_time_zone_id *ptr) @trusted
-	{
+	this(mg_date_time_zone_id *ptr) @trusted {
 		assert(ptr != null);
-		ref_ = SharedPtr!mg_date_time_zone_id.make(ptr, (p) { mg_date_time_zone_id_destroy(p); });
+		ptr_ = ptr;
 	}
 
 	/// Create a DateTimeZoneId from a copy of the given `mg_date_time_zone_id`.
@@ -69,10 +72,10 @@ package:
 		this(mg_date_time_zone_id_copy(ptr));
 	}
 
-	auto ptr() const { return ref_.data; }
+	auto ptr() const { return ptr_; }
 
 private:
-	SharedPtr!mg_date_time_zone_id ref_;
+	mg_date_time_zone_id *ptr_;
 }
 
 unittest {
