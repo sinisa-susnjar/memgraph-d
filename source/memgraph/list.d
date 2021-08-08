@@ -14,13 +14,22 @@ import memgraph.atomic;
 /// Maximum possible list length allowed by Bolt is `uint.max`.
 struct List {
 	/// Disable default constructor to guarantee that this always has a valid ptr_.
-	@disable this();
+	// @disable this();
 	/// Disable postblit in favour of copy-ctor.
 	// @disable this(this);
 
 	this(this) {
 		if (ptr_)
 			ptr_ = mg_list_copy(ptr_);
+	}
+
+	/// Construct a list from an array of values.
+	this(const Value[] valueArray) {
+		this(mg_list_make_empty(to!uint(valueArray.length)));
+		foreach (value; valueArray) {
+			immutable rc = mg_list_append(ptr_, mg_value_copy(value.ptr));
+			assert(rc == mg_error.MG_SUCCESS);
+		}
 	}
 
 	/// Constructs a list that can hold at most `capacity` elements.
@@ -47,8 +56,7 @@ struct List {
 	/// Create a list from a Value.
 	this(const ref Value value) {
 		assert(value.type == Type.List);
-		// this(mg_list_copy(mg_value_list(value.ptr)));
-		this(mg_value_list(value.ptr));
+		this(mg_list_copy(mg_value_list(value.ptr)));
 	}
 
 	/// Compares this list with `other`.
@@ -57,30 +65,33 @@ struct List {
 		return Detail.areListsEqual(ptr_, other.ptr_);
 	}
 
+	/// Compares this list with an array of values.
+	/// Return: true if same, false otherwise.
+	bool opEquals(const ref Value[] valueArray) const {
+		auto other = List(valueArray);
+		return Detail.areListsEqual(ptr_, other.ptr_);
+	}
+
 	/// Append `value` to this list.
-	ref List opOpAssign(string op: "~")(const Value value)
-	{
+	ref List opOpAssign(string op: "~")(const Value value) {
 		immutable rc = mg_list_append(ptr_, mg_value_copy(value.ptr));
 		assert(rc == mg_error.MG_SUCCESS);
 		return this;
 	}
 
 	/// Return value at position `idx` of this list.
-	Value opIndex(uint idx) {
+	Value opIndex(size_t idx) {
 		assert(ptr_ != null);
 		assert(idx < mg_list_size(ptr_));
-		return Value(mg_list_at(ptr_, idx));
+		return Value(mg_list_at(ptr_, to!uint(idx)));
 	}
 
 	/// Return a printable string representation of this list.
 	string toString() const {
-		import std.algorithm : map;
-		import std.range : join;
+		immutable len = length;
 		string ret = "[";
-		for (uint i = 0; i < length; i++) {
-			auto v = Value(mg_list_at(ptr_, i));
-			// ret ~= to!string(Value(mg_list_at(ptr_, i)));
-			ret ~= to!string(v);
+		for (uint i = 0; i < len; i++) {
+			ret ~= to!string(Value(mg_list_at(ptr_, i)));
 			if (i < length-1)
 				ret ~= ",";
 		}
@@ -94,20 +105,22 @@ struct List {
 		return mg_list_size(ptr_);
 	}
 
-	/*
+	/// Checks if the list as range is empty.
 	bool empty() const {
-		return idx_ >= list_.length;
+		return idx_ >= length;
 	}
+
+	/// Returns the next element in the list range.
 	auto front() const {
 		import std.typecons;
-		assert(idx_ < list_.length);
-		return list_[idx_];
-		// return tuple(idx_, list_[idx_]);
+		assert(idx_ < length);
+		return Tuple!(uint, "index", Value, "value")( idx_, Value(mg_list_at(ptr_, idx_)) );
 	}
+
+	/// Move to the next element in the list range.
 	void popFront() {
 		idx_++;
 	}
-	*/
 
 	@safe @nogc ~this() pure nothrow {
 		if (ptr_ != null)
@@ -116,17 +129,14 @@ struct List {
 
 package:
 	/// Create a List using the given `mg_list`.
-	this(mg_list *ptr) @trusted
-	{
+	this(mg_list *ptr) @trusted {
 		assert(ptr != null);
 		ptr_ = ptr;
 	}
 
 	/// Create a List from a copy of the given `mg_list`.
 	this(const mg_list *ptr) {
-		assert(ptr != null);
-		// this(mg_list_copy(ptr));
-		ptr_ = mg_list_copy(ptr);
+		this(mg_list_copy(ptr));
 	}
 
 	auto ptr() const { return ptr_; }
@@ -134,7 +144,7 @@ package:
 private:
 	mg_list *ptr_;
 	// SharedPtr!mg_list ref_;
-	// uint idx_;
+	uint idx_;
 }
 
 unittest {
@@ -200,4 +210,22 @@ unittest {
 	assert(to!string(v2) == to!string(l4));
 
 	assert(v != v2);
+}
+
+unittest {
+	Value[] vl;
+	vl ~= Value(42);
+	vl ~= Value(23L);
+	vl ~= Value(5.43210);
+	vl ~= Value(true);
+	vl ~= Value("Hi");
+	assert(vl.length == 5);
+
+	auto l = List(vl);
+	foreach (i, v; vl)
+		assert(v == l[i]);
+	foreach (i, v; l)
+		assert(v == vl[i]);
+
+	assert(l == vl);
 }
