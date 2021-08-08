@@ -2,172 +2,91 @@
 module memgraph.value;
 
 import std.conv, std.string;
+import std.typecons : tuple;
 
 import memgraph.detail;
 import memgraph;
 
+// Internal mapping between D type and a tuple containing the memgraph type, the
+// operation to be applied when doing an opCast/opEquals, and the operation to be
+// applied during an opAssign.
+private static immutable enum mixinOps = [
+	typeid(double): tuple(Type.Double,
+			"mg_value_float(ref_.data)", "mg_value_make_float(val)"),
+	typeid(int): tuple(Type.Int,
+			"to!int(mg_value_integer(ref_.data))", "mg_value_make_integer(val)"),
+	typeid(long): tuple(Type.Int,
+			"mg_value_integer(ref_.data)", "mg_value_make_integer(val)"),
+	typeid(bool): tuple(Type.Bool,
+			"to!bool(mg_value_bool(ref_.data))", "mg_value_make_bool(val)"),
+	typeid(Node): tuple(Type.Node,
+			"Node(mg_value_node(ref_.data))", "mg_value_make_node(mg_node_copy(val.ptr))"),
+	typeid(List): tuple(Type.List,
+			"List(mg_value_list(ref_.data))", "mg_value_make_list(mg_list_copy(val.ptr))"),
+	typeid(Map): tuple(Type.Map,
+			"Map(mg_value_map(ref_.data))", "mg_value_make_map(mg_map_copy(val.ptr))"),
+	typeid(Path): tuple(Type.Path,
+			"Path(mg_value_path(ref_.data))", "mg_value_make_path(mg_path_copy(val.ptr))"),
+	typeid(Relationship): tuple(Type.Relationship,
+			"Relationship(mg_value_relationship(ref_.data))", "mg_value_make_relationship(mg_relationship_copy(val.ptr))"),
+	typeid(UnboundRelationship): tuple(Type.UnboundRelationship,
+			"UnboundRelationship(mg_value_unbound_relationship(ref_.data))", "mg_value_make_unbound_relationship(mg_unbound_relationship_copy(val.ptr))"),
+	typeid(string): tuple(Type.String,
+			"Detail.convertString(mg_value_string(ref_.data))", "mg_value_make_string(toStringz(val))"),
+	typeid(char[]): tuple(Type.String,
+			"Detail.convertString(mg_value_string(ref_.data))", "mg_value_make_string(toStringz(val))"),
+	typeid(Date): tuple(Type.Date,
+			"Date(mg_value_date(ref_.data))", "mg_value_make_date(mg_date_copy(val.ptr))"),
+	typeid(Time): tuple(Type.Time,
+			"Time(mg_value_time(ref_.data))", "mg_value_make_time(mg_time_copy(val.ptr))"),
+	typeid(LocalTime): tuple(Type.LocalTime,
+			"LocalTime(mg_value_local_time(ref_.data))", "mg_value_make_local_time(mg_local_time_copy(val.ptr))"),
+	typeid(DateTime): tuple(Type.DateTime,
+			"DateTime(mg_value_date_time(ref_.data))", "mg_value_make_date_time(mg_date_time_copy(val.ptr))"),
+	typeid(DateTimeZoneId): tuple(Type.DateTimeZoneId,
+			"DateTimeZoneId(mg_value_date_time_zone_id(ref_.data))", "mg_value_make_date_time_zone_id(mg_date_time_zone_id_copy(val.ptr))"),
+	typeid(LocalDateTime): tuple(Type.LocalDateTime,
+			"LocalDateTime(mg_value_local_date_time(ref_.data))", "mg_value_make_local_date_time(mg_local_date_time_copy(val.ptr))"),
+	typeid(Duration): tuple(Type.Duration,
+			"Duration(mg_value_duration(ref_.data))", "mg_value_make_duration(mg_duration_copy(val.ptr))"),
+	typeid(Point2d): tuple(Type.Point2d,
+			"Point2d(mg_value_point_2d(ref_.data))", "mg_value_make_point_2d(mg_point_2d_copy(val.ptr))"),
+	typeid(Point3d): tuple(Type.Point3d,
+			"Point3d(mg_value_point_3d(ref_.data))", "mg_value_make_point_3d(mg_point_3d_copy(val.ptr))"),
+];
+
 /// A Bolt value, encapsulating all other values.
 struct Value {
 
-	/// Creates a Null value.
+	/// Make a Null value.
 	this(typeof(null)) { this(mg_value_make_null()); }
 
-	/// Make a new `Value` from a bool.
-	this(bool value) { this(mg_value_make_bool(value)); }
-	/// Make a new `Value` from a int.
-	this(int value) { this(mg_value_make_integer(value)); }
-	/// Make a new `Value` from a long.
-	this(long value) { this(mg_value_make_integer(value)); }
-	/// Make a new `Value` from a double.
-	this(double value) { this(mg_value_make_float(value)); }
-
-	/// Constructs a new `Value` from a string.
-	this(const string value) {
-		this(mg_value_make_string(toStringz(value)));
-	}
-
-	/// Constructs a new `Value` from a `List`.
-	this(ref List value) {
-		this(mg_value_make_list(mg_list_copy(value.ptr)));
+	/// Make a new value of type `T` and initialise it with `val`.
+	this(T)(const T val) {
+		this(mixin(mixinOps[typeid(T)][2]));
 	}
 
 	/// Constructs a new `Value` from a `Map`.
-	this(ref Map value) {
-		this(mg_value_make_map(mg_map_copy(value.ptr)));
-	}
-
-	/// Constructs a new vertex value from the given `vertex`.
-	this(const ref Node vertex) {
-		this(mg_value_make_node(mg_node_copy(vertex.ptr)));
-	}
-
-	/// Constructs a new edge value from the given `edge`.
-	this(const ref Relationship edge) {
-		this(mg_value_make_relationship(mg_relationship_copy(edge.ptr)));
-	}
-
-	/// Constructs an unbounded edge value from the given `edge`.
-	this(const ref UnboundRelationship edge) {
-		this(mg_value_make_unbound_relationship(mg_unbound_relationship_copy(edge.ptr)));
-	}
-
-	/// Constructs a path value from the given `path`.
-	this(const ref Path path) {
-		this(mg_value_make_path(mg_path_copy(path.ptr)));
-	}
-
-	/// Constructs a date value from the given `date`.
-	this(const ref Date date) {
-		this(mg_value_make_date(mg_date_copy(date.ptr)));
-	}
-
-	/// Constructs a time value from the given `time`.
-	this(const ref Time time) {
-		this(mg_value_make_time(mg_time_copy(time.ptr)));
-	}
-
-	/// Constructs a local time value from the given `time`.
-	this(const ref LocalTime time) {
-		this(mg_value_make_local_time(mg_local_time_copy(time.ptr)));
-	}
-
-	/// Constructs a date time value from the given `dateTime`.
-	this(const ref DateTime dateTime) {
-		this(mg_value_make_date_time(mg_date_time_copy(dateTime.ptr)));
-	}
-
-	/// Constructs a date time zone id value from the given `dateTimeZoneId`.
-	this(const ref DateTimeZoneId dateTimeZoneId) {
-		this(mg_value_make_date_time_zone_id(mg_date_time_zone_id_copy(dateTimeZoneId.ptr)));
-	}
-
-	/// Constructs a local date time value from the given `localDateTime`.
-	this(const ref LocalDateTime localDateTime) {
-		this(mg_value_make_local_date_time(mg_local_date_time_copy(localDateTime.ptr)));
-	}
-
-	/// Constructs a duration value from the given `duration`.
-	this(const ref Duration duration) {
-		this(mg_value_make_duration(mg_duration_copy(duration.ptr)));
-	}
-
-	/// Constructs a point 2d value from the given `Point2d`.
-	this(const ref Point2d duration) {
-		this(mg_value_make_point_2d(mg_point_2d_copy(duration.ptr)));
-	}
-
-	/// Constructs a point 3d value from the given `Point3d`.
-	this(const ref Point3d duration) {
-		this(mg_value_make_point_3d(mg_point_3d_copy(duration.ptr)));
-	}
-
-	import std.typecons : tuple;
-	private static immutable enum ops = [
-		// D type		memgraph type		opCast/opEquals		opAssign
-		typeid(double):			tuple(Type.Double,
-									"mg_value_float(ref_.data)",
-									"mg_value_make_float"),
-		typeid(int):			tuple(Type.Int,
-									"to!int(mg_value_integer(ref_.data))",
-									"mg_value_make_integer"),
-		typeid(long):			tuple(Type.Int,
-									"mg_value_integer(ref_.data)",
-									"mg_value_make_integer"),
-		typeid(bool):			tuple(Type.Bool,
-									"to!bool(mg_value_bool(ref_.data))",
-									"mg_value_make_bool"),
-		typeid(Node):			tuple(Type.Node,
-									"Node(mg_value_node(ref_.data))", ""),
-		typeid(List):			tuple(Type.List,
-									"List(mg_value_list(ref_.data))", ""),
-		typeid(Map):			tuple(Type.Map,
-									"Map(mg_value_map(ref_.data))", ""),
-		typeid(Path):			tuple(Type.Path,
-									"Path(mg_value_path(ref_.data))", ""),
-		typeid(Relationship):	tuple(Type.Relationship,
-									"Relationship(mg_value_relationship(ref_.data))", ""),
-		typeid(UnboundRelationship):	tuple(Type.UnboundRelationship,
-									"UnboundRelationship(mg_value_unbound_relationship(ref_.data))", ""),
-		typeid(string):			tuple(Type.String,
-									"Detail.convertString(mg_value_string(ref_.data))", ""),
-		typeid(Date):			tuple(Type.Date,
-									"Date(mg_value_date(ref_.data))", ""),
-		typeid(Time):			tuple(Type.Time,
-									"Time(mg_value_time(ref_.data))", ""),
-		typeid(LocalTime):		tuple(Type.LocalTime,
-									"LocalTime(mg_value_local_time(ref_.data))", ""),
-		typeid(DateTime):		tuple(Type.DateTime,
-									"DateTime(mg_value_date_time(ref_.data))", ""),
-		typeid(DateTimeZoneId):	tuple(Type.DateTimeZoneId,
-									"DateTimeZoneId(mg_value_date_time_zone_id(ref_.data))", ""),
-		typeid(LocalDateTime):	tuple(Type.LocalDateTime,
-									"LocalDateTime(mg_value_local_date_time(ref_.data))", ""),
-		typeid(Duration):		tuple(Type.Duration,
-									"Duration(mg_value_duration(ref_.data))", ""),
-		typeid(Point2d):		tuple(Type.Point2d,
-									"Point2d(mg_value_point_2d(ref_.data))", ""),
-		typeid(Point3d):		tuple(Type.Point3d,
-									"Point3d(mg_value_point_3d(ref_.data))", ""),
-	];
+	this(ref Map value) { this(mg_value_make_map(mg_map_copy(value.ptr))); }
 
 	/// Cast this value to type `T`.
 	auto opCast(T)() const {
 		assert(ref_.data != null);
-		assert(type() == ops[typeid(T)][0]);
-		return mixin(ops[typeid(T)][1]);
+		assert(type == mixinOps[typeid(T)][0]);
+		return mixin(mixinOps[typeid(T)][1]);
 	}
 
 	/// Comparison operator for type `T`.
 	/// Note: The code asserts that the current value holds a representation of type `T`.
 	bool opEquals(T)(const T val) const {
 		assert(ref_.data != null);
-		assert(type() == ops[typeid(T)][0]);
-		return mixin(ops[typeid(T)][1]) == val;
+		assert(type == mixinOps[typeid(T)][0]);
+		return mixin(mixinOps[typeid(T)][1]) == val;
 	}
 
 	/// Assignment operator for type `T`.
-	void opAssign(T)(inout T value) {
-		ref_ = SharedPtr!mg_value.make(mixin(ops[typeid(T)][2])(value), (p) { mg_value_destroy(p); });
+	void opAssign(T)(inout T val) {
+		ref_ = SharedPtr!mg_value.make(mixin(mixinOps[typeid(T)][2]), (p) { mg_value_destroy(p); });
 	}
 
 	/// Comparison operator for another `Value`.
@@ -182,17 +101,12 @@ struct Value {
 		return this;
 	}
 
-	/// Assignment operator for a `string`.
-	void opAssign(const string value) {
-		ref_ = SharedPtr!mg_value.make(mg_value_make_string(toStringz(value)), (p) { mg_value_destroy(p); });
-	}
-
 	/// Return this value as a string.
 	/// If the value held is not of type `Type.String`, then
 	/// it will be first converted into the appropriate string
 	/// representation.
-	const (string) toString() const {
-		switch (type()) {
+	string toString() const {
+		switch (type) {
 			case Type.Double:				return to!string(to!double(this));
 			case Type.Node:					return to!string(to!Node(this));
 			case Type.Bool:					return to!string(to!bool(this));
@@ -218,13 +132,13 @@ struct Value {
 
 	/// Return the type of value being held.
 	@property Type type() const {
+		assert(ref_.data != null);
 		return Detail.convertType(mg_value_get_type(ref_.data));
 	}
 
 package:
 	/// Create a Value using the given `mg_value`.
-	this(mg_value *ptr)
-	{
+	this(mg_value *ptr) {
 		assert(ptr != null);
 		ref_ = SharedPtr!mg_value.make(ptr, (p) { mg_value_destroy(p); });
 	}
@@ -472,4 +386,20 @@ unittest {
 	const v2 = Value(2.71828);
 	assert(v2.type == Type.Double);
 	assert(v1 != v2);
+}
+
+// assignment tests
+unittest {
+	Value v;
+	v = 42;
+	assert(v == 42);
+	v = 2.71828;
+	assert(v == 2.71828);
+	v = "Hello";
+	assert(v == "Hello");
+	v = true;
+	assert(v == true);
+
+	auto l = List(10);
+	v = l;
 }
