@@ -9,50 +9,50 @@ import memgraph;
 
 // Internal mapping between D type and a tuple containing the memgraph type, the
 // operation to be applied when doing an opCast/opEquals, and the operation to be
-// applied during an opAssign.
+// applied during construction of a value or an opAssign.
 private static immutable enum mixinOps = [
 	typeid(double): tuple(Type.Double,
-			"mg_value_float(ref_.data)", "mg_value_make_float(val)"),
+		"mg_value_float(ref_.data)", "mg_value_make_float(val)"),
 	typeid(int): tuple(Type.Int,
-			"to!int(mg_value_integer(ref_.data))", "mg_value_make_integer(val)"),
+		"to!int(mg_value_integer(ref_.data))", "mg_value_make_integer(val)"),
 	typeid(long): tuple(Type.Int,
-			"mg_value_integer(ref_.data)", "mg_value_make_integer(val)"),
+		"mg_value_integer(ref_.data)", "mg_value_make_integer(val)"),
 	typeid(bool): tuple(Type.Bool,
-			"to!bool(mg_value_bool(ref_.data))", "mg_value_make_bool(val)"),
+		"to!bool(mg_value_bool(ref_.data))", "mg_value_make_bool(val)"),
 	typeid(Node): tuple(Type.Node,
-			"Node(mg_value_node(ref_.data))", "mg_value_make_node(mg_node_copy(val.ptr))"),
+		"Node(mg_value_node(ref_.data))", "mg_value_make_node(mg_node_copy(val.ptr))"),
 	typeid(List): tuple(Type.List,
-			"List(mg_value_list(ref_.data))", "mg_value_make_list(mg_list_copy(val.ptr))"),
+		"List(mg_value_list(ref_.data))", "mg_value_make_list(mg_list_copy(val.ptr))"),
 	typeid(Map): tuple(Type.Map,
-			"Map(mg_value_map(ref_.data))", "mg_value_make_map(mg_map_copy(val.ptr))"),
+		"Map(mg_value_map(ref_.data))", "mg_value_make_map(mg_map_copy(val.ptr))"),
 	typeid(Path): tuple(Type.Path,
-			"Path(mg_value_path(ref_.data))", "mg_value_make_path(mg_path_copy(val.ptr))"),
+		"Path(mg_value_path(ref_.data))", "mg_value_make_path(mg_path_copy(val.ptr))"),
 	typeid(Relationship): tuple(Type.Relationship,
-			"Relationship(mg_value_relationship(ref_.data))", "mg_value_make_relationship(mg_relationship_copy(val.ptr))"),
+		"Relationship(mg_value_relationship(ref_.data))", "mg_value_make_relationship(mg_relationship_copy(val.ptr))"),
 	typeid(UnboundRelationship): tuple(Type.UnboundRelationship,
-			"UnboundRelationship(mg_value_unbound_relationship(ref_.data))", "mg_value_make_unbound_relationship(mg_unbound_relationship_copy(val.ptr))"),
+		"UnboundRelationship(mg_value_unbound_relationship(ref_.data))", "mg_value_make_unbound_relationship(mg_unbound_relationship_copy(val.ptr))"),
 	typeid(string): tuple(Type.String,
-			"Detail.convertString(mg_value_string(ref_.data))", "mg_value_make_string(toStringz(val))"),
+		"Detail.convertString(mg_value_string(ref_.data))", "mg_value_make_string(toStringz(val))"),
 	typeid(char[]): tuple(Type.String,
-			"Detail.convertString(mg_value_string(ref_.data))", "mg_value_make_string(toStringz(val))"),
+		"Detail.convertString(mg_value_string(ref_.data))", "mg_value_make_string(toStringz(val))"),
 	typeid(Date): tuple(Type.Date,
-			"Date(mg_value_date(ref_.data))", "mg_value_make_date(mg_date_copy(val.ptr))"),
+		"Date(mg_value_date(ref_.data))", "mg_value_make_date(mg_date_copy(val.ptr))"),
 	typeid(Time): tuple(Type.Time,
-			"Time(mg_value_time(ref_.data))", "mg_value_make_time(mg_time_copy(val.ptr))"),
+		"Time(mg_value_time(ref_.data))", "mg_value_make_time(mg_time_copy(val.ptr))"),
 	typeid(LocalTime): tuple(Type.LocalTime,
-			"LocalTime(mg_value_local_time(ref_.data))", "mg_value_make_local_time(mg_local_time_copy(val.ptr))"),
+		"LocalTime(mg_value_local_time(ref_.data))", "mg_value_make_local_time(mg_local_time_copy(val.ptr))"),
 	typeid(DateTime): tuple(Type.DateTime,
-			"DateTime(mg_value_date_time(ref_.data))", "mg_value_make_date_time(mg_date_time_copy(val.ptr))"),
+		"DateTime(mg_value_date_time(ref_.data))", "mg_value_make_date_time(mg_date_time_copy(val.ptr))"),
 	typeid(DateTimeZoneId): tuple(Type.DateTimeZoneId,
-			"DateTimeZoneId(mg_value_date_time_zone_id(ref_.data))", "mg_value_make_date_time_zone_id(mg_date_time_zone_id_copy(val.ptr))"),
+		"DateTimeZoneId(mg_value_date_time_zone_id(ref_.data))", "mg_value_make_date_time_zone_id(mg_date_time_zone_id_copy(val.ptr))"),
 	typeid(LocalDateTime): tuple(Type.LocalDateTime,
-			"LocalDateTime(mg_value_local_date_time(ref_.data))", "mg_value_make_local_date_time(mg_local_date_time_copy(val.ptr))"),
+		"LocalDateTime(mg_value_local_date_time(ref_.data))", "mg_value_make_local_date_time(mg_local_date_time_copy(val.ptr))"),
 	typeid(Duration): tuple(Type.Duration,
-			"Duration(mg_value_duration(ref_.data))", "mg_value_make_duration(mg_duration_copy(val.ptr))"),
+		"Duration(mg_value_duration(ref_.data))", "mg_value_make_duration(mg_duration_copy(val.ptr))"),
 	typeid(Point2d): tuple(Type.Point2d,
-			"Point2d(mg_value_point_2d(ref_.data))", "mg_value_make_point_2d(mg_point_2d_copy(val.ptr))"),
+		"Point2d(mg_value_point_2d(ref_.data))", "mg_value_make_point_2d(mg_point_2d_copy(val.ptr))"),
 	typeid(Point3d): tuple(Type.Point3d,
-			"Point3d(mg_value_point_3d(ref_.data))", "mg_value_make_point_3d(mg_point_3d_copy(val.ptr))"),
+		"Point3d(mg_value_point_3d(ref_.data))", "mg_value_make_point_3d(mg_point_3d_copy(val.ptr))"),
 ];
 
 /// A Bolt value, encapsulating all other values.
@@ -90,7 +90,13 @@ struct Value {
 	}
 
 	/// Comparison operator for another `Value`.
+	/*
 	bool opEquals(const ref Value other) const {
+		return Detail.areValuesEqual(ref_.data, other.ref_.data);
+	}
+	*/
+
+	bool opEquals(const Value other) const {
 		return Detail.areValuesEqual(ref_.data, other.ref_.data);
 	}
 
