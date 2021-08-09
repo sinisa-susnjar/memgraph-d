@@ -12,7 +12,7 @@ struct SharedPtr(T)
 	alias PtrType = Unqual!T *;
 
 	/// Control block for shared pointer. Contains pointer to the "pointee" and the reference count.
-	shared struct Control {
+	private shared struct Control {
 		@disable this();
 		@disable this(this);
 		/// Create a control object using the given `data` pointer.
@@ -31,8 +31,11 @@ struct SharedPtr(T)
 			dtor_ = dtor;
 		}
 		~this() {
-			if (dtor_)
+			if (dtor_) {
+				// import std.stdio;
+				// writefln("atomic.~this[%s]: calling %s.dtor for %s (%s)", &this, T.stringof, data_, refs_);
 				dtor_(cast(PtrType)data_);
+			}
 		}
 	private:
 		void delegate(PtrType t) dtor_;
