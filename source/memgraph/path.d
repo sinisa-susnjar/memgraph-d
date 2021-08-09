@@ -2,7 +2,7 @@
 module memgraph.path;
 
 import memgraph.mgclient, memgraph.detail, memgraph.map, memgraph.value, memgraph.node, memgraph.unboundrelationship;
-import memgraph.enums;
+import memgraph.enums, memgraph.atomic;
 
 /// Represents a sequence of alternating nodes and relationships
 /// corresponding to a walk in a labeled property graph.
@@ -13,31 +13,23 @@ import memgraph.enums;
 /// direction opposite of the direction of the underlying relationship in the
 /// data graph.
 struct Path {
-
-	/// Disable default constructor, to guarantee that this always has a valid ptr_.
 	@disable this();
-
-	/// Postblit, create a copy of the path from source.
-	this(this) {
-		if (ptr_)
-			ptr_ = mg_path_copy(ptr_);
-	}
+	@disable this(this);
 
 	/// Create a copy of `other` path.
 	this(const ref Path other) {
-		this(mg_path_copy(other.ptr_));
+		this(mg_path_copy(other.ref_.data));
+	}
+
+	/// Create a copy of `other` path.
+	this(ref Path other) {
+		ref_ = other.ref_;
 	}
 
 	/// Create a path from a Value.
 	this(const ref Value value) {
 		assert(value.type == Type.Path);
 		this(mg_path_copy(mg_value_path(value.ptr)));
-	}
-
-	/// Destructor. Destroys the internal `mg_path`.
-	@safe @nogc ~this() pure nothrow {
-		if (ptr_ != null)
-			mg_path_destroy(ptr_);
 	}
 
 	/// Return a printable string representation of this path.
@@ -48,21 +40,21 @@ struct Path {
 	/// Compares this path with `other`.
 	/// Return: true if same, false otherwise.
 	bool opEquals(const ref Path other) const {
-		return Detail.arePathsEqual(ptr_, other.ptr_);
+		return Detail.arePathsEqual(ref_.data, other.ref_.data);
 	}
 
 	/// Returns the path length.
 	/// Length of the path is number of edges.
 	const (long) length() const {
-		assert(ptr_ != null);
-		return mg_path_length(ptr_);
+		assert(ref_.data != null);
+		return mg_path_length(ref_.data);
 	}
 
 	/// Returns the vertex at the given `index`.
 	/// `index` should be less than or equal to length of the path.
 	const (Node) getNodeAt(uint index) const {
-		assert(ptr_ != null);
-		auto vertex_ptr = mg_path_node_at(ptr_, index);
+		assert(ref_.data != null);
+		const auto vertex_ptr = mg_path_node_at(ref_.data, index);
 		assert(vertex_ptr != null);
 		return Node(vertex_ptr);
 	}
@@ -70,8 +62,8 @@ struct Path {
 	/// Returns the edge at the given `index`.
 	/// `index` should be less than length of the path.
 	const (UnboundRelationship) getRelationshipAt(uint index) const {
-		assert(ptr_ != null);
-		auto edge_ptr = mg_path_relationship_at(ptr_, index);
+		assert(ref_.data != null);
+		auto edge_ptr = mg_path_relationship_at(ref_.data, index);
 		assert(edge_ptr != null);
 		return UnboundRelationship(edge_ptr);
 	}
@@ -80,8 +72,8 @@ struct Path {
 	/// `index` should be less than length of the path.
 	/// Return: True if the edge is reversed, false otherwise.
 	bool isReversedRelationshipAt(uint index) const {
-		assert(ptr_ != null);
-		auto is_reversed = mg_path_relationship_reversed_at(ptr_, index);
+		assert(ref_.data != null);
+		auto is_reversed = mg_path_relationship_reversed_at(ref_.data, index);
 		assert(is_reversed != -1);
 		return is_reversed == 1;
 	}
@@ -90,19 +82,19 @@ package:
 	/// Create a Path using the given `mg_path`.
 	this(mg_path *ptr) {
 		assert(ptr != null);
-		ptr_ = ptr;
+		ref_ = SharedPtr!mg_path.make(ptr, (p) { mg_path_destroy(p); });
 	}
 
 	/// Create a Path from a copy of the given `mg_path`.
-	this(const mg_path *const_ptr) {
-		assert(const_ptr != null);
-		this(mg_path_copy(const_ptr));
+	this(const mg_path *ptr) {
+		assert(ptr != null);
+		this(mg_path_copy(ptr));
 	}
 
-	auto ptr() const { return ptr_; }
+	const (mg_path *) ptr() const { return ref_.data; }
 
 private:
-	mg_path *ptr_;
+	SharedPtr!mg_path ref_;
 }
 
 unittest {
@@ -126,12 +118,12 @@ unittest {
 		auto p = to!Path(c[0]);
 
 		auto p2 = p;
-		const p3 = c[0];
+		auto p3 = c[0];
 		assert(p2 == p3);
 		auto p4 = Path(p);
 		assert(p4 == p);
 
-		const p5 = Value(p);
+		auto p5 = Value(p);
 
 		assert(p3 == p5);
 
@@ -141,10 +133,10 @@ unittest {
 		}
 
 		foreach (i; 0..p.length) {
-			const n = p.getNodeAt(to!uint(i));
+			auto n = p.getNodeAt(to!uint(i));
 			auto r = p.getRelationshipAt(to!uint(i));
 
-			const n2 = n;
+			auto n2 = n;
 			const n3 = Value(n);
 			assert(n2 == n3);
 

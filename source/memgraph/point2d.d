@@ -26,8 +26,7 @@ struct Point2d {
 
 	/// Assigns a point 2d to another. The target of the assignment gets detached from
 	/// whatever point 2d it was attached to, and attaches itself to the new point 2d.
-	ref Point2d opAssign(Point2d rhs) @safe return
-	{
+	ref Point2d opAssign(Point2d rhs) @safe return {
 		import std.algorithm.mutation : swap;
 		swap(this, rhs);
 		return this;
@@ -54,8 +53,7 @@ struct Point2d {
 
 package:
 	/// Create a Point2d using the given `mg_point_2d`.
-	this(mg_point_2d *ptr) @trusted
-	{
+	this(mg_point_2d *ptr) @trusted {
 		assert(ptr != null);
 		ref_ = SharedPtr!mg_point_2d.make(ptr, (p) { mg_point_2d_destroy(p); });
 	}
@@ -66,7 +64,7 @@ package:
 		this(mg_point_2d_copy(ptr));
 	}
 
-	auto ptr() const { return ref_.data; }
+	const (mg_point_2d *) ptr() const { return ref_.data; }
 
 private:
 	SharedPtr!mg_point_2d ref_;

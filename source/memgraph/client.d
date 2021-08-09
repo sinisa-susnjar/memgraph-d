@@ -4,31 +4,26 @@ module memgraph.client;
 import std.string, std.stdio;
 
 import memgraph.mgclient, memgraph.optional, memgraph.value, memgraph.map, memgraph.params, memgraph.result;
+import memgraph.atomic;
 
 /// Provides a connection for memgraph.
 struct Client {
-	/// Destructor, destroys the memgraph session.
-	~this() {
-		if (session)
-			mg_session_destroy(session);
-	}
-
 	/// Client software version.
 	/// Return: Client version in the major.minor.patch format.
 	static auto clientVersion() { return fromStringz(mg_client_version()); }
 
 	/// Obtains the error message stored in the current session (if any).
 	@property auto error() {
-		assert(session != null);
-		return fromStringz(mg_session_error(session));
+		assert(ref_.data != null);
+		return fromStringz(mg_session_error(ref_.data));
 	}
 
 	/// Returns the status of the current session.
 	/// Return: One of the session codes in `mg_session_code`.
 	// @property auto status() inout {
 	@property auto status() inout {
-		assert(session != null);
-		return mg_session_status(session);
+		assert(ref_.data != null);
+		return mg_session_status(ref_.data);
 	}
 
 	/// Runs the given Cypher `statement` and discards any possible results.
@@ -46,14 +41,14 @@ struct Client {
 	/// After executing the statement, the method is blocked until all incoming
 	/// data (execution results) are handled, i.e. until the returned `Result` has been completely processed.
 	Optional!Result execute(const string statement) {
-		assert(session != null);
-		auto status = mg_session_run(session, toStringz(statement), null, null, null, null);
+		assert(ref_.data != null);
+		auto status = mg_session_run(ref_.data, toStringz(statement), null, null, null, null);
 		if (status < 0)
 			return Optional!Result();
-		status = mg_session_pull(session, null);
+		status = mg_session_pull(ref_.data, null);
 		if (status < 0)
 			return Optional!Result();
-		return Optional!Result(session);
+		return Optional!Result(ref_.data);
 	}
 
 	/// Executes the given Cypher `statement`, supplied with additional `params`.
@@ -61,14 +56,14 @@ struct Client {
 	/// After executing the statement, the method is blocked until all incoming
 	/// data (execution results) are handled, i.e. until the returned `Result` has been completely processed.
 	Optional!Result execute(const string statement, ref Map params) {
-		assert(session != null);
-		int status = mg_session_run(session, toStringz(statement), params.ptr, null, null, null);
+		assert(ref_.data != null);
+		int status = mg_session_run(ref_.data, toStringz(statement), params.ptr, null, null, null);
 		if (status < 0)
 			return Optional!Result();
-		status = mg_session_pull(session, null);
+		status = mg_session_pull(ref_.data, null);
 		if (status < 0)
 			return Optional!Result();
-		return Optional!Result(session);
+		return Optional!Result(ref_.data);
 	}
 
 /*
@@ -109,24 +104,24 @@ struct Client {
 	/// Start a transaction.
 	/// Return: true when the transaction was successfully started, false otherwise.
 	bool begin() {
-		assert(session != null);
-		return mg_session_begin_transaction(session, null) == 0;
+		assert(ref_.data != null);
+		return mg_session_begin_transaction(ref_.data, null) == 0;
 	}
 
 	/// Commit current transaction.
 	/// Return: true when the transaction was successfully committed, false otherwise.
 	bool commit() {
-		assert(session != null);
+		assert(ref_.data != null);
 		mg_result *result;
-		return mg_session_commit_transaction(session, &result) == 0;
+		return mg_session_commit_transaction(ref_.data, &result) == 0;
 	}
 
 	/// Rollback current transaction.
 	/// Return: true when the transaction was successfully rolled back, false otherwise.
 	bool rollback() {
-		assert(session != null);
+		assert(ref_.data != null);
 		mg_result *result;
-		return mg_session_rollback_transaction(session, &result) == 0;
+		return mg_session_rollback_transaction(ref_.data, &result) == 0;
 	}
 
 	/// Static method that creates a Memgraph client instance using default parameters localhost:7687
@@ -150,13 +145,13 @@ struct Client {
 	}
 
 package:
-	this(mg_session *session) {
-		assert(session != null);
-		this.session = session;
+	this(mg_session *ptr) {
+		assert(ptr != null);
+		ref_ = SharedPtr!mg_session.make(ptr, (p) { mg_session_destroy(p); });
 	}
 
 private:
-	mg_session *session;
+	SharedPtr!mg_session ref_;
 }
 
 unittest {

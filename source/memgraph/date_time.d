@@ -27,8 +27,7 @@ struct DateTime {
 
 	/// Assigns a date time to another. The target of the assignment gets detached from
 	/// whatever date time it was attached to, and attaches itself to the new date time.
-	ref DateTime opAssign(DateTime rhs) @safe return
-	{
+	ref DateTime opAssign(DateTime rhs) @safe return {
 		import std.algorithm.mutation : swap;
 		swap(this, rhs);
 		return this;
@@ -57,8 +56,7 @@ struct DateTime {
 
 package:
 	/// Create a DateTime using the given `mg_date_time`.
-	this(mg_date_time *ptr) @trusted
-	{
+	this(mg_date_time *ptr) @trusted {
 		assert(ptr != null);
 		ref_ = SharedPtr!mg_date_time.make(ptr, (p) { mg_date_time_destroy(p); });
 	}
@@ -69,7 +67,7 @@ package:
 		this(mg_date_time_copy(ptr));
 	}
 
-	auto ptr() const { return ref_.data; }
+	const (mg_date_time *) ptr() const { return ref_.data; }
 
 private:
 	SharedPtr!mg_date_time ref_;

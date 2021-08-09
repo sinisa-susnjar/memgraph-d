@@ -2,7 +2,7 @@
 module memgraph.unboundrelationship;
 
 import memgraph.mgclient, memgraph.detail, memgraph.map, memgraph.value;
-import memgraph.enums;
+import memgraph.enums, memgraph.atomic;
 
 /// Represents a relationship from a labeled property graph.
 ///
@@ -10,31 +10,23 @@ import memgraph.enums;
 /// Mainly used as a supporting type for `mg_path`. An unbound relationship
 /// owns its type string and property map.
 struct UnboundRelationship {
-
-	/// Disable default constructor, to guarantee that this always has a valid ptr_.
 	@disable this();
-
-	/// Postblit, create a copy of the unbound relationship from source.
-	this(this) {
-		if (ptr_)
-			ptr_ = mg_unbound_relationship_copy(ptr_);
-	}
+	@disable this(this);
 
 	/// Create a copy of `other` unbound relationship.
 	this(const ref UnboundRelationship other) {
-		this(mg_unbound_relationship_copy(other.ptr_));
+		this(mg_unbound_relationship_copy(other.ref_.data));
+	}
+
+	/// Create a copy of `other` unbound relationship.
+	this(ref UnboundRelationship other) {
+		ref_ = other.ref_;
 	}
 
 	/// Create a unbound relationship from a Value.
 	this(const ref Value value) {
 		assert(value.type == Type.UnboundRelationship);
 		this(mg_unbound_relationship_copy(mg_value_unbound_relationship(value.ptr)));
-	}
-
-	/// Destructor. Destroys the internal `mg_unbound_relationship`.
-	@safe @nogc ~this() pure nothrow {
-		if (ptr_ != null)
-			mg_unbound_relationship_destroy(ptr_);
 	}
 
 	/// Return a printable string representation of this unbound relationship.
@@ -45,44 +37,44 @@ struct UnboundRelationship {
 	/// Compares this unbound relationship with `other`.
 	/// Return: true if same, false otherwise.
 	bool opEquals(const ref UnboundRelationship other) const {
-		return Detail.areUnboundRelationshipsEqual(ptr_, other.ptr_);
+		return Detail.areUnboundRelationshipsEqual(ref_.data, other.ref_.data);
 	}
 
 	/// Returns the unbound relationship id.
 	const (long) id() const {
-		assert(ptr_ != null);
-		return mg_unbound_relationship_id(ptr_);
+		assert(ref_.data != null);
+		return mg_unbound_relationship_id(ref_.data);
 	}
 
 	/// Returns the unbound relationship type.
 	const (string) type() const {
-		assert(ptr_ != null);
-		return Detail.convertString(mg_unbound_relationship_type(ptr_));
+		assert(ref_.data != null);
+		return Detail.convertString(mg_unbound_relationship_type(ref_.data));
 	}
 
 	/// Returns the unbound relationship properties.
 	const (Map) properties() const {
-		assert(ptr_ != null);
-		return Map(mg_unbound_relationship_properties(ptr_));
+		assert(ref_.data != null);
+		return Map(mg_unbound_relationship_properties(ref_.data));
 	}
 
 package:
 	/// Create a Unbound Relationship using the given `mg_unbound_relationship`.
 	this(mg_unbound_relationship *ptr) {
 		assert(ptr != null);
-		ptr_ = ptr;
+		ref_ = SharedPtr!mg_unbound_relationship.make(ptr, (p) { mg_unbound_relationship_destroy(p); });
 	}
 
 	/// Create a Unbound Relationship from a copy of the given `mg_unbound_relationship`.
-	this(const mg_unbound_relationship *const_ptr) {
-		assert(const_ptr != null);
-		this(mg_unbound_relationship_copy(const_ptr));
+	this(const mg_unbound_relationship *ptr) {
+		assert(ptr != null);
+		this(mg_unbound_relationship_copy(ptr));
 	}
 
-	auto ptr() const { return ptr_; }
+	const (mg_unbound_relationship *) ptr() const { return ref_.data; }
 
 private:
-	mg_unbound_relationship *ptr_;
+	SharedPtr!mg_unbound_relationship ref_;
 }
 
 unittest {

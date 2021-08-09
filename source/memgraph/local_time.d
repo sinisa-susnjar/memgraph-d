@@ -25,8 +25,7 @@ struct LocalTime {
 
 	/// Assigns a local time to another. The target of the assignment gets detached from
 	/// whatever local time it was attached to, and attaches itself to the new local time.
-	ref LocalTime opAssign(LocalTime rhs) @safe return
-	{
+	ref LocalTime opAssign(LocalTime rhs) @safe return {
 		import std.algorithm.mutation : swap;
 		swap(this, rhs);
 		return this;
@@ -49,8 +48,7 @@ struct LocalTime {
 
 package:
 	/// Create a LocalTime using the given `mg_local_time`.
-	this(mg_local_time *ptr) @trusted
-	{
+	this(mg_local_time *ptr) @trusted {
 		assert(ptr != null);
 		ref_ = SharedPtr!mg_local_time.make(ptr, (p) { mg_local_time_destroy(p); });
 	}
@@ -61,7 +59,7 @@ package:
 		this(mg_local_time_copy(ptr));
 	}
 
-	auto ptr() const { return ref_.data; }
+	const (mg_local_time *) ptr() const { return ref_.data; }
 
 private:
 	SharedPtr!mg_local_time ref_;
@@ -84,7 +82,7 @@ unittest {
 
 		assert(to!string(t) == "42");
 
-		auto t2 = LocalTime(mg_local_time_copy(t.ptr));
+		auto t2 = LocalTime(t.ptr);
 		assert(t2 == t);
 
 		const t3 = LocalTime(t2);

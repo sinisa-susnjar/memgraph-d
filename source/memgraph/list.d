@@ -4,6 +4,7 @@ module memgraph.list;
 import std.string, std.conv;
 
 import memgraph.mgclient, memgraph.detail, memgraph.value, memgraph.enums;
+import memgraph.atomic;
 
 /// An ordered sequence of values.
 ///
@@ -18,8 +19,8 @@ struct List {
 	/// Construct a list from an array of values.
 	this(const Value[] valueArray) {
 		this(mg_list_make_empty(to!uint(valueArray.length)));
-		foreach (value; valueArray) {
-			immutable rc = mg_list_append(ptr_, mg_value_copy(value.ptr));
+		foreach (ref value; valueArray) {
+			immutable rc = mg_list_append(ref_.data, mg_value_copy(value.ptr));
 			assert(rc == mg_error.MG_SUCCESS);
 		}
 	}
@@ -45,28 +46,28 @@ struct List {
 	/// Compares this list with `other`.
 	/// Return: true if same, false otherwise.
 	bool opEquals(const ref List other) const {
-		return Detail.areListsEqual(ptr_, ptr_);
+		return Detail.areListsEqual(ref_.data, other.ref_.data);
 	}
 
 	/// Compares this list with an array of values.
 	/// Return: true if same, false otherwise.
 	bool opEquals(const ref Value[] valueArray) const {
 		auto other = List(valueArray);
-		return Detail.areListsEqual(ptr_, other.ptr_);
+		return Detail.areListsEqual(ref_.data, other.ref_.data);
 	}
 
 	/// Append `value` to this list.
 	ref List opOpAssign(string op: "~")(const Value value) {
-		immutable rc = mg_list_append(ptr_, mg_value_copy(value.ptr));
+		immutable rc = mg_list_append(ref_.data, mg_value_copy(value.ptr));
 		assert(rc == mg_error.MG_SUCCESS);
 		return this;
 	}
 
 	/// Return value at position `idx` of this list.
 	auto opIndex(size_t idx) const {
-		assert(ptr_ != null);
-		assert(idx < mg_list_size(ptr_));
-		return Value(mg_list_at(ptr_, to!uint(idx)));
+		assert(ref_.data != null);
+		assert(idx < mg_list_size(ref_.data));
+		return Value(mg_list_at(ref_.data, to!uint(idx)));
 	}
 
 	/// Return a printable string representation of this list.
@@ -74,7 +75,7 @@ struct List {
 		immutable len = length;
 		string ret = "[";
 		for (uint i = 0; i < len; i++) {
-			ret ~= to!string(Value(mg_list_at(ptr_, i)));
+			ret ~= to!string(Value(mg_list_at(ref_.data, i)));
 			if (i < length-1)
 				ret ~= ",";
 		}
@@ -84,8 +85,8 @@ struct List {
 
 	/// Returns the number of values in this list.
 	@property uint length() const {
-		assert(ptr_ != null);
-		return mg_list_size(ptr_);
+		assert(ref_.data != null);
+		return mg_list_size(ref_.data);
 	}
 
 	/// Checks if the list as range is empty.
@@ -95,22 +96,19 @@ struct List {
 	auto front() const {
 		import std.typecons : Tuple;
 		assert(idx_ < length);
-		return Tuple!(uint, "index", Value, "value")(idx_, Value(mg_list_at(ptr_, idx_)));
+		return Tuple!(uint, "index", Value, "value")(idx_, Value(mg_list_at(ref_.data, idx_)));
 	}
 
 	/// Move to the next element in the list range.
 	void popFront() { idx_++; }
 
-	@safe @nogc ~this() {
-		if (ptr_ != null)
-			mg_list_destroy(ptr_);
-	}
-
 package:
 	/// Create a List using the given `mg_list`.
 	this(mg_list *ptr) @trusted {
 		assert(ptr != null);
-		ptr_ = ptr;
+		// import std.stdio;
+		// writefln("list.this[%s](ptr: %s)", &this, ptr);
+		ref_ = SharedPtr!mg_list.make(ptr, (p) { mg_list_destroy(p); });
 	}
 
 	/// Create a List from a copy of the given `mg_list`.
@@ -119,10 +117,11 @@ package:
 		this(mg_list_copy(ptr));
 	}
 
-	auto ptr() const { return ptr_; }
+	/// Return pointer to internal mg_list.
+	const (mg_list *) ptr() const { return ref_.data; }
 
 private:
-	mg_list *ptr_;
+	SharedPtr!mg_list ref_;
 	uint idx_;
 }
 

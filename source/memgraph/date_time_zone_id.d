@@ -1,7 +1,7 @@
 /// Provides a wrapper around a `mg_date_time_zone_id`.
 module memgraph.date_time_zone_id;
 
-import memgraph.mgclient, memgraph.detail, memgraph.value;
+import memgraph.mgclient, memgraph.detail, memgraph.value, memgraph.atomic;
 
 /// Represents date and time with its time zone.
 ///
@@ -26,8 +26,7 @@ struct DateTimeZoneId {
 
 	/// Assigns a date time zone id to another. The target of the assignment gets detached from
 	/// whatever date time zone id it was attached to, and attaches itself to the new date time zone id.
-	ref DateTimeZoneId opAssign(DateTimeZoneId rhs) @safe return
-	{
+	ref DateTimeZoneId opAssign(DateTimeZoneId rhs) @safe return {
 		import std.algorithm.mutation : swap;
 		swap(this, rhs);
 		return this;
@@ -42,28 +41,23 @@ struct DateTimeZoneId {
 	/// Compares this date time zone id with `other`.
 	/// Return: true if same, false otherwise.
 	bool opEquals(const ref DateTimeZoneId other) const {
-		return Detail.areDateTimeZoneIdsEqual(ptr_, other.ptr_);
+		return Detail.areDateTimeZoneIdsEqual(ref_.data, other.ref_.data);
 	}
 
 	/// Returns seconds since Unix epoch.
-	long seconds() const { return mg_date_time_zone_id_seconds(ptr_); }
+	long seconds() const { return mg_date_time_zone_id_seconds(ref_.data); }
 
 	/// Returns nanoseconds since midnight.
-	long nanoseconds() const { return mg_date_time_zone_id_nanoseconds(ptr_); }
+	long nanoseconds() const { return mg_date_time_zone_id_nanoseconds(ref_.data); }
 
 	/// Returns time zone represented by the identifier.
-	long tzId() const { return mg_date_time_zone_id_tz_id(ptr_); }
-
-	@safe @nogc ~this() {
-		if (ptr_ != null)
-			mg_date_time_zone_id_destroy(ptr_);
-	}
+	long tzId() const { return mg_date_time_zone_id_tz_id(ref_.data); }
 
 package:
 	/// Create a DateTimeZoneId using the given `mg_date_time_zone_id`.
 	this(mg_date_time_zone_id *ptr) @trusted {
 		assert(ptr != null);
-		ptr_ = ptr;
+		ref_ = SharedPtr!mg_date_time_zone_id.make(ptr, (p) { mg_date_time_zone_id_destroy(p); });
 	}
 
 	/// Create a DateTimeZoneId from a copy of the given `mg_date_time_zone_id`.
@@ -72,10 +66,10 @@ package:
 		this(mg_date_time_zone_id_copy(ptr));
 	}
 
-	auto ptr() const { return ptr_; }
+	const (mg_date_time_zone_id *) ptr() const { return ref_.data; }
 
 private:
-	mg_date_time_zone_id *ptr_;
+	SharedPtr!mg_date_time_zone_id ref_;
 }
 
 unittest {
@@ -109,7 +103,8 @@ unittest {
 		const t4 = DateTimeZoneId(v);
 		assert(t4 == t);
 		assert(v == t);
-		assert(to!string(v) == to!string(t));
+		assert(to!string(v) ==
+				to!string(t));
 
 		t2 = t;
 		assert(t2 == t);

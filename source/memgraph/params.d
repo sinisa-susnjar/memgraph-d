@@ -62,7 +62,7 @@ struct Params {
 	}
 
 package:
-	auto ptr() {
+	const (mg_session_params *) ptr() {
 		if (!ptr_)
 			ptr_ = mg_session_params_make();
 		if (host.length)

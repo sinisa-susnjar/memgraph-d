@@ -53,8 +53,7 @@ struct Time {
 
 package:
 	/// Create a Time using the given `mg_time`.
-	this(mg_time *ptr) @trusted
-	{
+	this(mg_time *ptr) @trusted {
 		assert(ptr != null);
 		ref_ = SharedPtr!mg_time.make(ptr, (p) { mg_time_destroy(p); });
 	}
@@ -65,7 +64,7 @@ package:
 		this(mg_time_copy(ptr));
 	}
 
-	auto ptr() const { return ref_.data; }
+	const (mg_time *) ptr() const { return ref_.data; }
 
 private:
 	SharedPtr!mg_time ref_;

@@ -7,53 +7,53 @@ struct Optional(V) {
 
 	/// Copy construct `this` from another `Optional` instance.
 	this(ref return scope inout Optional!V rhs) inout {
-		 _value = rhs._value;
-		 _hasValue = rhs._hasValue;
+		 value_ = rhs.value_;
+		 hasValue_ = rhs.hasValue_;
 	}
 	/// Copy construct `this` from a value of type `V`.
 	this(inout V value) inout {
-		_value = value;
-		_hasValue = true;
+		value_ = value;
+		hasValue_ = true;
 	}
 	/// Copy construct `this` by creating an instance of type `V` using constructor arguments `args`.
 	this(Args...)(Args args) {
 		static if (args.length > 0) {
-			_value = V(args);
-			_hasValue = true;
+			value_ = V(args);
+			hasValue_ = true;
 		}
 	}
 	/// Assign value of type `V` to `this`.
 	auto opAssign(V value) {
-		_value = value;
-		_hasValue = true;
+		value_ = value;
+		hasValue_ = true;
 		return this;
 	}
 	/// When a `bool` is required, checks if this `Optional` contains a value.
 	/// Return: true if `this` holds a value, false otherwise.
 	auto opCast(T : bool)() const {
-		return _hasValue;
+		return hasValue_;
 	}
 	/// Return value of type `V`.
 	auto opCast(T : inout V)() inout {
-		return _value;
+		return value_;
 	}
 	/// Returns if `this` holds a value or not.
 	/// Return: true if `this` holds a value, false otherwise.
 	@property auto hasValue() inout {
-		return _hasValue;
+		return hasValue_;
 	}
 	/// Return value of type `V`.
 	@property inout(V) value() inout {
-		return _value;
+		return value_;
 	}
 	/// Dispatch function calls to the stored value and return any results.
 	auto opDispatch(string name, T...)(T vals) {
-		return mixin("_value." ~ name)(vals);
+		return mixin("value_." ~ name)(vals);
 	}
 private:
 	alias value this;
-	bool _hasValue;
-	V _value;
+	bool hasValue_;
+	V value_;
 }
 
 /// Assign a string to an optional.

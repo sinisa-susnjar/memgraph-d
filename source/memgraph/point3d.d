@@ -56,8 +56,7 @@ struct Point3d {
 
 package:
 	/// Create a Point3d using the given `mg_point_3d`.
-	this(mg_point_3d *ptr) @trusted
-	{
+	this(mg_point_3d *ptr) @trusted {
 		assert(ptr != null);
 		ref_ = SharedPtr!mg_point_3d.make(ptr, (p) { mg_point_3d_destroy(p); });
 	}
@@ -68,7 +67,7 @@ package:
 		this(mg_point_3d_copy(ptr));
 	}
 
-	auto ptr() const { return ref_.data; }
+	const (mg_point_3d *) ptr() const { return ref_.data; }
 
 private:
 	SharedPtr!mg_point_3d ref_;

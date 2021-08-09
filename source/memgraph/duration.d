@@ -27,8 +27,7 @@ struct Duration {
 
 	/// Assigns a duration to another. The target of the assignment gets detached from
 	/// whatever duration it was attached to, and attaches itself to the new duration.
-	ref Duration opAssign(Duration rhs) @safe return
-	{
+	ref Duration opAssign(Duration rhs) @safe return {
 		import std.algorithm.mutation : swap;
 		swap(this, rhs);
 		return this;
@@ -60,8 +59,7 @@ struct Duration {
 
 package:
 	/// Create a Duration using the given `mg_duration`.
-	this(mg_duration *ptr) @trusted
-	{
+	this(mg_duration *ptr) @trusted {
 		assert(ptr != null);
 		ref_ = SharedPtr!mg_duration.make(ptr, (p) { mg_duration_destroy(p); });
 	}
@@ -72,7 +70,7 @@ package:
 		this(mg_duration_copy(ptr));
 	}
 
-	auto ptr() const { return ref_.data; }
+	const (mg_duration *) ptr() const { return ref_.data; }
 
 private:
 	SharedPtr!mg_duration ref_;
@@ -101,7 +99,7 @@ unittest {
 
 		assert(to!string(t) == "3 10 42 23");
 
-		auto t2 = Duration(mg_duration_copy(t.ptr));
+		auto t2 = Duration(t.ptr);
 		assert(t2 == t);
 
 		const t3 = Duration(t2);
