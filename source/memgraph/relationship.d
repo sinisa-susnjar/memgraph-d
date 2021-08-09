@@ -129,6 +129,9 @@ unittest {
 		assert(v == r);
 		assert(r == v);
 		assert(v == c[1]);
+
+		const r5 = Relationship(r3);
+		assert(r5 == r3);
 	}
 	assert(to!string(res.columns) == `["a", "r", "b"]`);
 }

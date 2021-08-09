@@ -113,6 +113,9 @@ unittest {
 		assert(v2.type == Type.LocalDateTime);
 
 		assert(v1 == v2);
+
+		const t5 = LocalDateTime(t3);
+		assert(t5 == t3);
 	}
 	// Force garbage collection for full code coverage
 	import core.memory;

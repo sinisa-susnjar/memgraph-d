@@ -108,8 +108,7 @@ unittest {
 		const t4 = DateTimeZoneId(v);
 		assert(t4 == t);
 		assert(v == t);
-		assert(to!string(v) ==
-				to!string(t));
+		assert(to!string(v) == to!string(t));
 
 		t2 = t;
 		assert(t2 == t);
@@ -120,6 +119,9 @@ unittest {
 		assert(v2.type == Type.DateTimeZoneId);
 
 		assert(v1 == v2);
+
+		const t5 = DateTimeZoneId(t3);
+		assert(t5 == t3);
 	}
 	// Force garbage collection for full code coverage
 	import core.memory;

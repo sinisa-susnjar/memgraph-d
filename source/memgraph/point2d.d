@@ -115,6 +115,9 @@ unittest {
 		assert(v2.type == Type.Point2d);
 
 		assert(v1 == v2);
+
+		const t5 = Point2d(t3);
+		assert(t5 == t3);
 	}
 	// Force garbage collection for full code coverage
 	import core.memory;

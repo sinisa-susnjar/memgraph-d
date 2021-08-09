@@ -164,5 +164,9 @@ unittest {
 		auto v = Value(p);
 		assert(v == p);
 		assert(to!string(v) == to!string(p));
+
+		const p6 = p;
+		const p7 = Path(p6);
+		assert(p7 == p);
 	}
 }
