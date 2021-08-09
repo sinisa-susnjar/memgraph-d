@@ -13,12 +13,12 @@ struct UnboundRelationship {
 	@disable this();
 	@disable this(this);
 
-	/// Create a copy of `other` unbound relationship.
+	/// Create a deep copy of `other` unbound relationship.
 	this(const ref UnboundRelationship other) {
 		this(mg_unbound_relationship_copy(other.ref_.data));
 	}
 
-	/// Create a copy of `other` unbound relationship.
+	/// Create a shared copy of `other` unbound relationship.
 	this(ref UnboundRelationship other) {
 		ref_ = other.ref_;
 	}

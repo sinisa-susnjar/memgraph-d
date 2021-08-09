@@ -8,14 +8,17 @@ import memgraph.atomic, memgraph.enums;
 ///
 /// Contains SRID along with its x and y coordinates.
 struct Point2d {
-	/// Disable default constructor to guarantee that this always has a valid ptr_.
 	@disable this();
-	/// Disable postblit in favour of copy-ctor.
 	@disable this(this);
 
-	/// Create a copy of `other` point 2d.
+	/// Create a shared copy of `other` point 2d.
 	this(ref Point2d other) {
 		ref_ = other.ref_;
+	}
+
+	/// Create a deep copy of `other` point 2d.
+	this(const ref Point2d other) {
+		this(mg_point_2d_copy(other.ptr));
 	}
 
 	/// Create a point 2d from a Value.

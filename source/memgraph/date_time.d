@@ -2,7 +2,7 @@
 module memgraph.date_time;
 
 import memgraph.mgclient, memgraph.detail, memgraph.value;
-import memgraph.atomic;
+import memgraph.atomic, memgraph.enums;
 
 /// Represents date and time with its time zone.
 ///
@@ -10,18 +10,22 @@ import memgraph.atomic;
 /// Time is defined with nanoseconds since midnight.
 /// Time zone is defined with minutes from UTC.
 struct DateTime {
-	/// Disable default constructor to guarantee that this always has a valid ptr_.
 	@disable this();
-	/// Disable postblit in favour of copy-ctor.
 	@disable this(this);
 
-	/// Create a copy of `other` date time.
+	/// Create a shared copy of `other` date time.
 	this(ref DateTime other) {
 		ref_ = other.ref_;
 	}
 
+	/// Create a deep copy of `other` date time.
+	this(const ref DateTime other) {
+		this(mg_date_time_copy(other.ptr));
+	}
+
 	/// Create a date time from a Value.
 	this(const ref Value value) {
+		assert(value.type == Type.DateTime);
 		this(mg_date_time_copy(mg_value_date_time(value.ptr)));
 	}
 

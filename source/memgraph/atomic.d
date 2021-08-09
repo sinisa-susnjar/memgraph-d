@@ -4,8 +4,7 @@ module memgraph.atomic;
 import core.atomic : atomicOp, atomicStore, atomicLoad;
 
 /// Thread-safe lock-free atomic shared pointer to T.
-struct SharedPtr(T)
-{
+struct SharedPtr(T) {
 	import std.traits;
 
 	/// Unqualified pointer type for dealing with custom deleters.

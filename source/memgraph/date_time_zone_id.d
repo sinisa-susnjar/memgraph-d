@@ -2,6 +2,7 @@
 module memgraph.date_time_zone_id;
 
 import memgraph.mgclient, memgraph.detail, memgraph.value, memgraph.atomic;
+import memgraph.enums;
 
 /// Represents date and time with its time zone.
 ///
@@ -9,18 +10,22 @@ import memgraph.mgclient, memgraph.detail, memgraph.value, memgraph.atomic;
 /// Time is defined with nanoseconds since midnight.
 /// Timezone is defined with an identifier for a specific time zone.
 struct DateTimeZoneId {
-	/// Disable default constructor to guarantee that this always has a valid ptr_.
 	@disable this();
-	/// Disable postblit in favour of copy-ctor.
 	@disable this(this);
 
-	/// Create a copy of `other` date time zone id.
-	this(ref DateTimeZoneId other) {
+	/// Create a deep copy of `other` date time zone id.
+	this(const ref DateTimeZoneId other) {
 		this(mg_date_time_zone_id_copy(other.ptr));
+	}
+
+	/// Create a shared copy of `other` date time zone id.
+	this(ref DateTimeZoneId other) {
+		ref_ = other.ref_;
 	}
 
 	/// Create a date time zone id from a Value.
 	this(const ref Value value) {
+		assert(value.type == Type.DateTimeZoneId);
 		this(mg_date_time_zone_id_copy(mg_value_date_time_zone_id(value.ptr)));
 	}
 

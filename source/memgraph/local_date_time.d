@@ -2,25 +2,29 @@
 module memgraph.local_date_time;
 
 import memgraph.mgclient, memgraph.detail, memgraph.value;
-import memgraph.atomic;
+import memgraph.atomic, memgraph.enums;
 
 /// Represents date and time without its time zone.
 ///
 /// Date is defined with seconds since the Unix epoch.
 /// Time is defined with nanoseconds since midnight.
 struct LocalDateTime {
-	/// Disable default constructor to guarantee that this always has a valid ptr_.
 	@disable this();
-	/// Disable postblit in favour of copy-ctor.
 	@disable this(this);
 
-	/// Create a copy of `other` local date time.
+	/// Create a shared copy of `other` local date time.
 	this(ref LocalDateTime other) {
 		ref_ = other.ref_;
 	}
 
+	/// Create a deep copy of `other` local date time.
+	this(const ref LocalDateTime other) {
+		this(mg_local_date_time_copy(other.ptr));
+	}
+
 	/// Create a local date time from a Value.
 	this(const ref Value value) {
+		assert(value.type == Type.LocalDateTime);
 		this(mg_local_date_time_copy(mg_value_local_date_time(value.ptr)));
 	}
 

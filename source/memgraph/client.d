@@ -14,16 +14,16 @@ struct Client {
 
 	/// Obtains the error message stored in the current session (if any).
 	@property auto error() {
-		assert(ref_.data != null);
-		return fromStringz(mg_session_error(ref_.data));
+		assert(ptr != null);
+		return fromStringz(mg_session_error(ptr));
 	}
 
 	/// Returns the status of the current session.
 	/// Return: One of the session codes in `mg_session_code`.
 	// @property auto status() inout {
 	@property auto status() inout {
-		assert(ref_.data != null);
-		return mg_session_status(ref_.data);
+		assert(ptr != null);
+		return mg_session_status(ptr);
 	}
 
 	/// Runs the given Cypher `statement` and discards any possible results.
@@ -41,14 +41,14 @@ struct Client {
 	/// After executing the statement, the method is blocked until all incoming
 	/// data (execution results) are handled, i.e. until the returned `Result` has been completely processed.
 	Optional!Result execute(const string statement) {
-		assert(ref_.data != null);
-		auto status = mg_session_run(ref_.data, toStringz(statement), null, null, null, null);
+		assert(ptr != null);
+		auto status = mg_session_run(ptr, toStringz(statement), null, null, null, null);
 		if (status < 0)
 			return Optional!Result();
-		status = mg_session_pull(ref_.data, null);
+		status = mg_session_pull(ptr, null);
 		if (status < 0)
 			return Optional!Result();
-		return Optional!Result(ref_.data);
+		return Optional!Result(ptr);
 	}
 
 	/// Executes the given Cypher `statement`, supplied with additional `params`.
@@ -56,14 +56,14 @@ struct Client {
 	/// After executing the statement, the method is blocked until all incoming
 	/// data (execution results) are handled, i.e. until the returned `Result` has been completely processed.
 	Optional!Result execute(const string statement, ref Map params) {
-		assert(ref_.data != null);
-		int status = mg_session_run(ref_.data, toStringz(statement), params.ptr, null, null, null);
+		assert(ptr != null);
+		int status = mg_session_run(ptr, toStringz(statement), params.ptr, null, null, null);
 		if (status < 0)
 			return Optional!Result();
-		status = mg_session_pull(ref_.data, null);
+		status = mg_session_pull(ptr, null);
 		if (status < 0)
 			return Optional!Result();
-		return Optional!Result(ref_.data);
+		return Optional!Result(ptr);
 	}
 
 /*
@@ -104,24 +104,24 @@ struct Client {
 	/// Start a transaction.
 	/// Return: true when the transaction was successfully started, false otherwise.
 	bool begin() {
-		assert(ref_.data != null);
-		return mg_session_begin_transaction(ref_.data, null) == 0;
+		assert(ptr != null);
+		return mg_session_begin_transaction(ptr, null) == 0;
 	}
 
 	/// Commit current transaction.
 	/// Return: true when the transaction was successfully committed, false otherwise.
 	bool commit() {
-		assert(ref_.data != null);
+		assert(ptr != null);
 		mg_result *result;
-		return mg_session_commit_transaction(ref_.data, &result) == 0;
+		return mg_session_commit_transaction(ptr, &result) == 0;
 	}
 
 	/// Rollback current transaction.
 	/// Return: true when the transaction was successfully rolled back, false otherwise.
 	bool rollback() {
-		assert(ref_.data != null);
+		assert(ptr != null);
 		mg_result *result;
-		return mg_session_rollback_transaction(ref_.data, &result) == 0;
+		return mg_session_rollback_transaction(ptr, &result) == 0;
 	}
 
 	/// Static method that creates a Memgraph client instance using default parameters localhost:7687
@@ -145,12 +145,15 @@ struct Client {
 	}
 
 package:
-	this(mg_session *ptr) {
-		assert(ptr != null);
-		ref_ = SharedPtr!mg_session.make(ptr, (p) { mg_session_destroy(p); });
+	this(mg_session *session) {
+		assert(session != null);
+		ref_ = SharedPtr!mg_session.make(session, (p) { mg_session_destroy(p); });
 	}
 
 private:
+	/// Return pointer to internal mg_session.
+	auto ptr() inout { return ref_.data; }
+
 	SharedPtr!mg_session ref_;
 }
 

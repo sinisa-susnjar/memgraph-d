@@ -8,14 +8,17 @@ import memgraph.atomic, memgraph.enums;
 ///
 /// Contains SRID along with its x, y and z coordinates.
 struct Point3d {
-	/// Disable default constructor to guarantee that this always has a valid ptr_.
 	@disable this();
-	/// Disable postblit in favour of copy-ctor.
 	@disable this(this);
 
-	/// Create a copy of `other` point 3d.
+	/// Create a shared copy of `other` point 3d.
 	this(ref Point3d other) {
 		ref_ = other.ref_;
+	}
+
+	/// Create a deep copy of `other` point 3d.
+	this(const ref Point3d other) {
+		this(mg_point_3d_copy(other.ptr));
 	}
 
 	/// Create a point 3d from a Value.
@@ -26,8 +29,7 @@ struct Point3d {
 
 	/// Assigns a point 3d to another. The target of the assignment gets detached from
 	/// whatever point 3d it was attached to, and attaches itself to the new point 3d.
-	ref Point3d opAssign(Point3d rhs) @safe return
-	{
+	ref Point3d opAssign(Point3d rhs) @safe return {
 		import std.algorithm.mutation : swap;
 		swap(this, rhs);
 		return this;

@@ -13,12 +13,12 @@ struct Relationship {
 	@disable this();
 	@disable this(this);
 
-	/// Create a copy of `other` relationship.
+	/// Create a deep copy of `other` relationship.
 	this(const ref Relationship other) {
 		this(mg_relationship_copy(other.ref_.data));
 	}
 
-	/// Create a copy of `other` relationship.
+	/// Create a shared copy of `other` relationship.
 	this(ref Relationship other) {
 		ref_ = other.ref_;
 	}

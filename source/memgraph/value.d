@@ -63,10 +63,14 @@ struct Value {
 	/// Make a Null value.
 	this(typeof(null)) { this(mg_value_make_null()); }
 
-	/// Copy constructor.
+	/// Deep copy constructor.
 	this(const ref Value rhs) {
-		assert(rhs.ref_.data != null);
-		this(mg_value_copy(rhs.ref_.data));
+		this(mg_value_copy(rhs.ptr));
+	}
+
+	/// Shared copy constructor.
+	this(ref Value other) {
+		ref_ = other.ref_;
 	}
 
 	/// Make a new value of type `T` and initialise it with `val`.

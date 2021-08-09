@@ -9,14 +9,17 @@ import memgraph.atomic, memgraph.enums;
 /// Time is defined with nanoseconds since midnight.
 /// Timezone is defined with seconds from UTC.
 struct Time {
-	/// Disable default constructor to guarantee that this always has a valid ptr_.
 	@disable this();
-	/// Disable postblit in favour of copy-ctor.
 	@disable this(this);
 
-	/// Create a copy of `other` time.
+	/// Create a shared copy of `other` time.
 	this(ref Time other) {
 		ref_ = other.ref_;
+	}
+
+	/// Create a deep copy of `other` time.
+	this(const ref Time other) {
+		this(mg_time_copy(other.ptr));
 	}
 
 	/// Create a time from a Value.

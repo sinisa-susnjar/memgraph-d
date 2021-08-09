@@ -2,6 +2,7 @@
 module memgraph.node;
 
 import memgraph.mgclient, memgraph.detail, memgraph.map, memgraph.atomic;
+import memgraph.value, memgraph.enums;
 
 import std.conv;
 
@@ -70,22 +71,21 @@ struct Node {
 
 	@disable this(this);
 
-	/// Create a Node from a copy of the given `node`.
+	/// Create a shared copy of the given `node`.
 	this(ref Node other) {
 		ref_ = other.ref_;
 	}
 
-	/// Create a Node from a copy of the given `node`.
+	/// Create a deep copy of the given `node`.
 	this(const ref Node other) {
 		this(mg_node_copy(other.ref_.data));
 	}
 
-	/// Create a node from a Value. TODO ?!?
-	/*
+	/// Create a node from a Value.
 	this(const ref Value value) {
-		this(mg_node_copy(other.ptr_));
+		assert(value.type == Type.Node);
+		this(mg_node_copy(mg_value_node(value.ptr)));
 	}
-	*/
 
 	/// Returns the ID of this node.
 	long id() const {

@@ -2,24 +2,28 @@
 module memgraph.local_time;
 
 import memgraph.mgclient, memgraph.detail, memgraph.value;
-import memgraph.atomic;
+import memgraph.atomic, memgraph.enums;
 
 /// Represents local time.
 ///
 /// Time is defined with nanoseconds since midnight.
 struct LocalTime {
-	/// Disable default constructor, to guarantee that this always has a valid ptr_.
 	@disable this();
-	/// Disable postblit in favour of copy-ctor.
 	@disable this(this);
 
-	/// Create a copy of `other` local time.
+	/// Create a shared copy of `other` local time.
 	this(ref LocalTime other) {
 		ref_ = other.ref_;
 	}
 
+	/// Create a deep copy of `other` local time.
+	this(const ref LocalTime other) {
+		this(mg_local_time_copy(other.ptr));
+	}
+
 	/// Create a local time from a Value.
 	this(const ref Value value) {
+		assert(value.type == Type.LocalTime);
 		this(mg_local_time_copy(mg_value_local_time(value.ptr)));
 	}
 

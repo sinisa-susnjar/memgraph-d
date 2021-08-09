@@ -2,29 +2,28 @@
 module memgraph.date;
 
 import memgraph.mgclient, memgraph.detail, memgraph.value;
-import memgraph.atomic;
+import memgraph.atomic, memgraph.enums;
 
 /// Represents a date.
 ///
 /// Date is defined with number of days since the Unix epoch.
 struct Date {
-	/// Disable default constructor, to guarantee that this always has a valid ptr_.
 	@disable this();
-	/// Disable postblit in favour of copy-ctor.
 	@disable this(this);
 
-	/// Create a copy of `other` date.
+	/// Create a deep copy of `other` date.
 	this(ref Date other) {
 		ref_ = other.ref_;
 	}
 
-	/// Create a copy of `other` date.
+	/// Create a shared copy of `other` date.
 	this(const ref Date other) {
-		this(mg_date_copy(other.ref_.data));
+		this(mg_date_copy(other.ptr));
 	}
 
 	/// Create a date from a Value.
 	this(const ref Value value) {
+		assert(value.type == Type.Date);
 		this(mg_date_copy(mg_value_date(value.ptr)));
 	}
 

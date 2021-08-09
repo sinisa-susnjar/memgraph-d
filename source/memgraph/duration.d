@@ -2,7 +2,7 @@
 module memgraph.duration;
 
 import memgraph.mgclient, memgraph.detail, memgraph.value;
-import memgraph.atomic;
+import memgraph.atomic, memgraph.enums;
 
 /// Represents a temporal amount which captures the difference in time
 /// between two instants.
@@ -10,18 +10,22 @@ import memgraph.atomic;
 /// Duration is defined with months, days, seconds, and nanoseconds.
 /// Note: Duration can be negative.
 struct Duration {
-	/// Disable default constructor to guarantee that this always has a valid ptr_.
 	@disable this();
-	/// Disable postblit in favour of copy-ctor.
 	@disable this(this);
 
-	/// Create a copy of `other` duration.
+	/// Create a shared copy of `other` duration.
 	this(ref Duration other) {
 		ref_ = other.ref_;
 	}
 
+	/// Create a deep copy of `other` duration.
+	this(const ref Duration other) {
+		this(mg_duration_copy(other.ptr));
+	}
+
 	/// Create a duration from a Value.
 	this(const ref Value value) {
+		assert(value.type == Type.Duration);
 		this(mg_duration_copy(mg_value_duration(value.ptr)));
 	}
 

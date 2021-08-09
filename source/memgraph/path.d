@@ -16,12 +16,12 @@ struct Path {
 	@disable this();
 	@disable this(this);
 
-	/// Create a copy of `other` path.
+	/// Create a deep copy of `other` path.
 	this(const ref Path other) {
 		this(mg_path_copy(other.ref_.data));
 	}
 
-	/// Create a copy of `other` path.
+	/// Create a shared copy of `other` path.
 	this(ref Path other) {
 		ref_ = other.ref_;
 	}

@@ -16,7 +16,7 @@ struct List {
 	/// Disable postblit.
 	@disable this(this);
 
-	/// Construct a list from an array of values.
+	/// Construct a new list from an array of values.
 	this(const Value[] valueArray) {
 		this(mg_list_make_empty(to!uint(valueArray.length)));
 		foreach (ref value; valueArray) {
@@ -32,9 +32,14 @@ struct List {
 		this(mg_list_make_empty(capacity));
 	}
 
-	/// Create a copy of `other` list. Will copy all values into this list from `other`.
-	this(inout ref List other) {
+	/// Create a deep copy of `other` list.
+	this(const ref List other) {
 		this(mg_list_copy(other.ptr));
+	}
+
+	/// Create a shared copy of `other` list.
+	this(ref List other) {
+		ref_ = other.ref_;
 	}
 
 	/// Create a list from a Value.
@@ -172,20 +177,26 @@ unittest {
 	assert(to!string(v) == to!string(l));
 	assert(v == v);
 
-	auto l4 = List(l);
+	const l4 = List(l);
 	assert(l4.ptr != null);
-	assert(l4.ptr != l.ptr);
+	assert(l4.ptr == l.ptr); // pointers are the same since both shared the same shared ptr
 	assert(l4.length == 8);
 	assert(to!string(l4) == "[42,23,5.4321,true,Hi,123456,Bok!,true]");
+
+	const l5 = List(l4);
+	assert(l5.ptr != null);
+	assert(l5.ptr != l.ptr); // pointers are *not* the same here due to const doing a deep copy
+	assert(l5.length == 8);
+	assert(to!string(l5) == "[42,23,5.4321,true,Hi,123456,Bok!,true]");
 
 	l ~= Value("another entry");
 	assert(l.length == 9);
 	assert(to!string(l) == "[42,23,5.4321,true,Hi,123456,Bok!,true,another entry]");
 	v = Value(l);
 
-	auto v2 = Value(l4);
-	assert(v2 == l4);
-	assert(to!string(v2) == to!string(l4));
+	auto v2 = Value(l5);
+	assert(v2 == l5);
+	assert(to!string(v2) == to!string(l5));
 
 	assert(v != v2);
 }
