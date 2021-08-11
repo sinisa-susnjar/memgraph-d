@@ -1,28 +1,24 @@
 /// Provides a wrapper around a `mg_date`.
 module memgraph.date;
 
-import memgraph.mgclient, memgraph.detail, memgraph.value;
-import memgraph.atomic, memgraph.enums;
+import memgraph.mgclient, memgraph.detail, memgraph.value, memgraph.enums;
 
 /// Represents a date.
 ///
 /// Date is defined with number of days since the Unix epoch.
 struct Date {
-	@disable this();
-	@disable this(this);
-
-	/// Create a deep copy of `other` date.
-	this(ref Date other) {
-		ref_ = other.ref_;
+	this(this) {
+		if (ptr_)
+			ptr_ = mg_date_copy(ptr_);
 	}
 
-	/// Create a shared copy of `other` date.
-	this(const ref Date other) {
+	/// Create a copy of `other` date.
+	this(inout ref Date other) {
 		this(mg_date_copy(other.ptr));
 	}
 
 	/// Create a date from a Value.
-	this(const ref Value value) {
+	this(inout ref Value value) {
 		assert(value.type == Type.Date);
 		this(mg_date_copy(mg_value_date(value.ptr)));
 	}
@@ -44,17 +40,22 @@ struct Date {
 	/// Compares this date with `other`.
 	/// Return: true if same, false otherwise.
 	bool opEquals(const ref Date other) const {
-		return Detail.areDatesEqual(ref_.data, other.ref_.data);
+		return Detail.areDatesEqual(ptr_, other.ptr_);
 	}
 
 	/// Returns days since Unix epoch.
-	const (long) days() const { return mg_date_days(ref_.data); }
+	const (long) days() const { return mg_date_days(ptr_); }
+
+	@safe @nogc ~this() {
+		if (ptr_)
+			mg_date_destroy(ptr_);
+	}
 
 package:
 	/// Create a Date using the given `mg_date`.
 	this(mg_date *ptr) {
 		assert(ptr != null);
-		ref_ = SharedPtr!mg_date.make(ptr, (p) { mg_date_destroy(p); });
+		ptr_ = ptr;
 	}
 
 	/// Create a Date from a copy of the given `mg_date`.
@@ -63,10 +64,10 @@ package:
 		this(mg_date_copy(ptr));
 	}
 
-	const (mg_date *) ptr() const { return ref_.data; }
+	const (mg_date *) ptr() const { return ptr_; }
 
 private:
-	SharedPtr!mg_date ref_;
+	mg_date *ptr_;
 }
 
 unittest {

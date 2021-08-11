@@ -1,8 +1,7 @@
 /// Provides a wrapper around a `Relationship`.
 module memgraph.relationship;
 
-import memgraph.mgclient, memgraph.detail, memgraph.map, memgraph.value;
-import memgraph.enums, memgraph.atomic;
+import memgraph.mgclient, memgraph.detail, memgraph.map, memgraph.value, memgraph.enums;
 
 /// Represents a relationship from a labeled property graph.
 ///
@@ -10,21 +9,13 @@ import memgraph.enums, memgraph.atomic;
 /// identifiers for the start and end nodes of that relationship, a type and a
 /// map of properties. A relationship owns its type string and property map.
 struct Relationship {
-	@disable this();
-	@disable this(this);
-
-	/// Create a deep copy of `other` relationship.
-	this(const ref Relationship other) {
-		this(mg_relationship_copy(other.ref_.data));
-	}
-
-	/// Create a shared copy of `other` relationship.
-	this(ref Relationship other) {
-		ref_ = other.ref_;
+	/// Create a copy of `other` relationship.
+	this(inout ref Relationship other) {
+		this(mg_relationship_copy(other.ptr));
 	}
 
 	/// Create a relationship from a Value.
-	this(const ref Value value) {
+	this(inout ref Value value) {
 		assert(value.type == Type.Relationship);
 		this(mg_relationship_copy(mg_value_relationship(value.ptr)));
 	}
@@ -37,39 +28,49 @@ struct Relationship {
 	/// Compares this relationship with `other`.
 	/// Return: true if same, false otherwise.
 	bool opEquals(const ref Relationship other) const {
-		return Detail.areRelationshipsEqual(ref_.data, other.ref_.data);
+		return Detail.areRelationshipsEqual(ptr_, other.ptr_);
 	}
 
 	/// Returns the relationship id.
 	const (long) id() const {
-		return mg_relationship_id(ref_.data);
+		return mg_relationship_id(ptr_);
 	}
 
 	/// Returns the relationship start id.
 	const (long) startId() const {
-		return mg_relationship_start_id(ref_.data);
+		return mg_relationship_start_id(ptr_);
 	}
 
 	/// Returns the relationship end id.
 	const (long) endId() const {
-		return mg_relationship_end_id(ref_.data);
+		return mg_relationship_end_id(ptr_);
 	}
 
 	/// Returns the relationship type.
 	const (string) type() const {
-		return Detail.convertString(mg_relationship_type(ref_.data));
+		return Detail.convertString(mg_relationship_type(ptr_));
 	}
 
 	/// Returns the relationship properties.
 	const (Map) properties() const {
-		return Map(mg_relationship_properties(ref_.data));
+		return Map(mg_relationship_properties(ptr_));
+	}
+
+	this(this) {
+		if (ptr_)
+			ptr_ = mg_relationship_copy(ptr_);
+	}
+
+	~this() {
+		if (ptr_)
+			mg_relationship_destroy(ptr_);
 	}
 
 package:
 	/// Create a Relationship using the given `mg_relationship`.
 	this(mg_relationship *ptr) {
 		assert(ptr != null);
-		ref_ = SharedPtr!mg_relationship.make(ptr, (p) { mg_relationship_destroy(p); });
+		ptr_ = ptr;
 	}
 
 	/// Create a Relationship from a copy of the given `mg_relationship`.
@@ -78,10 +79,10 @@ package:
 		this(mg_relationship_copy(const_ptr));
 	}
 
-	const (mg_relationship *) ptr() const { return ref_.data; }
+	const (mg_relationship *) ptr() const { return ptr_; }
 
 private:
-	SharedPtr!mg_relationship ref_;
+	mg_relationship *ptr_;
 }
 
 unittest {

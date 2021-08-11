@@ -4,7 +4,6 @@ module memgraph.result;
 import std.string, std.conv;
 
 import memgraph.mgclient, memgraph.value, memgraph.map, memgraph.optional, memgraph.detail;
-import memgraph.atomic;
 
 /// An object encapsulating a single result row or query execution summary. It's
 /// lifetime is limited by lifetime of parent `mg_session`. Also, invoking
@@ -13,9 +12,9 @@ import memgraph.atomic;
 struct Result {
 	/// Returns names of columns output by the current query execution.
 	auto columns() {
-		assert(ref_.data != null);
-		assert(*ref_.data != null);
-		const (mg_list) *list = mg_result_columns(*ref_.data);
+		assert(ptr_ != null);
+		assert(*ptr_ != null);
+		const (mg_list) *list = mg_result_columns(*ptr_);
 		const size_t list_length = mg_list_size(list);
 		string[] cols;
 		cols.length = list_length;
@@ -26,40 +25,51 @@ struct Result {
 
 	/// Returns query execution summary as a key/value `Map`.
 	auto summary() {
-		assert(ref_.data != null);
-		assert(*ref_.data != null);
-		return Map(mg_result_summary(*ref_.data));
+		assert(ptr_ != null);
+		assert(*ptr_ != null);
+		return Map(mg_result_summary(*ptr_));
 	}
 
 	/// Check if the `Result` is empty.
 	/// Return: true if empty, false if there are more rows to be fetched.
 	/// Note: part of `InputRange` interface
 	bool empty() {
-		if (values.length == 0) {
-			assert(ref_.data != null);
-			immutable status = mg_session_fetch(session, ref_.data);
+		if (values_.length == 0) {
+			assert(ptr_ != null);
+			immutable status = mg_session_fetch(session_, ptr_);
 			if (status != 1)
 				return true;
-			const (mg_list) *list = mg_result_row(*ref_.data);
+			const (mg_list) *list = mg_result_row(*ptr_);
 			const size_t list_length = mg_list_size(list);
 			Value[] data;
 			data.length = list_length;
 			for (uint i = 0; i < list_length; ++i)
 				data[i] = Value(mg_list_at(list, i));
-			values ~= data;
+			values_ ~= data;
 		}
-		return values.length == 0;
+		return values_.length == 0;
 	}
 	/// Returns the front element of the range.
 	/// Note: part of `InputRange` interface
 	auto front() {
-		assert(values.length > 0);
-		return values[0];
+		assert(values_.length > 0);
+		return values_[0];
 	}
 	/// Pops the first element from the range, shortening the range by one element.
 	/// Note: part of `InputRange` interface
 	void popFront() {
-		values = values[1..$];
+		values_ = values_[1..$];
+	}
+
+	~this() {
+		import core.stdc.stdlib : free;
+		refs_--;
+		if (ptr_ && refs_ == 0)
+			free(ptr_);
+	}
+
+	this(this) {
+		refs_++;
 	}
 
 package:
@@ -71,16 +81,18 @@ package:
 	/// future range copies.
 	this(mg_session *session) {
 		assert(session != null);
-		import core.stdc.stdlib : malloc, free;
-		this.session = session;
-		ref_ = SharedPtr!(mg_result*).make(cast(mg_result **)malloc((mg_result *).sizeof), (p) { free(p); });
+		import core.stdc.stdlib : malloc;
+		session_ = session;
+		ptr_ = cast(mg_result **)malloc((mg_result *).sizeof);
 	}
 
 private:
 	/// Pointer to private `mg_session` instance.
-	mg_session *session;
-	/// Shared pointer to private `mg_result` instance.
-	SharedPtr!(mg_result*) ref_;
+	mg_session *session_;
+	/// Pointer to private `mg_result` instance.
+	mg_result **ptr_;
 	/// Temporary value store.
-	Value[][] values;
+	Value[][] values_;
+	/// Reference count.
+	uint refs_ = 1;
 }

@@ -1,7 +1,7 @@
 /// Provides a node wrapper.
 module memgraph.node;
 
-import memgraph.mgclient, memgraph.detail, memgraph.map, memgraph.atomic;
+import memgraph.mgclient, memgraph.detail, memgraph.map;
 import memgraph.value, memgraph.enums;
 
 import std.conv;
@@ -69,46 +69,49 @@ struct Node {
 		return labels.join(":") ~ " " ~ to!string(properties());
 	}
 
-	@disable this(this);
-
-	/// Create a shared copy of the given `node`.
-	this(ref Node other) {
-		ref_ = other.ref_;
+	this(this) {
+		if (ptr_)
+			ptr_ = mg_node_copy(ptr_);
 	}
 
-	/// Create a deep copy of the given `node`.
-	this(const ref Node other) {
-		this(mg_node_copy(other.ref_.data));
+	/// Create a copy of the given `node`.
+	this(inout ref Node other) {
+		this(mg_node_copy(other.ptr_));
 	}
 
 	/// Create a node from a Value.
-	this(const ref Value value) {
+	this(inout ref Value value) {
 		assert(value.type == Type.Node);
 		this(mg_node_copy(mg_value_node(value.ptr)));
 	}
 
 	/// Returns the ID of this node.
 	long id() const {
-		assert(ref_.data != null);
-		return mg_node_id(ref_.data);
+		assert(ptr_ != null);
+		return mg_node_id(ptr_);
 	}
 
 	/// Returns the labels belonging to this node.
-	Labels labels() const { return Labels(ref_.data); }
+	Labels labels() const { return Labels(ptr_); }
 
 	/// Returns the property map belonging to this node.
-	const (Map) properties() const { return Map(mg_node_properties(ref_.data)); }
+	const (Map) properties() const { return Map(mg_node_properties(ptr_)); }
 
 	/// Comparison operator.
 	bool opEquals(const ref Node other) const {
-		return Detail.areNodesEqual(ref_.data, other.ref_.data);
+		return Detail.areNodesEqual(ptr_, other.ptr_);
+	}
+
+	~this() {
+		if (ptr_)
+			mg_node_destroy(ptr_);
 	}
 
 package:
 	/// Create a Node using the given `mg_node`.
 	this(mg_node *ptr) {
 		assert(ptr != null);
-		ref_ = SharedPtr!mg_node.make(ptr, (p) { mg_node_destroy(p); });
+		ptr_ = ptr;
 	}
 
 	/// Create a Node from a copy of the given `mg_node`.
@@ -117,11 +120,11 @@ package:
 		this(mg_node_copy(ptr));
 	}
 
-	const (mg_node *) ptr() const { return ref_.data; }
+	const (mg_node *) ptr() const { return ptr_; }
 
 private:
 	/// Pointer to `mg_node` instance.
-	SharedPtr!mg_node ref_;
+	mg_node *ptr_;
 }
 
 unittest {

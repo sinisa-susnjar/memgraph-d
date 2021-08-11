@@ -1,28 +1,19 @@
 /// Provides a wrapper around a `mg_local_time`.
 module memgraph.local_time;
 
-import memgraph.mgclient, memgraph.detail, memgraph.value;
-import memgraph.atomic, memgraph.enums;
+import memgraph.mgclient, memgraph.detail, memgraph.value, memgraph.enums;
 
 /// Represents local time.
 ///
 /// Time is defined with nanoseconds since midnight.
 struct LocalTime {
-	@disable this();
-	@disable this(this);
-
-	/// Create a shared copy of `other` local time.
-	this(ref LocalTime other) {
-		ref_ = other.ref_;
-	}
-
-	/// Create a deep copy of `other` local time.
-	this(const ref LocalTime other) {
+	/// Create a copy of `other` local time.
+	this(inout ref LocalTime other) {
 		this(mg_local_time_copy(other.ptr));
 	}
 
 	/// Create a local time from a Value.
-	this(const ref Value value) {
+	this(inout ref Value value) {
 		assert(value.type == Type.LocalTime);
 		this(mg_local_time_copy(mg_value_local_time(value.ptr)));
 	}
@@ -44,17 +35,27 @@ struct LocalTime {
 	/// Compares this local time with `other`.
 	/// Return: true if same, false otherwise.
 	bool opEquals(const ref LocalTime other) const {
-		return Detail.areLocalTimesEqual(ref_.data, other.ref_.data);
+		return Detail.areLocalTimesEqual(ptr_, other.ptr);
 	}
 
 	/// Returns nanoseconds since midnight.
-	const (long) nanoseconds() const { return mg_local_time_nanoseconds(ref_.data); }
+	const (long) nanoseconds() const { return mg_local_time_nanoseconds(ptr_); }
+
+	this(this) {
+		if (ptr_)
+			ptr_ = mg_local_time_copy(ptr_);
+	}
+
+	@safe @nogc ~this() {
+		if (ptr_)
+			mg_local_time_destroy(ptr_);
+	}
 
 package:
 	/// Create a LocalTime using the given `mg_local_time`.
 	this(mg_local_time *ptr) @trusted {
 		assert(ptr != null);
-		ref_ = SharedPtr!mg_local_time.make(ptr, (p) { mg_local_time_destroy(p); });
+		ptr_ = ptr;
 	}
 
 	/// Create a LocalTime from a copy of the given `mg_local_time`.
@@ -63,10 +64,10 @@ package:
 		this(mg_local_time_copy(ptr));
 	}
 
-	const (mg_local_time *) ptr() const { return ref_.data; }
+	const (mg_local_time *) ptr() const { return ptr_; }
 
 private:
-	SharedPtr!mg_local_time ref_;
+	mg_local_time *ptr_;
 }
 
 unittest {

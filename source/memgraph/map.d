@@ -14,14 +14,24 @@ import memgraph.mgclient, memgraph.detail, memgraph.value;
 /// Can be used like a standard D hash map (because it is one under the hood).
 struct Map {
 
-	/// Create a copy of `other` map. Will copy all key/value pairs into this map from `other`.
-	/*
-	this(const ref Map other) {
-		// foreach (k, v; other.map_) map_[k] = v;
-		map_ = other.map_.dup;
-		this(mg_map_copy(other.ptr_));
+	/// Constructs a map that can hold at most `capacity` elements.
+	/// Params: capacity = The maximum number of elements that the newly constructed
+	///                    list can hold.
+	this(uint capacity) {
+		this(mg_map_make_empty(capacity));
 	}
-	*/
+
+	/// Create a copy of `other` map.
+	this(inout ref Map other) {
+		this(mg_map_copy(other.ptr));
+	}
+
+	/// Create a map from a Value.
+	this(inout ref Value value) {
+		assert(value.type == Type.Map);
+		this(mg_map_copy(mg_value_map(value.ptr)));
+	}
+
 	this(this) {
 		if (ptr_)
 			ptr_ = mg_map_copy(ptr_);
@@ -94,17 +104,16 @@ package:
 	this(mg_map *ptr) {
 		assert(ptr != null);
 		ptr_ = ptr;
-		mapToAA();
 	}
 
 	/// Create a Map from a copy of the given `mg_map`.
-	this(const mg_map *const_ptr) {
+	this(const mg_map *ptr) {
 		assert(ptr != null);
-		this(mg_map_copy(const_ptr));
-		mapToAA();
+		this(mg_map_copy(ptr));
 	}
 
-	auto ptr() { AAToMap(); return ptr_; }
+	/// Return pointer to internal mg_map.
+	const (mg_map *) ptr() const { return ptr_; }
 
 private:
 	// Copy the contents from the mg_map into an associative array
@@ -131,8 +140,6 @@ private:
 		}
 	}
 
-	alias toAA this;
-	Value[string] map_;
 	mg_map *ptr_;
 }
 

@@ -4,7 +4,6 @@ module memgraph.client;
 import std.string, std.stdio;
 
 import memgraph.mgclient, memgraph.optional, memgraph.value, memgraph.map, memgraph.params, memgraph.result;
-import memgraph.atomic;
 
 /// Provides a connection for memgraph.
 struct Client {
@@ -144,17 +143,22 @@ struct Client {
 		return Optional!Client(session);
 	}
 
+	~this() {
+		if (ptr_)
+			mg_session_destroy(ptr_);
+	}
+
 package:
 	this(mg_session *session) {
 		assert(session != null);
-		ref_ = SharedPtr!mg_session.make(session, (p) { mg_session_destroy(p); });
+		ptr_ = session;
 	}
 
 private:
 	/// Return pointer to internal mg_session.
-	auto ptr() inout { return ref_.data; }
+	auto ptr() inout { return ptr_; }
 
-	SharedPtr!mg_session ref_;
+	mg_session *ptr_;
 }
 
 unittest {

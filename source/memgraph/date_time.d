@@ -1,8 +1,7 @@
 /// Provides a wrapper around a `mg_date_time`.
 module memgraph.date_time;
 
-import memgraph.mgclient, memgraph.detail, memgraph.value;
-import memgraph.atomic, memgraph.enums;
+import memgraph.mgclient, memgraph.detail, memgraph.value, memgraph.enums;
 
 /// Represents date and time with its time zone.
 ///
@@ -10,21 +9,14 @@ import memgraph.atomic, memgraph.enums;
 /// Time is defined with nanoseconds since midnight.
 /// Time zone is defined with minutes from UTC.
 struct DateTime {
-	@disable this();
-	@disable this(this);
-
-	/// Create a shared copy of `other` date time.
-	this(ref DateTime other) {
-		ref_ = other.ref_;
-	}
 
 	/// Create a deep copy of `other` date time.
-	this(const ref DateTime other) {
+	this(inout ref DateTime other) {
 		this(mg_date_time_copy(other.ptr));
 	}
 
 	/// Create a date time from a Value.
-	this(const ref Value value) {
+	this(inout ref Value value) {
 		assert(value.type == Type.DateTime);
 		this(mg_date_time_copy(mg_value_date_time(value.ptr)));
 	}
@@ -46,23 +38,33 @@ struct DateTime {
 	/// Compares this date time with `other`.
 	/// Return: true if same, false otherwise.
 	bool opEquals(const ref DateTime other) const {
-		return Detail.areDateTimesEqual(ref_.data, other.ref_.data);
+		return Detail.areDateTimesEqual(ptr_, other.ptr);
 	}
 
 	/// Returns seconds since Unix epoch.
-	const (long) seconds() const { return mg_date_time_seconds(ref_.data); }
+	const (long) seconds() const { return mg_date_time_seconds(ptr_); }
 
 	/// Returns nanoseconds since midnight.
-	const (long) nanoseconds() const { return mg_date_time_nanoseconds(ref_.data); }
+	const (long) nanoseconds() const { return mg_date_time_nanoseconds(ptr_); }
 
 	/// Returns time zone offset in minutes from UTC.
-	const (long) tz_offset_minutes() const { return mg_date_time_tz_offset_minutes(ref_.data); }
+	const (long) tz_offset_minutes() const { return mg_date_time_tz_offset_minutes(ptr_); }
+
+	this(this) {
+		if (ptr_)
+			ptr_ = mg_date_time_copy(ptr_);
+	}
+
+	@safe @nogc ~this() {
+		if (ptr_)
+			mg_date_time_destroy(ptr_);
+	}
 
 package:
 	/// Create a DateTime using the given `mg_date_time`.
 	this(mg_date_time *ptr) @trusted {
 		assert(ptr != null);
-		ref_ = SharedPtr!mg_date_time.make(ptr, (p) { mg_date_time_destroy(p); });
+		ptr_ = ptr;
 	}
 
 	/// Create a DateTime from a copy of the given `mg_date_time`.
@@ -71,10 +73,10 @@ package:
 		this(mg_date_time_copy(ptr));
 	}
 
-	const (mg_date_time *) ptr() const { return ref_.data; }
+	const (mg_date_time *) ptr() const { return ptr_; }
 
 private:
-	SharedPtr!mg_date_time ref_;
+	mg_date_time *ptr_;
 }
 
 unittest {

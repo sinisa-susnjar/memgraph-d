@@ -1,29 +1,21 @@
 /// Provides a wrapper around a `mg_local_date_time`.
 module memgraph.local_date_time;
 
-import memgraph.mgclient, memgraph.detail, memgraph.value;
-import memgraph.atomic, memgraph.enums;
+import memgraph.mgclient, memgraph.detail, memgraph.value, memgraph.enums;
 
 /// Represents date and time without its time zone.
 ///
 /// Date is defined with seconds since the Unix epoch.
 /// Time is defined with nanoseconds since midnight.
 struct LocalDateTime {
-	@disable this();
-	@disable this(this);
 
-	/// Create a shared copy of `other` local date time.
-	this(ref LocalDateTime other) {
-		ref_ = other.ref_;
-	}
-
-	/// Create a deep copy of `other` local date time.
-	this(const ref LocalDateTime other) {
+	/// Create a copy of `other` local date time.
+	this(inout ref LocalDateTime other) {
 		this(mg_local_date_time_copy(other.ptr));
 	}
 
 	/// Create a local date time from a Value.
-	this(const ref Value value) {
+	this(inout ref Value value) {
 		assert(value.type == Type.LocalDateTime);
 		this(mg_local_date_time_copy(mg_value_local_date_time(value.ptr)));
 	}
@@ -45,20 +37,30 @@ struct LocalDateTime {
 	/// Compares this local date time with `other`.
 	/// Return: true if same, false otherwise.
 	bool opEquals(const ref LocalDateTime other) const {
-		return Detail.areLocalDateTimesEqual(ref_.data, other.ref_.data);
+		return Detail.areLocalDateTimesEqual(ptr_, other.ptr);
 	}
 
 	/// Returns seconds since Unix epoch.
-	const (long) seconds() const { return mg_local_date_time_seconds(ref_.data); }
+	const (long) seconds() const { return mg_local_date_time_seconds(ptr_); }
 
 	/// Returns nanoseconds since midnight.
-	const (long) nanoseconds() const { return mg_local_date_time_nanoseconds(ref_.data); }
+	const (long) nanoseconds() const { return mg_local_date_time_nanoseconds(ptr_); }
+
+	this(this) {
+		if (ptr_)
+			ptr_ = mg_local_date_time_copy(ptr_);
+	}
+
+	@safe @nogc ~this() {
+		if (ptr_)
+			mg_local_date_time_destroy(ptr_);
+	}
 
 package:
 	/// Create a LocalDateTime using the given `mg_local_date_time`.
 	this(mg_local_date_time *ptr) @trusted {
 		assert(ptr != null);
-		ref_ = SharedPtr!mg_local_date_time.make(ptr, (p) { mg_local_date_time_destroy(p); });
+		ptr_ = ptr;
 	}
 
 	/// Create a LocalDateTime from a copy of the given `mg_local_date_time`.
@@ -67,10 +69,10 @@ package:
 		this(mg_local_date_time_copy(ptr));
 	}
 
-	const (mg_local_date_time *) ptr() const { return ref_.data; }
+	const (mg_local_date_time *) ptr() const { return ptr_; }
 
 private:
-	SharedPtr!mg_local_date_time ref_;
+	mg_local_date_time *ptr_;
 }
 
 unittest {

@@ -2,7 +2,7 @@
 module memgraph.path;
 
 import memgraph.mgclient, memgraph.detail, memgraph.map, memgraph.value, memgraph.node, memgraph.unboundrelationship;
-import memgraph.enums, memgraph.atomic;
+import memgraph.enums;
 
 /// Represents a sequence of alternating nodes and relationships
 /// corresponding to a walk in a labeled property graph.
@@ -13,21 +13,13 @@ import memgraph.enums, memgraph.atomic;
 /// direction opposite of the direction of the underlying relationship in the
 /// data graph.
 struct Path {
-	@disable this();
-	@disable this(this);
-
-	/// Create a deep copy of `other` path.
-	this(const ref Path other) {
-		this(mg_path_copy(other.ref_.data));
-	}
-
-	/// Create a shared copy of `other` path.
-	this(ref Path other) {
-		ref_ = other.ref_;
+	/// Create a copy of `other` path.
+	this(inout ref Path other) {
+		this(mg_path_copy(other.ptr));
 	}
 
 	/// Create a path from a Value.
-	this(const ref Value value) {
+	this(inout ref Value value) {
 		assert(value.type == Type.Path);
 		this(mg_path_copy(mg_value_path(value.ptr)));
 	}
@@ -40,21 +32,21 @@ struct Path {
 	/// Compares this path with `other`.
 	/// Return: true if same, false otherwise.
 	bool opEquals(const ref Path other) const {
-		return Detail.arePathsEqual(ref_.data, other.ref_.data);
+		return Detail.arePathsEqual(ptr_, other.ptr);
 	}
 
 	/// Returns the path length.
 	/// Length of the path is number of edges.
 	const (long) length() const {
-		assert(ref_.data != null);
-		return mg_path_length(ref_.data);
+		assert(ptr_ != null);
+		return mg_path_length(ptr_);
 	}
 
 	/// Returns the vertex at the given `index`.
 	/// `index` should be less than or equal to length of the path.
 	const (Node) getNodeAt(uint index) const {
-		assert(ref_.data != null);
-		const auto vertex_ptr = mg_path_node_at(ref_.data, index);
+		assert(ptr_ != null);
+		const auto vertex_ptr = mg_path_node_at(ptr_, index);
 		assert(vertex_ptr != null);
 		return Node(vertex_ptr);
 	}
@@ -62,8 +54,8 @@ struct Path {
 	/// Returns the edge at the given `index`.
 	/// `index` should be less than length of the path.
 	const (UnboundRelationship) getRelationshipAt(uint index) const {
-		assert(ref_.data != null);
-		auto edge_ptr = mg_path_relationship_at(ref_.data, index);
+		assert(ptr_ != null);
+		auto edge_ptr = mg_path_relationship_at(ptr_, index);
 		assert(edge_ptr != null);
 		return UnboundRelationship(edge_ptr);
 	}
@@ -72,17 +64,27 @@ struct Path {
 	/// `index` should be less than length of the path.
 	/// Return: True if the edge is reversed, false otherwise.
 	bool isReversedRelationshipAt(uint index) const {
-		assert(ref_.data != null);
-		auto is_reversed = mg_path_relationship_reversed_at(ref_.data, index);
+		assert(ptr_ != null);
+		auto is_reversed = mg_path_relationship_reversed_at(ptr_, index);
 		assert(is_reversed != -1);
 		return is_reversed == 1;
+	}
+
+	this(this) {
+		if (ptr_)
+			ptr_ = mg_path_copy(ptr_);
+	}
+
+	~this() {
+		if (ptr_)
+			mg_path_destroy(ptr_);
 	}
 
 package:
 	/// Create a Path using the given `mg_path`.
 	this(mg_path *ptr) {
 		assert(ptr != null);
-		ref_ = SharedPtr!mg_path.make(ptr, (p) { mg_path_destroy(p); });
+		ptr_ = ptr;
 	}
 
 	/// Create a Path from a copy of the given `mg_path`.
@@ -91,10 +93,10 @@ package:
 		this(mg_path_copy(ptr));
 	}
 
-	const (mg_path *) ptr() const { return ref_.data; }
+	const (mg_path *) ptr() const { return ptr_; }
 
 private:
-	SharedPtr!mg_path ref_;
+	mg_path *ptr_;
 }
 
 unittest {

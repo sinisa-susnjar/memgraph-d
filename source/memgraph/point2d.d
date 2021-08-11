@@ -1,28 +1,20 @@
 /// Provides a wrapper around a `mg_point_2d`.
 module memgraph.point2d;
 
-import memgraph.mgclient, memgraph.detail, memgraph.value;
-import memgraph.atomic, memgraph.enums;
+import memgraph.mgclient, memgraph.detail, memgraph.value, memgraph.enums;
 
 /// Represents a single location in 2-dimensional space.
 ///
 /// Contains SRID along with its x and y coordinates.
 struct Point2d {
-	@disable this();
-	@disable this(this);
-
-	/// Create a shared copy of `other` point 2d.
-	this(ref Point2d other) {
-		ref_ = other.ref_;
-	}
 
 	/// Create a deep copy of `other` point 2d.
-	this(const ref Point2d other) {
+	this(inout ref Point2d other) {
 		this(mg_point_2d_copy(other.ptr));
 	}
 
 	/// Create a point 2d from a Value.
-	this(const ref Value value) {
+	this(inout ref Value value) {
 		assert(value.type == Type.Point2d);
 		this(mg_point_2d_copy(mg_value_point_2d(value.ptr)));
 	}
@@ -44,21 +36,31 @@ struct Point2d {
 	/// Compares this point 2d with `other`.
 	/// Return: true if same, false otherwise.
 	bool opEquals(const ref Point2d other) const {
-		return Detail.arePoint2dsEqual(ref_.data, other.ref_.data);
+		return Detail.arePoint2dsEqual(ptr_, other.ptr);
 	}
 
 	/// Returns SRID of the 2D point.
-	long srid() const { return mg_point_2d_srid(ref_.data); }
+	long srid() const { return mg_point_2d_srid(ptr_); }
 	/// Returns the x coordinate of the 2D point.
-	double x() const { return mg_point_2d_x(ref_.data); }
+	double x() const { return mg_point_2d_x(ptr_); }
 	/// Returns the y coordinate of the 2D point.
-	double y() const { return mg_point_2d_y(ref_.data); }
+	double y() const { return mg_point_2d_y(ptr_); }
+
+	this(this) {
+		if (ptr_)
+			ptr_ = mg_point_2d_copy(ptr_);
+	}
+
+	@safe @nogc ~this() {
+		if (ptr_)
+			mg_point_2d_destroy(ptr_);
+	}
 
 package:
 	/// Create a Point2d using the given `mg_point_2d`.
 	this(mg_point_2d *ptr) @trusted {
 		assert(ptr != null);
-		ref_ = SharedPtr!mg_point_2d.make(ptr, (p) { mg_point_2d_destroy(p); });
+		ptr_ = ptr;
 	}
 
 	/// Create a Point2d from a copy of the given `mg_point_2d`.
@@ -67,10 +69,10 @@ package:
 		this(mg_point_2d_copy(ptr));
 	}
 
-	const (mg_point_2d *) ptr() const { return ref_.data; }
+	const (mg_point_2d *) ptr() const { return ptr_; }
 
 private:
-	SharedPtr!mg_point_2d ref_;
+	mg_point_2d *ptr_;
 }
 
 unittest {

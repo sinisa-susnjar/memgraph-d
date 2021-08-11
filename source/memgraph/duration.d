@@ -1,8 +1,7 @@
 /// Provides a wrapper around a `mg_duration`.
 module memgraph.duration;
 
-import memgraph.mgclient, memgraph.detail, memgraph.value;
-import memgraph.atomic, memgraph.enums;
+import memgraph.mgclient, memgraph.detail, memgraph.value, memgraph.enums;
 
 /// Represents a temporal amount which captures the difference in time
 /// between two instants.
@@ -10,21 +9,14 @@ import memgraph.atomic, memgraph.enums;
 /// Duration is defined with months, days, seconds, and nanoseconds.
 /// Note: Duration can be negative.
 struct Duration {
-	@disable this();
-	@disable this(this);
 
-	/// Create a shared copy of `other` duration.
-	this(ref Duration other) {
-		ref_ = other.ref_;
-	}
-
-	/// Create a deep copy of `other` duration.
-	this(const ref Duration other) {
+	/// Create a copy of `other` duration.
+	this(inout ref Duration other) {
 		this(mg_duration_copy(other.ptr));
 	}
 
 	/// Create a duration from a Value.
-	this(const ref Value value) {
+	this(inout ref Value value) {
 		assert(value.type == Type.Duration);
 		this(mg_duration_copy(mg_value_duration(value.ptr)));
 	}
@@ -46,26 +38,36 @@ struct Duration {
 	/// Compares this duration with `other`.
 	/// Return: true if same, false otherwise.
 	bool opEquals(const ref Duration other) const {
-		return Detail.areDurationsEqual(ref_.data, other.ref_.data);
+		return Detail.areDurationsEqual(ptr_, other.ptr);
 	}
 
 	/// Returns the months part of the temporal amount.
-	const (long) months() const { return mg_duration_months(ref_.data); }
+	const (long) months() const { return mg_duration_months(ptr_); }
 
 	/// Returns the days part of the temporal amount.
-	const (long) days() const { return mg_duration_days(ref_.data); }
+	const (long) days() const { return mg_duration_days(ptr_); }
 
 	/// Returns the seconds part of the temporal amount.
-	const (long) seconds() const { return mg_duration_seconds(ref_.data); }
+	const (long) seconds() const { return mg_duration_seconds(ptr_); }
 
 	/// Returns the nanoseconds part of the temporal amount.
-	const (long) nanoseconds() const { return mg_duration_nanoseconds(ref_.data); }
+	const (long) nanoseconds() const { return mg_duration_nanoseconds(ptr_); }
+
+	this(this) {
+		if (ptr_)
+			ptr_ = mg_duration_copy(ptr_);
+	}
+
+	@safe @nogc ~this() {
+		if (ptr_)
+			mg_duration_destroy(ptr_);
+	}
 
 package:
 	/// Create a Duration using the given `mg_duration`.
 	this(mg_duration *ptr) @trusted {
 		assert(ptr != null);
-		ref_ = SharedPtr!mg_duration.make(ptr, (p) { mg_duration_destroy(p); });
+		ptr_ = ptr;
 	}
 
 	/// Create a Duration from a copy of the given `mg_duration`.
@@ -74,10 +76,10 @@ package:
 		this(mg_duration_copy(ptr));
 	}
 
-	const (mg_duration *) ptr() const { return ref_.data; }
+	const (mg_duration *) ptr() const { return ptr_; }
 
 private:
-	SharedPtr!mg_duration ref_;
+	mg_duration *ptr_;
 }
 
 unittest {

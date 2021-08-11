@@ -1,28 +1,19 @@
 /// Provides a wrapper around a `mg_point_3d`.
 module memgraph.point3d;
 
-import memgraph.mgclient, memgraph.detail, memgraph.value;
-import memgraph.atomic, memgraph.enums;
+import memgraph.mgclient, memgraph.detail, memgraph.value, memgraph.enums;
 
 /// Represents a single location in 3-dimensional space.
 ///
 /// Contains SRID along with its x, y and z coordinates.
 struct Point3d {
-	@disable this();
-	@disable this(this);
-
-	/// Create a shared copy of `other` point 3d.
-	this(ref Point3d other) {
-		ref_ = other.ref_;
-	}
-
 	/// Create a deep copy of `other` point 3d.
-	this(const ref Point3d other) {
+	this(inout ref Point3d other) {
 		this(mg_point_3d_copy(other.ptr));
 	}
 
 	/// Create a point 3d from a Value.
-	this(const ref Value value) {
+	this(inout ref Value value) {
 		assert(value.type == Type.Point3d);
 		this(mg_point_3d_copy(mg_value_point_3d(value.ptr)));
 	}
@@ -44,23 +35,33 @@ struct Point3d {
 	/// Compares this point 3d with `other`.
 	/// Return: true if same, false otherwise.
 	bool opEquals(const ref Point3d other) const {
-		return Detail.arePoint3dsEqual(ref_.data, other.ref_.data);
+		return Detail.arePoint3dsEqual(ptr_, other.ptr);
 	}
 
 	/// Returns SRID of the 3D point.
-	long srid() const { return mg_point_3d_srid(ref_.data); }
+	long srid() const { return mg_point_3d_srid(ptr_); }
 	/// Returns the x coordinate of the 3D point.
-	double x() const { return mg_point_3d_x(ref_.data); }
+	double x() const { return mg_point_3d_x(ptr_); }
 	/// Returns the y coordinate of the 3D point.
-	double y() const { return mg_point_3d_y(ref_.data); }
+	double y() const { return mg_point_3d_y(ptr_); }
 	/// Returns the z coordinate of the 3D point.
-	double z() const { return mg_point_3d_z(ref_.data); }
+	double z() const { return mg_point_3d_z(ptr_); }
+
+	this(this) {
+		if (ptr_)
+			ptr_ = mg_point_3d_copy(ptr_);
+	}
+
+	@safe @nogc ~this() {
+		if (ptr_)
+			mg_point_3d_destroy(ptr_);
+	}
 
 package:
 	/// Create a Point3d using the given `mg_point_3d`.
 	this(mg_point_3d *ptr) @trusted {
 		assert(ptr != null);
-		ref_ = SharedPtr!mg_point_3d.make(ptr, (p) { mg_point_3d_destroy(p); });
+		ptr_ = ptr;
 	}
 
 	/// Create a Point3d from a copy of the given `mg_point_3d`.
@@ -69,10 +70,10 @@ package:
 		this(mg_point_3d_copy(ptr));
 	}
 
-	const (mg_point_3d *) ptr() const { return ref_.data; }
+	const (mg_point_3d *) ptr() const { return ptr_; }
 
 private:
-	SharedPtr!mg_point_3d ref_;
+	mg_point_3d *ptr_;
 }
 
 unittest {
