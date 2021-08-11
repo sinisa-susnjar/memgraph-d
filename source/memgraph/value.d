@@ -67,12 +67,6 @@ struct Value {
 	}
 
 	@disable this(this);
-	/*
-	this(this) {
-		if (ptr_)
-			ptr_ = mg_value_copy(ptr_);
-	}
-	*/
 
 	/// Make a new value of type `T` and initialise it with `val`.
 	this(T)(const T val) {
@@ -167,8 +161,6 @@ package:
 	}
 
 	const (mg_value *) ptr() const { return ptr_; }
-
-	mg_value * ptr() { return ptr_; }
 
 private:
 	mg_value *ptr_;
