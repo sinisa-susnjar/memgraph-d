@@ -778,7 +778,7 @@ extern (C) {
 	///
 	/// Return: The function returns non-zero value if insertion failed, zero
 	///         otherwise.
-	int mg_map_insert(mg_map *map, const char *key_str, mg_value *value);
+	mg_error mg_map_insert(mg_map *map, const char *key_str, mg_value *value);
 
 	/// Inserts the given key-value pair into the map.
 	///
