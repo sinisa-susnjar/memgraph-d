@@ -12,6 +12,9 @@ import memgraph.mgclient, memgraph.detail, memgraph.value, memgraph.enums;
 ///
 /// Maximum possible list length allowed by Bolt is `uint.max`.
 struct List {
+	/// List needs an initial capacity.
+	@disable this();
+
 	/// Construct a new list from an array of values.
 	this(const Value[] valueArray) {
 		this(mg_list_make_empty(to!uint(valueArray.length)));
