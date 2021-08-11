@@ -147,6 +147,8 @@ unittest {
 	l ~= Value("Hi");
 	assert(l.length == 5);
 
+	assert(l == l);
+
 	assert(l[0].type == Type.Int);
 	assert(l[0] == 42);
 	assert(l[1].type == Type.Int);
@@ -200,6 +202,27 @@ unittest {
 	assert(to!string(v2) == to!string(l4));
 
 	assert(v != v2);
+}
+
+unittest {
+	auto l1 = List(5);
+	l1 ~= Value(123);
+	l1 ~= Value("Hello");
+	l1 ~= Value(true);
+	l1 ~= Value(5.5);
+
+	auto l2 = List(5);
+	l2 ~= Value(123);
+	l2 ~= Value("Hello");
+	l2 ~= Value(true);
+	l2 ~= Value(5.5);
+
+	assert(l1 == l2);
+
+	l1 ~= Value("new");
+	l2 ~= Value("novo");
+
+	assert(l1 != l2);
 }
 
 unittest {

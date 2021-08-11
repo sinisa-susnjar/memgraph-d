@@ -192,6 +192,8 @@ unittest {
 	assert(v2 == "Hello there");
 	assert(v2.toString == "Hello there");
 	assert(to!string(v2) == "Hello there");
+
+	assert(v1 == v1);
 }
 
 unittest {

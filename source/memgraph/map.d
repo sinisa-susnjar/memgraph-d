@@ -176,6 +176,34 @@ unittest {
 }
 
 unittest {
+	auto m1 = Map(10);
+	m1["key1"] = 123;
+	auto m2 = Map(10);
+	assert(m1 != m2);
+
+	m2["key1"] = 456;
+	assert(m1 != m2);
+
+	m1["key2"] = "Hi!";
+	m2["key99"] = "Bok!";
+	assert(m1 != m2);
+}
+
+unittest {
+	auto m1 = Map(10);
+	m1["key1"] = 123;
+	auto m2 = Map(10);
+	assert(m1 != m2);
+
+	m2["key1"] = 123;
+	assert(m1 == m2);
+
+	m1["key2"] = "Hi!";
+	m2["key99"] = "Bok!";
+	assert(m1 != m2);
+}
+
+unittest {
 	auto m = Map(32);
 	m["answer_to_life_the_universe_and_everything"] = 42;
 	assert("answer_to_life_the_universe_and_everything" in m);
