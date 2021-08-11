@@ -256,8 +256,7 @@ unittest {
 	// Connect to memgraph DB at localhost:7688
 	Params p = { host: "localhost", port: 7688 };
 	auto client = Client.connect(p);
-	if (!client)
-		writefln("cannot connect to %s:%s: %s", p.host, p.port, client.status);
+	if (!client) writefln("cannot connect to %s:%s: %s", p.host, p.port, client.status);
 }
 
 unittest {
