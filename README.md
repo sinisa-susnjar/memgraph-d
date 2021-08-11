@@ -31,15 +31,16 @@ int main() {
 
     auto results = client.execute("MATCH (n) RETURN n;");
     foreach (r; results) {
-        if (r.type == Type.Node) {
-            const auto node = to!Node(r);
+        assert(r.length == 1);
+        if (r[0].type == Type.Node) {
+            const auto node = to!Node(r[0]);
             writefln("%s {%s}", node.labels.join(":"),
-                     node.properties.byKeyValue.map!(
+                     node.properties.map!(
                          p => p.key ~ ":" ~ to!string(p.value)).join(" "));
         }
     }
     writefln("Summary: {%s}",
-             results.summary.byKeyValue.map!(
+             results.summary.map!(
                  p => p.key ~ ":" ~ to!string(p.value)).join(" "));
     writefln("Columns: %s", results.columns);
 
