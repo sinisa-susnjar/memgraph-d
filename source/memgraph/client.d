@@ -40,21 +40,14 @@ struct Client {
 	/// After executing the statement, the method is blocked until all incoming
 	/// data (execution results) are handled, i.e. until the returned `Result` has been completely processed.
 	Optional!Result execute(const string statement) {
-		assert(ptr != null);
-		auto status = mg_session_run(ptr, toStringz(statement), null, null, null, null);
-		if (status < 0)
-			return Optional!Result();
-		status = mg_session_pull(ptr, null);
-		if (status < 0)
-			return Optional!Result();
-		return Optional!Result(ptr);
+		return execute(statement, Map(0));
 	}
 
 	/// Executes the given Cypher `statement`, supplied with additional `params`.
 	/// Return: optional `Result` that can be used as a range e.g. using foreach() to process all results.
 	/// After executing the statement, the method is blocked until all incoming
 	/// data (execution results) are handled, i.e. until the returned `Result` has been completely processed.
-	Optional!Result execute(const string statement, ref Map params) {
+	Optional!Result execute(const string statement, const Map params) {
 		assert(ptr != null);
 		int status = mg_session_run(ptr, toStringz(statement), params.ptr, null, null, null);
 		if (status < 0)
