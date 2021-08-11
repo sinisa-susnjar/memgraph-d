@@ -13,9 +13,17 @@ import memgraph.mgclient, memgraph.detail, memgraph.value, memgraph.enums;
 ///
 /// Can be used like a standard D hash map (because it is one under the hood).
 struct Map {
-
 	/// Map needs an initial capacity.
 	@disable this();
+
+	/// Construct a new map from an associative array of key, value pairs.
+	this(const ref Value[string] valueMap) {
+		this(mg_map_make_empty(to!uint(valueMap.length)));
+		foreach (ref key, ref value; valueMap) {
+			immutable rc = mg_map_insert(ptr_, toStringz(key), mg_value_copy(value.ptr));
+			assert(rc == mg_error.MG_SUCCESS);
+		}
+	}
 
 	/// Constructs a map that can hold at most `capacity` elements.
 	/// Params: capacity = The maximum number of elements that the newly constructed
@@ -63,6 +71,13 @@ struct Map {
 	/// Return: true if same, false otherwise.
 	bool opEquals(const Map other) const {
 		return Detail.areMapsEqual(ptr_, other.ptr);
+	}
+
+	/// Compares this map with an associative array of key, value pairs.
+	/// Return: true if same, false otherwise.
+	bool opEquals(const ref Value[string] valueMap) const {
+		auto other = Map(valueMap);
+		return Detail.areMapsEqual(ptr_, other.ptr_);
 	}
 
 	/// Remove given `key` from map.
@@ -120,16 +135,18 @@ struct Map {
 		return ret;
 	}
 
+	/*
 	ref Value opIndexOpAssign(string op)(int value, const char[] key) if (op == "=") {
 		auto val = Value(value);
 		immutable rc = mg_map_insert(ptr_, toStringz(key), val.ptr);
 		assert(rc == mg_error.MG_SUCCESS);
 		return val;
 	}
+	*/
 
 	Value opIndexAssign(T)(const T value, const string key) {
 		auto val = Value(value);
-		immutable rc = mg_map_insert(ptr_, toStringz(key), val.ptr);
+		immutable rc = mg_map_insert(ptr_, toStringz(key), mg_value_copy(val.ptr));
 		assert(rc == mg_error.MG_SUCCESS);
 		return val;
 	}
@@ -243,4 +260,22 @@ unittest {
 	assert(v == m);
 
 	assert(to!string(v) == to!string(m));
+}
+
+unittest {
+	Value[string] vm;
+	vm["int"] = 42;
+	vm["long"] = 23L;
+	vm["double"] = 5.43210;
+	vm["bool"] = true;
+	vm["string"] = "Hi";
+	assert(vm.length == 5);
+
+	auto m = Map(vm);
+	foreach (k, v; vm)
+		assert(v == m[k]);
+	foreach (k, v; m)
+		assert(v == vm[k]);
+
+	assert(m == vm);
 }
