@@ -92,10 +92,10 @@ struct Node {
 	}
 
 	/// Returns the labels belonging to this node.
-	Labels labels() const { return Labels(ptr_); }
+	auto labels() inout { return Labels(ptr_); }
 
 	/// Returns the property map belonging to this node.
-	const (Map) properties() const { return Map(mg_node_properties(ptr_)); }
+	auto properties() inout { return Map(mg_node_properties(ptr_)); }
 
 	/// Comparison operator.
 	bool opEquals(const ref Node other) const {

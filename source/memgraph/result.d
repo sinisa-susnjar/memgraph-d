@@ -11,7 +11,7 @@ import memgraph.mgclient, memgraph.value, memgraph.map, memgraph.optional, memgr
 /// Implements an `InputRange`.
 struct Result {
 	/// Returns names of columns output by the current query execution.
-	auto columns() {
+	auto columns() inout {
 		assert(ptr_ != null);
 		assert(*ptr_ != null);
 		const (mg_list) *list = mg_result_columns(*ptr_);
@@ -24,7 +24,7 @@ struct Result {
 	}
 
 	/// Returns query execution summary as a key/value `Map`.
-	auto summary() {
+	auto summary() inout {
 		assert(ptr_ != null);
 		assert(*ptr_ != null);
 		return Map(mg_result_summary(*ptr_));
@@ -33,7 +33,7 @@ struct Result {
 	/// Check if the `Result` is empty.
 	/// Return: true if empty, false if there are more rows to be fetched.
 	/// Note: part of `InputRange` interface
-	bool empty() {
+	@property bool empty() {
 		if (values_.length == 0) {
 			assert(ptr_ != null);
 			immutable status = mg_session_fetch(session_, ptr_);
@@ -57,7 +57,7 @@ struct Result {
 	}
 	/// Pops the first element from the range, shortening the range by one element.
 	/// Note: part of `InputRange` interface
-	void popFront() {
+	@property void popFront() {
 		values_ = values_[1..$];
 	}
 
@@ -95,4 +95,9 @@ private:
 	Value[][] values_;
 	/// Reference count.
 	uint refs_ = 1;
+}
+
+unittest {
+	import std.range.primitives : isInputRange;
+	assert(isInputRange!Result);
 }

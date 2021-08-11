@@ -123,7 +123,8 @@ struct Value {
 	/// it will be first converted into the appropriate string
 	/// representation.
 	string toString() const {
-		switch (type) {
+		final switch (type) {
+			case Type.Null:					return "(null)";
 			case Type.Double:				return to!string(to!double(this));
 			case Type.Node:					return to!string(to!Node(this));
 			case Type.Bool:					return to!string(to!bool(this));
@@ -143,7 +144,6 @@ struct Value {
 			case Type.Duration:				return to!string(to!Duration(this));
 			case Type.Point2d:				return to!string(to!Point2d(this));
 			case Type.Point3d:				return to!string(to!Point3d(this));
-			default: assert(0, "unhandled type: " ~ to!string(type()));
 		}
 	}
 
@@ -167,6 +167,8 @@ package:
 	}
 
 	const (mg_value *) ptr() const { return ptr_; }
+
+	mg_value * ptr() { return ptr_; }
 
 private:
 	mg_value *ptr_;
@@ -341,7 +343,7 @@ unittest {
 
 // map tests
 unittest {
-	Map m;
+	auto m = Map(100);
 	m["key1"] = 1;
 	m["key2"] = true;
 	m["key3"] = 2.71828;
@@ -367,6 +369,8 @@ unittest {
 	assert(v2.type == Type.Null);
 
 	assert(v1 == v2);
+
+	assert(to!string(v1) == "(null)");
 }
 
 // unknown value test

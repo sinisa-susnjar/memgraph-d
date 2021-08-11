@@ -67,12 +67,13 @@ struct List {
 	}
 
 	/// Return a printable string representation of this list.
-	string toString() const {
+	const (string) toString() const {
+		assert(ptr_);
 		immutable len = length;
 		string ret = "[";
 		for (uint i = 0; i < len; i++) {
 			ret ~= to!string(Value(mg_list_at(ptr_, i)));
-			if (i < length-1)
+			if (i < len-1)
 				ret ~= ",";
 		}
 		ret ~= "]";
@@ -86,7 +87,7 @@ struct List {
 	}
 
 	/// Checks if the list as range is empty.
-	bool empty() const { return idx_ >= length; }
+	@property bool empty() const { return idx_ >= length; }
 
 	/// Returns the next element in the list range.
 	auto front() const {
@@ -129,6 +130,11 @@ package:
 private:
 	mg_list *ptr_;
 	uint idx_;
+}
+
+unittest {
+	import std.range.primitives : isInputRange;
+	assert(isInputRange!List);
 }
 
 unittest {
@@ -180,24 +186,18 @@ unittest {
 
 	const l4 = List(l);
 	assert(l4.ptr != null);
-	assert(l4.ptr == l.ptr); // pointers are the same since both shared the same shared ptr
+	assert(l4.ptr != l.ptr);
 	assert(l4.length == 8);
 	assert(to!string(l4) == "[42,23,5.4321,true,Hi,123456,Bok!,true]");
-
-	const l5 = List(l4);
-	assert(l5.ptr != null);
-	assert(l5.ptr != l.ptr); // pointers are *not* the same here due to const doing a deep copy
-	assert(l5.length == 8);
-	assert(to!string(l5) == "[42,23,5.4321,true,Hi,123456,Bok!,true]");
 
 	l ~= Value("another entry");
 	assert(l.length == 9);
 	assert(to!string(l) == "[42,23,5.4321,true,Hi,123456,Bok!,true,another entry]");
 	v = Value(l);
 
-	auto v2 = Value(l5);
-	assert(v2 == l5);
-	assert(to!string(v2) == to!string(l5));
+	auto v2 = Value(l4);
+	assert(v2 == l4);
+	assert(to!string(v2) == to!string(l4));
 
 	assert(v != v2);
 }

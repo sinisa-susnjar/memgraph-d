@@ -225,7 +225,7 @@ unittest {
 	assert(result.count == 5);
 
 	// Just some test for execute() using Map parameters.
-	Map m;
+	auto m = Map(10);
 	m["test"] = 42;
 	result = client.execute("MATCH (n) RETURN n;", m);
 	assert(result, client.error);
@@ -251,7 +251,7 @@ unittest {
 	auto client = connectContainer();
 	assert(client);
 	assert(!client.run("WHAT IS THE ANSWER TO LIFE, THE UNIVERSE AND EVERYTHING?"));
-	Map m;
+	auto m = Map(10);
 	m["answer"] = 42;
 	assert(!client.execute("WHAT IS THE ANSWER TO LIFE, THE UNIVERSE AND EVERYTHING?", m));
 }
