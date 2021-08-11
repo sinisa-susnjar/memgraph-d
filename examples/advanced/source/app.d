@@ -49,11 +49,11 @@ int main(string[] args) {
 		if (r[0].type() == Type.Node) {
 			const auto node = to!Node(r[0]);
 			writefln("%s {%s}", node.labels.join(":"),
-					node.properties.byKeyValue.map!(p => p.key ~ ":" ~ to!string(p.value)).join(" "));
+					node.properties.map!(p => p.key ~ ":" ~ to!string(p.value)).join(" "));
 		}
 		resultCount++;
 	}
-	writefln("Summary: {%s}", results.summary.byKeyValue.map!(p => p.key ~ ":" ~ to!string(p.value)).join(" "));
+	writefln("Summary: {%s}", results.summary.map!(p => p.key ~ ":" ~ to!string(p.value)).join(" "));
 	writefln("Columns: %s", results.columns);
 	writefln("Number of results: %s", resultCount);
 
