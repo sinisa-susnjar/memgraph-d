@@ -61,7 +61,7 @@ struct Value {
 	this(typeof(null)) { this(mg_value_make_null()); }
 
 	/// Copy constructor.
-	this(inout ref Value rhs) {
+	this(const ref Value rhs) {
 		this(rhs.ptr_);
 		// this(mg_value_copy(rhs.ptr));
 	}
@@ -143,6 +143,11 @@ struct Value {
 	@property Type type() const {
 		assert(ptr_ != null);
 		return Detail.convertType(mg_value_get_type(ptr_));
+	}
+
+	@safe @nogc ~this() {
+		if (ptr_)
+			mg_value_destroy(ptr_);
 	}
 
 package:
