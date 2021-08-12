@@ -5,7 +5,7 @@ import std.algorithm : map;
 
 // Example adapted from advanced.cpp included in the mgclient git repo.
 
-private void clearDatabaseData(ref Optional!Client client) {
+private void clearDatabaseData(ref Client client) {
 	if (!client.run("MATCH (n) DETACH DELETE n;")) {
 		writefln("Failed to delete all data from the database: %s %s", client.status, client.error);
 		assert(0);
