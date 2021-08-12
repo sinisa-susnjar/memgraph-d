@@ -101,7 +101,7 @@ private:
 
 unittest {
 	import testutils : connectContainer, createTestData, deleteTestData;
-	import memgraph : Client, Optional, Type, Value, Node, Relationship, List;
+	import memgraph : Client, Type, Value, Node, Relationship, List;
 	import std.conv : to;
 
 	auto client = connectContainer();

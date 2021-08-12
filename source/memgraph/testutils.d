@@ -86,17 +86,17 @@ version (unittest) {
 	}	// connectContainer()
 
 	// Create an index on the test data.
-	void createTestIndex(ref Optional!Client client) {
+	void createTestIndex(ref Client client) {
 		assert(client.run("CREATE INDEX ON :Person(id);"), client.error);
 	}	// createTestIndex()
 
 	// Delete the test data.
-	void deleteTestData(ref Optional!Client client) {
+	void deleteTestData(ref Client client) {
 		assert(client.run("MATCH (n) DETACH DELETE n;"), client.error);
 	}	// deleteTestData()
 
 	// Create some test data.
-	void createTestData(ref Optional!Client client) {
+	void createTestData(ref Client client) {
 		// Create a few nodes.
 		assert(client.run(
 			"CREATE (:Person:Entrepreneur {id: 0, age: 40, name: 'John', " ~

@@ -3,7 +3,7 @@ module memgraph.client;
 
 import std.string, std.stdio;
 
-import memgraph.mgclient, memgraph.optional, memgraph.value, memgraph.map, memgraph.params, memgraph.result;
+import memgraph.mgclient, memgraph.value, memgraph.map, memgraph.params, memgraph.result;
 
 /// Provides a connection for memgraph.
 struct Client {
@@ -13,16 +13,15 @@ struct Client {
 
 	/// Obtains the error message stored in the current session (if any).
 	@property auto error() {
-		assert(ptr != null);
-		return fromStringz(mg_session_error(ptr));
+		assert(ptr_ != null);
+		return fromStringz(mg_session_error(ptr_));
 	}
 
 	/// Returns the status of the current session.
 	/// Return: One of the session codes in `mg_session_code`.
-	// @property auto status() inout {
 	@property auto status() inout {
-		assert(ptr != null);
-		return mg_session_status(ptr);
+		assert(ptr_ != null);
+		return mg_session_status(ptr_);
 	}
 
 	/// Runs the given Cypher `statement` and discards any possible results.
@@ -36,26 +35,26 @@ struct Client {
 	}
 
 	/// Executes the given Cypher `statement`.
-	/// Return: optional `Result` that can be used as a range e.g. using foreach() to process all results.
+	/// Return: `Result` that can be used as a range e.g. using foreach() to process all results.
 	/// After executing the statement, the method is blocked until all incoming
 	/// data (execution results) are handled, i.e. until the returned `Result` has been completely processed.
-	Optional!Result execute(const string statement) {
+	Result execute(const string statement) {
 		return execute(statement, Map(0));
 	}
 
 	/// Executes the given Cypher `statement`, supplied with additional `params`.
-	/// Return: optional `Result` that can be used as a range e.g. using foreach() to process all results.
+	/// Return: `Result` that can be used as a range e.g. using foreach() to process all results.
 	/// After executing the statement, the method is blocked until all incoming
 	/// data (execution results) are handled, i.e. until the returned `Result` has been completely processed.
-	Optional!Result execute(const string statement, const Map params) {
-		assert(ptr != null);
-		int status = mg_session_run(ptr, toStringz(statement), params.ptr, null, null, null);
+	Result execute(const string statement, const Map params) {
+		assert(ptr_ != null);
+		int status = mg_session_run(ptr_, toStringz(statement), params.ptr, null, null, null);
 		if (status < 0)
-			return Optional!Result();
-		status = mg_session_pull(ptr, null);
+			return Result();
+		status = mg_session_pull(ptr_, null);
 		if (status < 0)
-			return Optional!Result();
-		return Optional!Result(ptr);
+			return Result();
+		return Result(ptr_);
 	}
 
 /*
@@ -96,49 +95,69 @@ struct Client {
 	/// Start a transaction.
 	/// Return: true when the transaction was successfully started, false otherwise.
 	bool begin() {
-		assert(ptr != null);
-		return mg_session_begin_transaction(ptr, null) == 0;
+		assert(ptr_ != null);
+		return mg_session_begin_transaction(ptr_, null) == 0;
 	}
 
 	/// Commit current transaction.
 	/// Return: true when the transaction was successfully committed, false otherwise.
 	bool commit() {
-		assert(ptr != null);
+		assert(ptr_ != null);
 		mg_result *result;
-		return mg_session_commit_transaction(ptr, &result) == 0;
+		return mg_session_commit_transaction(ptr_, &result) == 0;
 	}
 
 	/// Rollback current transaction.
 	/// Return: true when the transaction was successfully rolled back, false otherwise.
 	bool rollback() {
-		assert(ptr != null);
+		assert(ptr_ != null);
 		mg_result *result;
-		return mg_session_rollback_transaction(ptr, &result) == 0;
+		return mg_session_rollback_transaction(ptr_, &result) == 0;
 	}
 
 	/// Static method that creates a Memgraph client instance using default parameters localhost:7687
-	/// Return: optional client connection instance.
-	/// Returns an empty optional if the connection couldn't be established.
-	static Optional!Client connect() {
+	/// Return: client connection instance.
+	/// Returns an unconnected instance if the connection couldn't be established.
+	static Client connect() {
 		Params params;
 		return connect(params);
 	}
 
 	/// Static method that creates a Memgraph client instance.
-	/// Return: optional client connection instance.
+	/// Return: client connection instance.
 	/// If the connection couldn't be established given the `params`, it will
-	/// return an empty optional.
-	static Optional!Client connect(ref Params params) {
+	/// return an unconnected instance.
+	static Client connect(ref Params params) {
 		mg_session *session = null;
 		immutable status = mg_connect(params.ptr, &session);
 		if (status < 0)
-			return Optional!Client();
-		return Optional!Client(session);
+			return Client();
+		return Client(session);
 	}
 
-	~this() {
+	/// Assigns a client to another. The target of the assignment gets detached from
+	/// whatever client it was attached to, and attaches itself to the new client.
+	ref Client opAssign(ref Client rhs) @safe return {
+		import std.algorithm.mutation : swap;
+		swap(this, rhs);
+		return this;
+	}
+
+	/// Create a copy of `other` client.
+	this(ref Client other) {
+		import std.algorithm.mutation : swap;
+		swap(this, other);
+	}
+
+	@safe @nogc ~this() {
 		if (ptr_)
 			mg_session_destroy(ptr_);
+	}
+
+	@disable this(this);
+
+	auto opCast(T : bool)() const {
+		return ptr_ != null;
 	}
 
 package:
@@ -148,10 +167,34 @@ package:
 	}
 
 private:
-	/// Return pointer to internal mg_session.
-	auto ptr() inout { return ptr_; }
-
 	mg_session *ptr_;
+}
+
+unittest {
+	import std.exception, core.exception;
+	import testutils;
+	import memgraph;
+
+	auto client = connectContainer();
+	assert(client);
+
+	assert(client.status == mg_session_code.MG_SESSION_READY);
+	assert(client.clientVersion.length > 0);
+
+	auto client2 = Client();
+	client2 = client;
+	assert(client2.status == mg_session_code.MG_SESSION_READY);
+	assert(client2.clientVersion.length > 0);
+
+	assertThrown!AssertError(client.status);
+	assertThrown!AssertError(client.error);
+
+	auto client3 = Client(client2);
+	assert(client3.status == mg_session_code.MG_SESSION_READY);
+	assert(client3.clientVersion.length > 0);
+
+	assertThrown!AssertError(client2.status);
+	assertThrown!AssertError(client2.error);
 }
 
 unittest {

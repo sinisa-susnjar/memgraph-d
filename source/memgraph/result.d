@@ -3,7 +3,7 @@ module memgraph.result;
 
 import std.string, std.conv;
 
-import memgraph.mgclient, memgraph.value, memgraph.map, memgraph.optional, memgraph.detail;
+import memgraph.mgclient, memgraph.value, memgraph.map, memgraph.detail;
 
 /// An object encapsulating a single result row or query execution summary. It's
 /// lifetime is limited by lifetime of parent `mg_session`. Also, invoking
@@ -70,6 +70,10 @@ struct Result {
 
 	this(this) {
 		refs_++;
+	}
+
+	auto opCast(T : bool)() const {
+		return ptr_ != null;
 	}
 
 package:

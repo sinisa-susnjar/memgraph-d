@@ -3,7 +3,6 @@
 module memgraph;
 
 public import memgraph.mgclient;
-public import memgraph.optional;
 public import memgraph.client;
 public import memgraph.value;
 public import memgraph.node;
