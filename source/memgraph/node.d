@@ -109,15 +109,15 @@ struct Node {
 
 package:
 	/// Create a Node using the given `mg_node`.
-	this(mg_node *ptr) {
-		assert(ptr != null);
-		ptr_ = ptr;
+	this(mg_node *p) {
+		assert(p != null);
+		ptr_ = p;
 	}
 
 	/// Create a Node from a copy of the given `mg_node`.
-	this(const mg_node *ptr) {
-		assert(ptr != null);
-		this(mg_node_copy(ptr));
+	this(const mg_node *p) {
+		assert(p != null);
+		this(mg_node_copy(p));
 	}
 
 	const (mg_node *) ptr() const { return ptr_; }

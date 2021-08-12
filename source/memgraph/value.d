@@ -62,7 +62,7 @@ struct Value {
 
 	/// Copy constructor.
 	this(inout ref Value rhs) {
-		this(rhs.ptr);
+		this(rhs.ptr_);
 		// this(mg_value_copy(rhs.ptr));
 	}
 
@@ -73,10 +73,8 @@ struct Value {
 		this(mixin(mixinOps[typeid(T)][2]));
 	}
 
-	/// Constructs a new `Value` from a `Map`.
-	this(ref Map value) { this(mg_value_make_map(mg_map_copy(value.ptr))); }
-
 	/// Cast this value to type `T`.
+	/// Note: The code asserts that the current value holds a representation of type `T`.
 	auto opCast(T)() const {
 		assert(ptr_ != null);
 		assert(type == mixinOps[typeid(T)][0]);
@@ -102,7 +100,7 @@ struct Value {
 
 	/// Comparison operator for another `Value`.
 	bool opEquals(const Value other) const {
-		return Detail.areValuesEqual(ptr_, other.ptr);
+		return Detail.areValuesEqual(ptr_, other.ptr_);
 	}
 
 	/// Assignment operator for another `Value`.
@@ -149,15 +147,15 @@ struct Value {
 
 package:
 	/// Create a Value using the given `mg_value`.
-	this(mg_value *ptr) {
-		assert(ptr != null);
-		ptr_ = ptr;
+	this(mg_value *p) {
+		assert(p != null);
+		ptr_ = p;
 	}
 
 	/// Create a Value from a copy of the given `mg_value`.
-	this(const mg_value *ptr) {
-		assert(ptr != null);
-		this(mg_value_copy(ptr));
+	this(const mg_value *p) {
+		assert(p != null);
+		this(mg_value_copy(p));
 	}
 
 	const (mg_value *) ptr() const { return ptr_; }
