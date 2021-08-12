@@ -80,52 +80,47 @@ private:
 }
 
 unittest {
-	{
-		import std.conv : to;
-		import memgraph.enums;
+	import std.conv : to;
+	import memgraph.enums;
 
-		auto tm = mg_date_time_zone_id_alloc(&mg_system_allocator);
-		assert(tm != null);
-		tm.seconds = 23;
-		tm.nanoseconds = 42;
-		tm.tz_id = 1;
+	auto tm = mg_date_time_zone_id_alloc(&mg_system_allocator);
+	assert(tm != null);
+	tm.seconds = 23;
+	tm.nanoseconds = 42;
+	tm.tz_id = 1;
 
-		auto t = DateTimeZoneId(tm);
-		assert(t.seconds == 23);
-		assert(t.nanoseconds == 42);
-		assert(t.tzId == 1);
+	auto t = DateTimeZoneId(tm);
+	assert(t.seconds == 23);
+	assert(t.nanoseconds == 42);
+	assert(t.tzId == 1);
 
-		const t1 = t;
-		assert(t1 == t);
+	const t1 = t;
+	assert(t1 == t);
 
-		assert(to!string(t) == "23 42 1");
+	assert(to!string(t) == "23 42 1");
 
-		auto t2 = DateTimeZoneId(mg_date_time_zone_id_copy(t.ptr));
-		assert(t2 == t);
+	auto t2 = DateTimeZoneId(mg_date_time_zone_id_copy(t.ptr));
+	assert(t2 == t);
 
-		const t3 = DateTimeZoneId(t2);
-		assert(t3 == t);
+	const t3 = DateTimeZoneId(t2);
+	assert(t3 == t);
 
-		const v = Value(t);
-		const t4 = DateTimeZoneId(v);
-		assert(t4 == t);
-		assert(v == t);
-		assert(to!string(v) == to!string(t));
+	const v = Value(t);
+	const t4 = DateTimeZoneId(v);
+	assert(t4 == t);
+	assert(v == t);
+	assert(to!string(v) == to!string(t));
 
-		t2 = t;
-		assert(t2 == t);
+	t2 = t;
+	assert(t2 == t);
 
-		const v1 = Value(t2);
-		assert(v1.type == Type.DateTimeZoneId);
-		const v2 = Value(t2);
-		assert(v2.type == Type.DateTimeZoneId);
+	const v1 = Value(t2);
+	assert(v1.type == Type.DateTimeZoneId);
+	const v2 = Value(t2);
+	assert(v2.type == Type.DateTimeZoneId);
 
-		assert(v1 == v2);
+	assert(v1 == v2);
 
-		const t5 = DateTimeZoneId(t3);
-		assert(t5 == t3);
-	}
-	// Force garbage collection for full code coverage
-	import core.memory;
-	GC.collect();
+	const t5 = DateTimeZoneId(t3);
+	assert(t5 == t3);
 }

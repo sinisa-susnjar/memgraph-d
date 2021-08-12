@@ -76,50 +76,45 @@ private:
 }
 
 unittest {
-	{
-		import std.conv : to;
-		import memgraph.enums;
+	import std.conv : to;
+	import memgraph.enums;
 
-		auto tm = mg_local_date_time_alloc(&mg_system_allocator);
-		assert(tm != null);
-		tm.seconds = 23;
-		tm.nanoseconds = 42;
+	auto tm = mg_local_date_time_alloc(&mg_system_allocator);
+	assert(tm != null);
+	tm.seconds = 23;
+	tm.nanoseconds = 42;
 
-		auto t = LocalDateTime(tm);
-		assert(t.seconds == 23);
-		assert(t.nanoseconds == 42);
+	auto t = LocalDateTime(tm);
+	assert(t.seconds == 23);
+	assert(t.nanoseconds == 42);
 
-		const t1 = t;
-		assert(t1 == t);
+	const t1 = t;
+	assert(t1 == t);
 
-		assert(to!string(t) == "23 42");
+	assert(to!string(t) == "23 42");
 
-		auto t2 = LocalDateTime(t.ptr);
-		assert(t2 == t);
+	auto t2 = LocalDateTime(t.ptr);
+	assert(t2 == t);
 
-		const t3 = LocalDateTime(t2);
-		assert(t3 == t);
+	const t3 = LocalDateTime(t2);
+	assert(t3 == t);
 
-		const v = Value(t);
-		const t4 = LocalDateTime(v);
-		assert(t4 == t);
-		assert(v == t);
-		assert(to!string(v) == to!string(t));
+	const v = Value(t);
+	const t4 = LocalDateTime(v);
+	assert(t4 == t);
+	assert(v == t);
+	assert(to!string(v) == to!string(t));
 
-		t2 = t;
-		assert(t2 == t);
+	t2 = t;
+	assert(t2 == t);
 
-		const v1 = Value(t2);
-		assert(v1.type == Type.LocalDateTime);
-		const v2 = Value(t2);
-		assert(v2.type == Type.LocalDateTime);
+	const v1 = Value(t2);
+	assert(v1.type == Type.LocalDateTime);
+	const v2 = Value(t2);
+	assert(v2.type == Type.LocalDateTime);
 
-		assert(v1 == v2);
+	assert(v1 == v2);
 
-		const t5 = LocalDateTime(t3);
-		assert(t5 == t3);
-	}
-	// Force garbage collection for full code coverage
-	import core.memory;
-	GC.collect();
+	const t5 = LocalDateTime(t3);
+	assert(t5 == t3);
 }

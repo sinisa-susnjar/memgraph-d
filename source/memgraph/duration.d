@@ -83,54 +83,49 @@ private:
 }
 
 unittest {
-	{
-		import std.conv : to;
-		import memgraph.enums;
+	import std.conv : to;
+	import memgraph.enums;
 
-		auto tm = mg_duration_alloc(&mg_system_allocator);
-		assert(tm != null);
-		tm.months = 3;
-		tm.days = 10;
-		tm.seconds = 42;
-		tm.nanoseconds = 23;
+	auto tm = mg_duration_alloc(&mg_system_allocator);
+	assert(tm != null);
+	tm.months = 3;
+	tm.days = 10;
+	tm.seconds = 42;
+	tm.nanoseconds = 23;
 
-		auto t = Duration(tm);
-		assert(t.months == 3);
-		assert(t.days == 10);
-		assert(t.seconds == 42);
-		assert(t.nanoseconds == 23);
+	auto t = Duration(tm);
+	assert(t.months == 3);
+	assert(t.days == 10);
+	assert(t.seconds == 42);
+	assert(t.nanoseconds == 23);
 
-		const t1 = t;
-		assert(t1 == t);
+	const t1 = t;
+	assert(t1 == t);
 
-		assert(to!string(t) == "3 10 42 23");
+	assert(to!string(t) == "3 10 42 23");
 
-		auto t2 = Duration(t.ptr);
-		assert(t2 == t);
+	auto t2 = Duration(t.ptr);
+	assert(t2 == t);
 
-		const t3 = Duration(t2);
-		assert(t3 == t);
+	const t3 = Duration(t2);
+	assert(t3 == t);
 
-		const v = Value(t);
-		const t4 = Duration(v);
-		assert(t4 == t);
-		assert(v == t);
-		assert(to!string(v) == to!string(t));
+	const v = Value(t);
+	const t4 = Duration(v);
+	assert(t4 == t);
+	assert(v == t);
+	assert(to!string(v) == to!string(t));
 
-		t2 = t;
-		assert(t2 == t);
+	t2 = t;
+	assert(t2 == t);
 
-		const v1 = Value(t2);
-		assert(v1.type == Type.Duration);
-		const v2 = Value(t2);
-		assert(v2.type == Type.Duration);
+	const v1 = Value(t2);
+	assert(v1.type == Type.Duration);
+	const v2 = Value(t2);
+	assert(v2.type == Type.Duration);
 
-		assert(v1 == v2);
+	assert(v1 == v2);
 
-		const t5 = Duration(t3);
-		assert(t5 == t3);
-	}
-	// Force garbage collection for full code coverage
-	import core.memory;
-	GC.collect();
+	const t5 = Duration(t3);
+	assert(t5 == t3);
 }

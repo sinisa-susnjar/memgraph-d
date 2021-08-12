@@ -80,52 +80,47 @@ private:
 }
 
 unittest {
-	{
-		import std.conv : to;
-		import memgraph.enums;
+	import std.conv : to;
+	import memgraph.enums;
 
-		auto tm = mg_date_time_alloc(&mg_system_allocator);
-		assert(tm != null);
-		tm.seconds = 23;
-		tm.nanoseconds = 42;
-		tm.tz_offset_minutes = 60;
+	auto tm = mg_date_time_alloc(&mg_system_allocator);
+	assert(tm != null);
+	tm.seconds = 23;
+	tm.nanoseconds = 42;
+	tm.tz_offset_minutes = 60;
 
-		auto t = DateTime(tm);
-		assert(t.seconds == 23);
-		assert(t.nanoseconds == 42);
-		assert(t.tz_offset_minutes == 60);
+	auto t = DateTime(tm);
+	assert(t.seconds == 23);
+	assert(t.nanoseconds == 42);
+	assert(t.tz_offset_minutes == 60);
 
-		const t1 = t;
-		assert(t1 == t);
+	const t1 = t;
+	assert(t1 == t);
 
-		assert(to!string(t) == "23 42 60");
+	assert(to!string(t) == "23 42 60");
 
-		auto t2 = DateTime(mg_date_time_copy(t.ptr));
-		assert(t2 == t);
+	auto t2 = DateTime(mg_date_time_copy(t.ptr));
+	assert(t2 == t);
 
-		const t3 = DateTime(t2);
-		assert(t3 == t);
+	const t3 = DateTime(t2);
+	assert(t3 == t);
 
-		const v = Value(t);
-		const t4 = DateTime(v);
-		assert(t4 == t);
-		assert(v == t);
-		assert(to!string(v) == to!string(t));
+	const v = Value(t);
+	const t4 = DateTime(v);
+	assert(t4 == t);
+	assert(v == t);
+	assert(to!string(v) == to!string(t));
 
-		t2 = t;
-		assert(t2 == t);
+	t2 = t;
+	assert(t2 == t);
 
-		const v1 = Value(t2);
-		assert(v1.type == Type.DateTime);
-		const v2 = Value(t2);
-		assert(v2.type == Type.DateTime);
+	const v1 = Value(t2);
+	assert(v1.type == Type.DateTime);
+	const v2 = Value(t2);
+	assert(v2.type == Type.DateTime);
 
-		assert(v1 == v2);
+	assert(v1 == v2);
 
-		const t5 = DateTime(t3);
-		assert(t5 == t3);
-	}
-	// Force garbage collection for full code coverage
-	import core.memory;
-	GC.collect();
+	const t5 = DateTime(t3);
+	assert(t5 == t3);
 }

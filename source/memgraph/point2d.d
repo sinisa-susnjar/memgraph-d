@@ -76,52 +76,47 @@ private:
 }
 
 unittest {
-	{
-		import std.conv : to;
-		import memgraph.enums;
+	import std.conv : to;
+	import memgraph.enums;
 
-		auto tm = mg_point_2d_alloc(&mg_system_allocator);
-		assert(tm != null);
-		tm.srid = 42;
-		tm.x = 6;
-		tm.y = 7;
+	auto tm = mg_point_2d_alloc(&mg_system_allocator);
+	assert(tm != null);
+	tm.srid = 42;
+	tm.x = 6;
+	tm.y = 7;
 
-		auto t = Point2d(tm);
-		assert(t.srid == 42);
-		assert(t.x == 6);
-		assert(t.y == 7);
+	auto t = Point2d(tm);
+	assert(t.srid == 42);
+	assert(t.x == 6);
+	assert(t.y == 7);
 
-		const t1 = t;
-		assert(t1 == t);
+	const t1 = t;
+	assert(t1 == t);
 
-		assert(to!string(t) == "42 6 7");
+	assert(to!string(t) == "42 6 7");
 
-		auto t2 = Point2d(mg_point_2d_copy(t.ptr));
-		assert(t2 == t);
+	auto t2 = Point2d(mg_point_2d_copy(t.ptr));
+	assert(t2 == t);
 
-		const t3 = Point2d(t2);
-		assert(t3 == t);
+	const t3 = Point2d(t2);
+	assert(t3 == t);
 
-		const v = Value(t);
-		const t4 = Point2d(v);
-		assert(t4 == t);
-		assert(v == t);
-		assert(to!string(v) == to!string(t));
+	const v = Value(t);
+	const t4 = Point2d(v);
+	assert(t4 == t);
+	assert(v == t);
+	assert(to!string(v) == to!string(t));
 
-		t2 = t;
-		assert(t2 == t);
+	t2 = t;
+	assert(t2 == t);
 
-		const v1 = Value(t2);
-		assert(v1.type == Type.Point2d);
-		const v2 = Value(t2);
-		assert(v2.type == Type.Point2d);
+	const v1 = Value(t2);
+	assert(v1.type == Type.Point2d);
+	const v2 = Value(t2);
+	assert(v2.type == Type.Point2d);
 
-		assert(v1 == v2);
+	assert(v1 == v2);
 
-		const t5 = Point2d(t3);
-		assert(t5 == t3);
-	}
-	// Force garbage collection for full code coverage
-	import core.memory;
-	GC.collect();
+	const t5 = Point2d(t3);
+	assert(t5 == t3);
 }
