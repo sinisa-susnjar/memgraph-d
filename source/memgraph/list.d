@@ -116,8 +116,6 @@ package:
 	/// Create a List using the given `mg_list`.
 	this(mg_list *ptr) @trusted {
 		assert(ptr != null);
-		// import std.stdio;
-		// writefln("list.this[%s](ptr: %s)", &this, ptr);
 		ptr_ = ptr;
 	}
 
@@ -238,9 +236,9 @@ unittest {
 	assert(vl.length == 5);
 
 	auto l = List(vl);
-	foreach (i, v; vl)
+	foreach (i, ref v; vl)
 		assert(v == l[i]);
-	foreach (i, v; l)
+	foreach (i, ref v; l)
 		assert(v == vl[i]);
 
 	assert(l == vl);
