@@ -130,8 +130,11 @@ struct Client {
 	static Client connect(ref Params params) {
 		mg_session *session = null;
 		immutable status = mg_connect(params.ptr, &session);
-		if (status < 0)
+		if (status < 0) {
+			if (session)
+				mg_session_destroy(session);
 			return Client();
+		}
 		return Client(session);
 	}
 
