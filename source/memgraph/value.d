@@ -63,10 +63,12 @@ struct Value {
 	/// Copy constructor.
 	this(const ref Value rhs) {
 		this(rhs.ptr_);
-		// this(mg_value_copy(rhs.ptr));
 	}
 
-	@disable this(this);
+	this(this) {
+		if (ptr_)
+			ptr_ = mg_value_copy(ptr_);
+	}
 
 	/// Make a new value of type `T` and initialise it with `val`.
 	this(T)(const T val) {
@@ -90,7 +92,6 @@ struct Value {
 	}
 
 	/// Assignment operator for type `T`.
-	// ref Value opAssign(T)(inout T val) return {
 	ref Value opAssign(T)(const T val) return {
 		if (ptr_)
 			mg_value_destroy(ptr_);
@@ -420,4 +421,7 @@ unittest {
 
 	auto l = List(10);
 	v = l;
+
+	auto v2 = Value(v);
+	assert(v == v2);
 }
