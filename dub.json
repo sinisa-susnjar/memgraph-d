@@ -5,7 +5,7 @@
 	"license": "MIT",
 	"name": "memgraph-d",
 	"preGenerateCommands": [
-		"pregen"
+		"$PACKAGE_DIR/pregen"
 	],
 	"libs": [ "openssl" ],
 	"configurations": [
