@@ -1496,7 +1496,7 @@ unittest {
 	startContainer();
 }
 
-/// Test connection to memgraph on localhost, port 7688.
+/// Test connection to memgraph on 127.0.0.1, port 7688.
 unittest {
 	import std.string : toStringz, fromStringz;
 	import std.conv : to;
@@ -1506,7 +1506,7 @@ unittest {
 	auto params = mg_session_params_make();
 	assert(params != null);
 
-	mg_session_params_set_host(params, toStringz("localhost"));
+	mg_session_params_set_host(params, toStringz("127.0.0.1"));
 	mg_session_params_set_port(params, to!ushort(7688));
 	mg_session_params_set_sslmode(params, mg_sslmode.MG_SSLMODE_DISABLE);
 

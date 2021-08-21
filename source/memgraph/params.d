@@ -8,8 +8,8 @@ import memgraph.mgclient;
 /// An object containing connection parameters for `Client.connect(Params)`.
 struct Params {
 	/// DNS resolvable name of host to connect to. Either one of host or
-	/// address parameters must be specified (defaults to `localhost`).
-	string host = "localhost";
+	/// address parameters must be specified (defaults to `127.0.0.1`).
+	string host = "127.0.0.1";
 	/// Port number to connect to at the server host (defaults to 7687).
 	ushort port = 7687;
 	/// Numeric IP address of host to connect to. This should be in the
@@ -103,7 +103,7 @@ private:
 unittest {
 	Params p;
 
-	assert(p.host == "localhost");
+	assert(p.host == "127.0.0.1");
 	assert(p.port == 7687);
 	assert(p.sslMode == mg_sslmode.MG_SSLMODE_DISABLE);
 

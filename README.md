@@ -83,7 +83,7 @@ This package contains two examples that were adapted from the examples contained
 
     cd examples/advanced
     dub build
-    ./advanced localhost 7687
+    ./advanced 127.0.0.1 7687
 
 ## Generate local documentation
 

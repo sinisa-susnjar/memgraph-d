@@ -11,7 +11,7 @@ version (unittest) {
 		auto params = mg_session_params_make();
 		assert(params != null);
 
-		mg_session_params_set_host(params, toStringz("localhost"));
+		mg_session_params_set_host(params, toStringz("127.0.0.1"));
 		mg_session_params_set_port(params, to!ushort(MEMGRAPH_PORT));
 		mg_session_params_set_sslmode(params, mg_sslmode.MG_SSLMODE_DISABLE);
 

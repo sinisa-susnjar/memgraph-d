@@ -115,7 +115,7 @@ struct Client {
 		return mg_session_rollback_transaction(ptr_, &result) == 0;
 	}
 
-	/// Static method that creates a Memgraph client instance using default parameters localhost:7687
+	/// Static method that creates a Memgraph client instance using default parameters 127.0.0.1:7687
 	/// Return: client connection instance.
 	/// Returns an unconnected instance if the connection couldn't be established.
 	static Client connect() {
@@ -299,14 +299,14 @@ unittest {
 unittest {
 	import std.stdio;
 	import memgraph;
-	// Connect to memgraph DB at localhost:7688
-	Params p = { host: "localhost", port: 7688 };
+	// Connect to memgraph DB at 127.0.0.1:7688
+	Params p = { host: "127.0.0.1", port: 7688 };
 	auto client = Client.connect(p);
 	if (!client) writefln("cannot connect to %s:%s: %s", p.host, p.port, client.status);
 }
 
 unittest {
 	// Just for coverage. It probably will fail - unless there happens
-	// to be a memgraph server running at localhost:7687
+	// to be a memgraph server running at 127.0.0.1:7687
 	Client.connect();
 }
