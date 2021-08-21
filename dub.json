@@ -4,15 +4,19 @@
 	"description": "D bindings for the memgraph DB",
 	"license": "MIT",
 	"name": "memgraph-d",
-	"preGenerateCommands": [
-		"$PACKAGE_DIR/pregen"
-	],
-	"libs": [ "openssl" ],
+	"preGenerateCommands": [ "$PACKAGE_DIR/pregen" ],
+	"lflags-windows": [ "c:/Program Files/OpenSSL-Win64/lib/libcrypto.lib",
+						"c:/Program Files/OpenSSL-Win64/lib/libssl.lib",
+						"$PACKAGE_DIR/mgclient/build/src/Debug/mgclient.lib" ],
+	"dflags-windows": [ "-L=/NODEFAULTLIB:libcmt", "-L=/NODEFAULTLIB:libvcruntime" ],
+	"libs-windows": [ "msvcrtd", "ws2_32" ],
+	"libs-linux": [ "openssl" ],
 	"configurations": [
 		{
 			"name": "lib",
 			"targetType": "staticLibrary",
-			"lflags": [ "$PACKAGE_DIR/mgclient/build/src/libmgclient.a" ]
+			"lflags-linux": [ "$PACKAGE_DIR/mgclient/build/src/libmgclient.a" ],
+			"lflags-windows": [ "$PACKAGE_DIR/mgclient/build/src/Debug/mgclient.lib" ]
 		},
 		{
 			"name": "shared",
