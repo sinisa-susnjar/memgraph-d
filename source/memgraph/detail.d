@@ -7,6 +7,7 @@ import memgraph.mgclient, memgraph.enums;
 
 /// Wrapper class around static helper functions.
 struct Detail {
+	/// Converts a `mg_string` to a D string.
 	static string convertString(const mg_string *str) {
 		assert(str != null);
 		const auto data = mg_string_data(str);
@@ -14,6 +15,7 @@ struct Detail {
 		return to!string(data[0..len]);
 	}
 
+	/// Converts a `mg_value_type` enum to a `Type` enum.
 	static Type convertType(mg_value_type type) {
 		switch (type) {
 			case mg_value_type.MG_VALUE_TYPE_NULL:
@@ -63,6 +65,7 @@ struct Detail {
 		}
 	}
 
+	/// Compares two `mg_value`s.
 	static bool areValuesEqual(const mg_value *value1, const mg_value *value2) {
 		assert(value1 != null);
 		assert(value2 != null);
@@ -136,6 +139,7 @@ struct Detail {
 		}
 	}
 
+	/// Compares two `mg_list`s.
 	static bool areListsEqual(const mg_list *list1, const mg_list *list2) {
 		assert(list1 != null);
 		assert(list2 != null);
@@ -151,6 +155,7 @@ struct Detail {
 		return true;
 	}
 
+	/// Compares two `mg_map`s.
 	static bool areMapsEqual(const mg_map *map1, const mg_map *map2) {
 		assert(map1 != null);
 		assert(map2 != null);
@@ -199,6 +204,7 @@ struct Detail {
 				mg_node_properties(node2));
 	}	// areNodesEqual()
 
+	/// Compares two `mg_relationship`s.
 	static bool areRelationshipsEqual(const mg_relationship *rel1,
 			const mg_relationship *rel2) {
 		assert(rel1 != null);
@@ -218,6 +224,7 @@ struct Detail {
 				mg_relationship_properties(rel2));
 	}
 
+	/// Compares two `mg_unbound_relationship`s.
 	static bool areUnboundRelationshipsEqual(const mg_unbound_relationship *rel1,
 			const mg_unbound_relationship *rel2) {
 		assert(rel1 != null);
@@ -233,6 +240,7 @@ struct Detail {
 				mg_unbound_relationship_properties(rel2));
 	}
 
+	/// Compares two `mg_path`s.
 	static bool arePathsEqual(const mg_path *path1, const mg_path *path2) {
 		assert(path1 != null);
 		assert(path2 != null);
@@ -260,12 +268,14 @@ struct Detail {
 				mg_path_node_at(path2, len));
 	}
 
+	/// Compares two `mg_date`s.
 	static bool areDatesEqual(const mg_date *date1, const mg_date *date2) {
 		assert(date1 != null);
 		assert(date2 != null);
 		return mg_date_days(date1) == mg_date_days(date2);
 	}
 
+	/// Compares two `mg_time`s.
 	static bool areTimesEqual(const mg_time *time1, const mg_time *time2) {
 		assert(time1 != null);
 		assert(time2 != null);
@@ -273,6 +283,7 @@ struct Detail {
 			mg_time_tz_offset_seconds(time1) == mg_time_tz_offset_seconds(time2);
 	}
 
+	/// Compares two `mg_local_time`s.
 	static bool areLocalTimesEqual(const mg_local_time *local_time1,
 			const mg_local_time *local_time2) {
 		assert(local_time1 != null);
@@ -281,6 +292,7 @@ struct Detail {
 			mg_local_time_nanoseconds(local_time2);
 	}
 
+	/// Compares two `mg_date_time`s.
 	static bool areDateTimesEqual(const mg_date_time *date_time1,
 			const mg_date_time *date_time2) {
 		assert(date_time1 != null);
@@ -292,6 +304,7 @@ struct Detail {
 			mg_date_time_tz_offset_minutes(date_time2);
 	}
 
+	/// Compares two `mg_date_time_zone`s.
 	static bool areDateTimeZoneIdsEqual(
 			const mg_date_time_zone_id *date_time_zone_id1,
 			const mg_date_time_zone_id *date_time_zone_id2) {
@@ -305,6 +318,7 @@ struct Detail {
 			mg_date_time_zone_id_tz_id(date_time_zone_id2);
 	}
 
+	/// Compares two `mg_local_date_time`s.
 	static bool areLocalDateTimesEqual(const mg_local_date_time *local_date_time1,
 			const mg_local_date_time *local_date_time2) {
 		assert(local_date_time1 != null);
@@ -315,6 +329,7 @@ struct Detail {
 			mg_local_date_time_nanoseconds(local_date_time2);
 	}
 
+	/// Compares two `mg_duration`s.
 	static bool areDurationsEqual(const mg_duration *duration1,
 			const mg_duration *duration2) {
 		assert(duration1 != null);
@@ -326,6 +341,7 @@ struct Detail {
 			mg_duration_nanoseconds(duration2);
 	}
 
+	/// Compares two `mg_point_2d`s.
 	static bool arePoint2dsEqual(const mg_point_2d *point_2d1,
 			const mg_point_2d *point_2d2) {
 		assert(point_2d1 != null);
@@ -335,6 +351,7 @@ struct Detail {
 			mg_point_2d_y(point_2d1) == mg_point_2d_y(point_2d2);
 	}
 
+	/// Compares two `mg_point_3d`s.
 	static bool arePoint3dsEqual(const mg_point_3d *point_3d1,
 			const mg_point_3d *point_3d2) {
 		assert(point_3d1 != null);

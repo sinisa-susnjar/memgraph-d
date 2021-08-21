@@ -1,8 +1,9 @@
 /// Provides a wrapper for a Bolt value.
 module memgraph.value;
 
-import std.conv, std.string;
+import std.string : toStringz;
 import std.typecons : tuple;
+import std.conv : to;
 
 import memgraph.detail;
 import memgraph;
@@ -65,6 +66,7 @@ struct Value {
 		this(rhs.ptr_);
 	}
 
+	/// Create a copy of the internal `mg_value`.
 	this(this) {
 		if (ptr_)
 			ptr_ = mg_value_copy(ptr_);
@@ -146,6 +148,7 @@ struct Value {
 		return Detail.convertType(mg_value_get_type(ptr_));
 	}
 
+	/// Destroys the internal `mg_value`.
 	@safe @nogc ~this() {
 		if (ptr_)
 			mg_value_destroy(ptr_);
@@ -164,6 +167,7 @@ package:
 		this(mg_value_copy(p));
 	}
 
+	/// Returns internal `mg_value` pointer.
 	const (mg_value *) ptr() const { return ptr_; }
 
 private:

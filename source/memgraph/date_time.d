@@ -10,7 +10,7 @@ import memgraph.mgclient, memgraph.detail, memgraph.value, memgraph.enums;
 /// Time zone is defined with minutes from UTC.
 struct DateTime {
 
-	/// Create a deep copy of `other` date time.
+	/// Create a copy of `other` date time.
 	this(inout ref DateTime other) {
 		this(mg_date_time_copy(other.ptr));
 	}
@@ -50,11 +50,13 @@ struct DateTime {
 	/// Returns time zone offset in minutes from UTC.
 	const (long) tz_offset_minutes() const { return mg_date_time_tz_offset_minutes(ptr_); }
 
+	/// Create a copy of the internal `mg_date_time`.
 	this(this) {
 		if (ptr_)
 			ptr_ = mg_date_time_copy(ptr_);
 	}
 
+	/// Destroys the internal `mg_date_time`.
 	@safe @nogc ~this() {
 		if (ptr_)
 			mg_date_time_destroy(ptr_);
@@ -73,6 +75,7 @@ package:
 		this(mg_date_time_copy(ptr));
 	}
 
+	/// Returns the internal `mg_date_time` pointer.
 	const (mg_date_time *) ptr() const { return ptr_; }
 
 private:

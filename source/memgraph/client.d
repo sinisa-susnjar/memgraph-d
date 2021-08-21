@@ -1,12 +1,15 @@
 /// Provides a connection for memgraph.
 module memgraph.client;
 
-import std.string, std.stdio;
+import std.string : fromStringz, toStringz;
 
 import memgraph.mgclient, memgraph.value, memgraph.map, memgraph.params, memgraph.result;
 
 /// Provides a connection for memgraph.
 struct Client {
+	/// Disable copying.
+	@disable this(this);
+
 	/// Client software version.
 	/// Return: Client version in the major.minor.patch format.
 	static auto clientVersion() { return fromStringz(mg_client_version()); }
@@ -152,18 +155,21 @@ struct Client {
 		swap(this, other);
 	}
 
+	/// Destroy the internal `mg_session`.
 	@safe @nogc ~this() {
 		if (ptr_)
 			mg_session_destroy(ptr_);
 	}
 
-	@disable this(this);
-
+	/// Status of this client connection as boolean value.
+	/// Returns: true = the client connection was established
+	///          false = this client is not connected
 	auto opCast(T : bool)() const {
 		return ptr_ != null;
 	}
 
 package:
+	/// Create a new instance using the given `mg_session` pointer.
 	this(mg_session *session) {
 		assert(session != null);
 		ptr_ = session;

@@ -7,6 +7,7 @@ import memgraph.mgclient, memgraph.detail, memgraph.value, memgraph.enums;
 ///
 /// Date is defined with number of days since the Unix epoch.
 struct Date {
+	/// Create a copy of the internal `mg_date`.
 	this(this) {
 		if (ptr_)
 			ptr_ = mg_date_copy(ptr_);
@@ -46,6 +47,7 @@ struct Date {
 	/// Returns days since Unix epoch.
 	const (long) days() const { return mg_date_days(ptr_); }
 
+	/// Destroys the internal `mg_date`.
 	@safe @nogc ~this() {
 		if (ptr_)
 			mg_date_destroy(ptr_);
@@ -64,6 +66,7 @@ package:
 		this(mg_date_copy(ptr));
 	}
 
+	/// Returns the internal `mg_date` pointer.
 	const (mg_date *) ptr() const { return ptr_; }
 
 private:

@@ -50,11 +50,13 @@ struct DateTimeZoneId {
 	/// Returns time zone represented by the identifier.
 	long tzId() const { return mg_date_time_zone_id_tz_id(ptr_); }
 
+	/// Create a copy of the internal `mg_date_time_zone_id`.
 	this(this) {
 		if (ptr_)
 			ptr_ = mg_date_time_zone_id_copy(ptr_);
 	}
 
+	/// Destroys the internal `mg_date_time_zone_id`.
 	@safe @nogc ~this() {
 		if (ptr_)
 			mg_date_time_zone_id_destroy(ptr_);
@@ -73,6 +75,7 @@ package:
 		this(mg_date_time_zone_id_copy(ptr));
 	}
 
+	/// Returns the internal `mg_date_time_zone_id` pointer.
 	const (mg_date_time_zone_id *) ptr() const { return ptr_; }
 
 private:
