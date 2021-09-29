@@ -24,6 +24,7 @@ jobs:
         brew install openssl@1.1
         brew install llvm
         brew install docker
+        launchctl start com.docker.docker.port
         docker pull memgraph/memgraph
 
     - name: 'Build & Test'
