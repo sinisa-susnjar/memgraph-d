@@ -20,11 +20,14 @@ jobs:
     - uses: dlang-community/setup-dlang@v1.1.1
 
     - name: 'Prepare'
-      run: brew install openssl
+      run: |
+        brew install openssl@1.1
+        brew install llvm
 
     - name: 'Build & Test'
       run: |
         # Build the project, with its main file included, without unittests
+        export OPENSSL_ROOT_DIR="$(ls -rd -- /usr/local/Cellar/openssl@1.1/* | head -n 1)"
         dub build --compiler=$DC
         # Build and run tests, as defined by `unittest` configuration
         # In this mode, `mainSourceFile` is excluded and `version (unittest)` are included
