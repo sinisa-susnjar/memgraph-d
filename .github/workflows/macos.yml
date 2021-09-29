@@ -33,4 +33,4 @@ jobs:
         export OPENSSL_ROOT_DIR="$(ls -rd -- /usr/local/Cellar/openssl@1.1/* | head -n 1)"
         dub build --compiler=$DC
         # Build and run tests
-        dub test --compiler=$DC
+        # dub test --compiler=$DC
