@@ -1,4 +1,4 @@
-[![ubuntu](https://github.com/sinisa-susnjar/memgraph-d/actions/workflows/ubuntu.yml/badge.svg)](https://github.com/sinisa-susnjar/memgraph-d/actions/workflows/ubuntu.yml) [![coverage](https://codecov.io/gh/sinisa-susnjar/memgraph-d/branch/main/graph/badge.svg?token=ILY7NOAXDF)](https://codecov.io/gh/sinisa-susnjar/memgraph-d)
+[![ubuntu](https://github.com/sinisa-susnjar/memgraph-d/actions/workflows/ubuntu.yml/badge.svg)](https://github.com/sinisa-susnjar/memgraph-d/actions/workflows/ubuntu.yml) [![macos](https://github.com/sinisa-susnjar/memgraph-d/actions/workflows/macos.yml/badge.svg)](https://github.com/sinisa-susnjar/memgraph-d/actions/workflows/macos.yml) [![windows](https://github.com/sinisa-susnjar/memgraph-d/actions/workflows/windows.yml/badge.svg)](https://github.com/sinisa-susnjar/memgraph-d/actions/workflows/windows.yml) [![coverage](https://codecov.io/gh/sinisa-susnjar/memgraph-d/branch/main/graph/badge.svg?token=ILY7NOAXDF)](https://codecov.io/gh/sinisa-susnjar/memgraph-d)
 
 # memgraph-d
 
