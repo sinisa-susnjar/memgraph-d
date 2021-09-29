@@ -23,15 +23,13 @@ jobs:
       run: |
         brew install openssl@1.1
         brew install llvm
+        brew cask install docker
+        docker pull memgraph/memgraph
 
     - name: 'Build & Test'
       run: |
-        # Build the project, with its main file included, without unittests
+        # Build the project, without unittests
         export OPENSSL_ROOT_DIR="$(ls -rd -- /usr/local/Cellar/openssl@1.1/* | head -n 1)"
         dub build --compiler=$DC
-        # Build and run tests, as defined by `unittest` configuration
-        # In this mode, `mainSourceFile` is excluded and `version (unittest)` are included
-        # See https://dub.pm/package-format-json.html#configurations
-        # dub test -b unittest-cov --compiler=$DC
-        # Upload code coverage
-        # bash <(curl -s https://codecov.io/bash)
+        # Build and run tests
+        dub test --compiler=$DC
