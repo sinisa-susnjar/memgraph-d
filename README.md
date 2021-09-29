@@ -1,4 +1,4 @@
-[![build](https://github.com/sinisa-susnjar/memgraph-d/actions/workflows/d.yml/badge.svg)](https://github.com/sinisa-susnjar/memgraph-d/actions) [![coverage](https://codecov.io/gh/sinisa-susnjar/memgraph-d/branch/main/graph/badge.svg?token=ILY7NOAXDF)](https://codecov.io/gh/sinisa-susnjar/memgraph-d)
+[![ubuntu](https://github.com/sinisa-susnjar/memgraph-d/actions/workflows/ubuntu.yml/badge.svg)](https://github.com/sinisa-susnjar/memgraph-d/actions/workflows/ubuntu.yml) [![coverage](https://codecov.io/gh/sinisa-susnjar/memgraph-d/branch/main/graph/badge.svg?token=ILY7NOAXDF)](https://codecov.io/gh/sinisa-susnjar/memgraph-d)
 
 # memgraph-d
 
