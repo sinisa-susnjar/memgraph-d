@@ -24,16 +24,10 @@ jobs:
 
     - name: 'Prepare'
       run: |
-        cmd /s /c "%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -InputFormat None -ExecutionPolicy Bypass -Command "[System.Net.ServicePointManager]::SecurityProtocol = 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))" && SET "PATH=%PATH%;%ALLUSERSPROFILE%\chocolatey\bin"
         choco install -y openssl
+        # not sure about docker yet...
 
     - name: 'Build & Test'
       run: |
-        # Build the project, with its main file included, without unittests
-        dub build --compiler=$DC
-        # Build and run tests, as defined by `unittest` configuration
-        # In this mode, `mainSourceFile` is excluded and `version (unittest)` are included
-        # See https://dub.pm/package-format-json.html#configurations
-        # dub test -b unittest-cov --compiler=$DC
-        # Upload code coverage
-        # bash <(curl -s https://codecov.io/bash)
+        # Build the project, without unittests
+        dub build
