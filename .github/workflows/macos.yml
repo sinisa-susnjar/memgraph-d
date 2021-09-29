@@ -9,15 +9,15 @@ jobs:
       fail-fast: false
       matrix:
         config:
-        - { os: macos-10.15 }
-        - { os: macos-11.0  }
+          - { os: macos-10.15, dc: ldc-latest }
+          - { os: macos-11.0, dc: ldc-latest  }
         build: [Debug, Release]
 
     name: "${{matrix.config.os}}:${{matrix.build}}"
 
     steps:
     - uses: actions/checkout@v2
-    - uses: dlang-community/setup-dlang@4c99aa991ce7d19dd3064de0a4f2f6b2f152e2d7
+    - uses: dlang-community/setup-dlang@v1.1.1
 
       # - name: 'Prepare'
       # run: sudo apt-get update; sudo apt-get install --fix-missing cmake gcc docker.io containerd runc
