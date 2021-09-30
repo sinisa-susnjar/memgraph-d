@@ -1,3 +1,6 @@
+if [ `uname -s` = "Darwin" ]; then
+	export OPENSSL_ROOT_DIR="$(ls -rd -- /usr/local/Cellar/openssl@1.1/* | head -n 1)"
+fi
 PACKAGE_DIR=${PACKAGE_DIR:-$PWD}
 git submodule update --init --recursive
 mkdir -p $PACKAGE_DIR/mgclient/build
