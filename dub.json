@@ -5,9 +5,15 @@
 	"license": "MIT",
 	"name": "memgraph-d",
 	"preGenerateCommands": [ "$PACKAGE_DIR/pregen" ],
-	"lflags-windows": [ "c:/Program Files/OpenSSL-Win64/lib/libcrypto.lib",
-						"c:/Program Files/OpenSSL-Win64/lib/libssl.lib",
-						"$PACKAGE_DIR/mgclient/build/src/Debug/mgclient.lib" ],
+	"lflags-windows": [
+		"c:/Program Files/OpenSSL-Win64/lib/libcrypto.lib",
+		"c:/Program Files/OpenSSL-Win64/lib/libssl.lib",
+		"$PACKAGE_DIR/mgclient/build/src/Debug/mgclient.lib"
+	],
+	"lflags-osx": [
+		"/usr/local/Cellar/openssl@1.1/1.1.1l/lib/libssl.a",
+		"/usr/local/Cellar/openssl@1.1/1.1.1l/lib/libcrypto.a"
+	],
 	"dflags-windows": [ "-L=/NODEFAULTLIB:libcmt", "-L=/NODEFAULTLIB:libvcruntime" ],
 	"libs-windows": [ "msvcrtd", "ws2_32" ],
 	"libs-linux": [ "openssl" ],
@@ -16,6 +22,7 @@
 			"name": "lib",
 			"targetType": "staticLibrary",
 			"lflags-linux": [ "$PACKAGE_DIR/mgclient/build/src/libmgclient.a" ],
+			"lflags-osx": [ "$PACKAGE_DIR/mgclient/build/src/libmgclient.a" ],
 			"lflags-windows": [ "$PACKAGE_DIR/mgclient/build/src/Debug/mgclient.lib" ]
 		},
 		{
