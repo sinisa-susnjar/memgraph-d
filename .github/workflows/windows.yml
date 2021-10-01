@@ -12,7 +12,8 @@ jobs:
         # arch: [x86, x86_64]
         config:
           # - { os: windows-2016, vs: "Visual Studio 2017", dc: ldc-latest } # https://github.com/actions/virtual-environments/blob/main/images/win/Windows2016-Readme.md#visual-studio-enterprise-2017
-          - { os: windows-2019, vs: "Visual Studio 2019", dc: [ ldc-latest ] } # https://github.com/actions/virtual-environments/blob/main/images/win/Windows2019-Readme.md#visual-studio-enterprise-2019
+          # - { os: windows-2019, vs: "Visual Studio 2019", dc: [ ldc-latest ] } # https://github.com/actions/virtual-environments/blob/main/images/win/Windows2019-Readme.md#visual-studio-enterprise-2019
+          - { os: windows-2022, vs: "Visual Studio 2019", dc: [ ldc-latest ] } # https://github.com/actions/virtual-environments/blob/main/images/win/Windows2019-Readme.md#visual-studio-enterprise-2019
         build: [Debug, Release]
         platform: [Win32, x64]
 
@@ -25,8 +26,8 @@ jobs:
     - name: 'Prepare'
       run: |
         choco install -y openssl
-        curl -SL --output vs_enterprise.exe https://aka.ms/vs/16/release/vs_enterprise.exe
-        cmd /s /c start /w vs_enterprise.exe --quiet --wait --norestart --nocache modify -installPath "%ProgramFiles(x86)%\Microsoft Visual Studio\2019\Enterprise" --remove Microsoft.VisualStudio.Component.Windows10SDK.17763
+        # curl -SL --output vs_enterprise.exe https://aka.ms/vs/16/release/vs_enterprise.exe
+        # cmd /s /c start /w vs_enterprise.exe --quiet --wait --norestart --nocache modify -installPath "%ProgramFiles(x86)%\Microsoft Visual Studio\2019\Enterprise" --remove Microsoft.VisualStudio.Component.Windows10SDK.17763
 
     - name: 'Build & Test'
       run: |
