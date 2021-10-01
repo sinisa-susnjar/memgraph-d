@@ -7,8 +7,7 @@
 	"preGenerateCommands": [ "$PACKAGE_DIR/pregen" ],
 	"lflags-windows": [
 		"c:/Program Files/OpenSSL-Win64/lib/libcrypto.lib",
-		"c:/Program Files/OpenSSL-Win64/lib/libssl.lib",
-		"$PACKAGE_DIR/mgclient/build/src/Debug/mgclient.lib"
+		"c:/Program Files/OpenSSL-Win64/lib/libssl.lib"
 	],
 	"lflags-osx": [
 		"/usr/local/Cellar/openssl@1.1/1.1.1l/lib/libssl.a",
