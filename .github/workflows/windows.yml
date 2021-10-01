@@ -25,8 +25,8 @@ jobs:
     - name: 'Prepare'
       run: |
         choco install -y openssl
-        curl -SL --output vs_buildtools.exe https://aka.ms/vs/16/release/vs_buildtools.exe
-        cmd /s /c start /w vs_buildtools.exe --quiet --wait --norestart --nocache modify --installPath "%ProgramFiles(x86)%\Microsoft Visual Studio\2019\BuildTools" --remove Microsoft.VisualStudio.Component.Windows10SDK.17763
+        curl -SL --output vs_enterprise.exe https://aka.ms/vs/16/release/vs_enterprise.exe
+        cmd /s /c start /w vs_enterprise.exe --quiet --wait --norestart --nocache modify --remove Microsoft.VisualStudio.Component.Windows10SDK.17763
 
     - name: 'Build & Test'
       run: |
