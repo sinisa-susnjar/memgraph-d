@@ -11,7 +11,7 @@ jobs:
         # dc: [ldc-latest, ldc-beta, dmd-latest, dmd-master, dmd-beta]
         # arch: [x86, x86_64]
         config:
-          - { os: windows-2016, vs: "Visual Studio 2017", dc: ldc-latest } # https://github.com/actions/virtual-environments/blob/main/images/win/Windows2016-Readme.md#visual-studio-enterprise-2017
+          # - { os: windows-2016, vs: "Visual Studio 2017", dc: ldc-latest } # https://github.com/actions/virtual-environments/blob/main/images/win/Windows2016-Readme.md#visual-studio-enterprise-2017
           - { os: windows-2019, vs: "Visual Studio 2019", dc: ldc-latest } # https://github.com/actions/virtual-environments/blob/main/images/win/Windows2019-Readme.md#visual-studio-enterprise-2019
         build: [Debug, Release]
         platform: [Win32, x64]
@@ -25,7 +25,6 @@ jobs:
     - name: 'Prepare'
       run: |
         choco install -y openssl
-        # not sure about docker yet...
 
     - name: 'Build & Test'
       run: |
