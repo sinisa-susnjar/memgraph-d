@@ -1,9 +1,9 @@
 {
 	"authors": [ "Sinisa Susnjar" ],
 	"copyright": "Copyright © 2021, Sinisa Susnjar",
-	"description": "Basic C interface example for memgraph-d",
+	"description": "Basic interface example for memgraph-d",
 	"license": "MIT",
-	"name": "basic_c",
+	"name": "basic",
 	"dependencies": {
 		"memgraph-d": { "path": "../../" }
 	}
