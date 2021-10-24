@@ -215,10 +215,7 @@ unittest {
 
 	assert(client.status == mg_session_code.MG_SESSION_READY);
 
-	// TODO: something weird is going on with error:
-	//       with ldc2, the first character seems to be random garbage if there actually is no error
-	//       and with dmd, the whole error message seems to retain it's last state, even after successful connect
-	// assert(client.error() == "", client.error);
+	assert(client.error() == "", client.error);
 
 	assert(client.clientVersion.length > 0);
 }
