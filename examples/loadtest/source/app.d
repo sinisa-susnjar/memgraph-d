@@ -2,6 +2,7 @@ import memgraph;
 
 import std.stdio, std.conv, std.array;
 import std.algorithm : map;
+import std.datetime.stopwatch;
 
 // Load testing the D bindings for memgraph.
 
@@ -36,6 +37,7 @@ int main(string[] args) {
 	}
 
 	writefln("starting insert...");
+	immutable insertStopWatch = StopWatch(AutoStart.yes);
 	foreach (id; 0..N) {
 		if (!client.run(
 					"CREATE (:Person:Entrepreneur {id: " ~ to!string(id) ~ ", age: 40, name: 'John', " ~
@@ -44,8 +46,11 @@ int main(string[] args) {
 			return 1;
 		}
 	}
+	auto insertMs = insertStopWatch.peek.total!"msecs";
+	writefln("inserted %d rows in %s ms (%s rows / ms)", N, insertMs, to!uint(cast(double)N / insertMs));
 
 	writefln("starting select...");
+	immutable selectStopWatch = StopWatch(AutoStart.yes);
 	auto results = client.execute("MATCH (n) RETURN n;");
 
 	size_t resultCount;
@@ -60,6 +65,9 @@ int main(string[] args) {
 		*/
 		resultCount++;
 	}
+	auto selectMs = selectStopWatch.peek.total!"msecs";
+	writefln("selected %d rows in %s ms (%s rows / ms)", N, selectMs, to!uint(cast(double)N / selectMs));
+
 	writefln("Summary: {%s}", results.summary.map!(p => p.key ~ ":" ~ to!string(p.value)).join(" "));
 	writefln("Columns: %s", results.columns);
 	writefln("Number of results: %s", resultCount);
