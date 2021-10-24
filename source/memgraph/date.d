@@ -65,6 +65,23 @@ unittest {
 }
 
 unittest {
+	import testutils : connectContainer;
+	import std.algorithm : count;
+	import std.conv : to;
+
+	auto client = connectContainer();
+	assert(client);
+
+	auto result = client.execute(`RETURN date("2038-01-20");`);
+	assert(result, client.error);
+	foreach (r; result) {
+		assert(r.length == 1);
+		assert(r[0].type() == Type.Date);
+		assert(to!Date(r[0]).toISOExtString == "2038-01-20");
+	}
+}
+
+unittest {
 	import memgraph.enums : Type;
 	import std.conv : to;
 
