@@ -182,7 +182,6 @@ private:
 unittest {
 	import std.exception, core.exception;
 	import testutils;
-	import memgraph;
 
 	auto client = connectContainer();
 	assert(client);
@@ -208,7 +207,6 @@ unittest {
 
 unittest {
 	import testutils;
-	import memgraph;
 
 	auto client = connectContainer();
 	assert(client);
@@ -222,7 +220,6 @@ unittest {
 
 unittest {
 	import testutils;
-	import memgraph;
 	import std.algorithm : count;
 
 	auto client = connectContainer();
@@ -283,13 +280,12 @@ unittest {
 	Params params;
 	params.host = "0.0.0.0";
 	params.port = 12_345;
-	auto client = Client.connect(params);
+	const client = Client.connect(params);
 	assert(!client);
 }
 
 unittest {
-	import testutils;
-	import memgraph;
+	import testutils : connectContainer;
 	auto client = connectContainer();
 	assert(client);
 	assert(!client.run("WHAT IS THE ANSWER TO LIFE, THE UNIVERSE AND EVERYTHING?"));
@@ -300,8 +296,7 @@ unittest {
 
 /// Connect example
 unittest {
-	import std.stdio;
-	import memgraph;
+	import std.stdio : writefln;
 	// Connect to memgraph DB at 127.0.0.1:7688
 	Params p = { host: "127.0.0.1", port: 7688 };
 	auto client = Client.connect(p);
