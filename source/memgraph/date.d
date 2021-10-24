@@ -2,93 +2,82 @@
 module memgraph.date;
 
 import memgraph.mgclient, memgraph.detail, memgraph.value, memgraph.enums;
+import sd = std.datetime.date;
+import ct = core.time;
 
 /// Represents a date.
 ///
 /// Date is defined with number of days since the Unix epoch.
+/// Uses a `std.datetime.date.Date` internally.
 struct Date {
-	/// Create a copy of the internal `mg_date`.
-	this(this) {
-		if (ptr_)
-			ptr_ = mg_date_copy(ptr_);
-	}
+	/// Create a copy of `other` Date.
+	this(Date other) { date_ = other.date_; }
 
-	/// Create a copy of `other` date.
-	this(inout ref Date other) {
-		this(mg_date_copy(other.ptr));
-	}
+	/// Create a copy of `other` std.datetime.date.Date.
+	this(sd.Date other) { date_ = other; }
 
 	/// Create a date from a Value.
 	this(inout ref Value value) {
 		assert(value.type == Type.Date);
-		this(mg_date_copy(mg_value_date(value.ptr)));
-	}
-
-	/// Assigns a date to another. The target of the assignment gets detached from
-	/// whatever date it was attached to, and attaches itself to the new date.
-	ref Date opAssign(Date rhs) @safe return {
-		import std.algorithm.mutation : swap;
-		swap(this, rhs);
-		return this;
+		date_ = epoch_ + ct.days(mg_date_days(mg_value_date(value.ptr)));
 	}
 
 	/// Return a printable string representation of this date.
-	const (string) toString() const {
-		import std.conv : to;
-		return to!string(days);
-	}
+	const (string) toString() const { return date_.toString; }
 
 	/// Compares this date with `other`.
 	/// Return: true if same, false otherwise.
-	bool opEquals(const ref Date other) const {
-		return Detail.areDatesEqual(ptr_, other.ptr_);
-	}
+	bool opEquals(const ref Date other) const { return date_ == other.date_; }
+
+	/// Return internal `std.datetime.date.Date`.
+	auto opCast(T : sd.Date)() const { return date_; }
 
 	/// Returns days since Unix epoch.
-	const (long) days() const { return mg_date_days(ptr_); }
-
-	/// Destroys the internal `mg_date`.
-	@safe @nogc ~this() {
-		if (ptr_)
-			mg_date_destroy(ptr_);
-	}
+	const (long) days() const { return (date_ - epoch_).total!"days"; }
 
 package:
 	/// Create a Date using the given `mg_date`.
-	this(mg_date *ptr) {
+	this(inout mg_date *ptr) {
 		assert(ptr != null);
-		ptr_ = ptr;
-	}
-
-	/// Create a Date from a copy of the given `mg_date`.
-	this(const mg_date *ptr) {
-		assert(ptr != null);
-		this(mg_date_copy(ptr));
+		date_ = epoch_ + ct.days(mg_date_days(ptr));
 	}
 
 	/// Returns the internal `mg_date` pointer.
-	const (mg_date *) ptr() const { return ptr_; }
+	const (mg_date *) ptr() const {
+		auto ptr = mg_date_make((date_ - epoch_).total!"days");
+		assert(ptr != null);
+		return ptr;
+	}
 
 private:
-	mg_date *ptr_;
+	sd.Date date_;
+	alias date_ this;
+}
+
+static private sd.Date epoch_ = sd.Date(1970, 1, 1);
+
+unittest {
+	import sd = std.datetime.date;
+	auto now = Date(sd.Date(2021, 10, 24));
+	assert(now.toString == "2021-Oct-24");
+	assert(now.toISOExtString == "2021-10-24");
+	assert(now.toISOString == "20211024");
 }
 
 unittest {
+	import memgraph.enums : Type;
 	import std.conv : to;
-	import memgraph.enums;
 
-	auto dt = mg_date_alloc(&mg_system_allocator);
+	auto dt = mg_date_make(42);
 	assert(dt != null);
-	dt.days = 42;
 
 	auto d = Date(dt);
 	assert(d.days == 42);
-	assert(d.ptr == dt);
 
 	const d1 = d;
 	assert(d1 == d);
 
-	assert(to!string(d) == "42");
+	assert(to!string(d) == "1970-Feb-12", to!string(d));
 
 	auto d2 = Date(mg_date_copy(d.ptr));
 	assert(d2 == d);
