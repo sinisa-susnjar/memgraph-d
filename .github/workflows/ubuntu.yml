@@ -1,6 +1,14 @@
 name: ubuntu
 
-on: [push, pull_request]
+on:
+  # Trigger the workflow on push or pull request,
+  # but only for the main branch
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
 
 jobs:
   build:
@@ -20,4 +28,6 @@ jobs:
         # Build and run tests
         dub test -b unittest-cov --compiler=$DC
         # Upload code coverage
-        bash <(curl -s https://codecov.io/bash)
+        curl -Os https://uploader.codecov.io/latest/linux/codecov
+        chmod +x codecov
+        ./codecov
