@@ -27,6 +27,7 @@ int main(string[] args) {
 	}
 
 	immutable N = to!size_t(args[3]);
+
 	clearDatabaseData(client);
 
 	if (!client.run("CREATE INDEX ON :Person(id);")) {
@@ -34,6 +35,7 @@ int main(string[] args) {
 		return 1;
 	}
 
+	writefln("starting insert...");
 	foreach (id; 0..N) {
 		if (!client.run(
 					"CREATE (:Person:Entrepreneur {id: " ~ to!string(id) ~ ", age: 40, name: 'John', " ~
@@ -43,16 +45,19 @@ int main(string[] args) {
 		}
 	}
 
+	writefln("starting select...");
 	auto results = client.execute("MATCH (n) RETURN n;");
 
 	size_t resultCount;
 	foreach (r; results) {
 		assert(r.length == 1);
+		/*
 		if (r[0].type() == Type.Node) {
 			const auto node = to!Node(r[0]);
 			writefln("%s {%s}", node.labels.join(":"),
 					node.properties.map!(p => p.key ~ ":" ~ to!string(p.value)).join(" "));
 		}
+		*/
 		resultCount++;
 	}
 	writefln("Summary: {%s}", results.summary.map!(p => p.key ~ ":" ~ to!string(p.value)).join(" "));
