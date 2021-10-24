@@ -983,11 +983,14 @@ extern (C) {
 	/// Destroys the given path.
 	@safe @nogc void mg_path_destroy(mg_path *path) pure nothrow;
 
+	/// Creates a `mg_date` from the given number of days since the Unix epoch.
+	/// Return: A pointer to a newly allocated mg_date or `null` if an error occurred.
+	@safe @nogc mg_date *mg_date_make(long days);
+
 	/// Returns days since the Unix epoch.
 	long mg_date_days(const mg_date *date);
 
 	/// Creates a copy of the given date.
-	///
 	/// Return: A pointer to the copy or NULL if an error occured.
 	@safe @nogc mg_date *mg_date_copy(const mg_date *date) pure nothrow;
 
