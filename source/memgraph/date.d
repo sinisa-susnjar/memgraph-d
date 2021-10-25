@@ -6,7 +6,6 @@ import sd = std.datetime.date;
 import ct = core.time;
 
 /// Represents a date.
-///
 /// Date is defined with number of days since the Unix epoch.
 /// Uses a `std.datetime.date.Date` internally.
 struct Date {
@@ -24,10 +23,6 @@ struct Date {
 
 	/// Return a printable string representation of this date.
 	const (string) toString() const { return date_.toString; }
-
-	/// Compares this date with `other`.
-	/// Return: true if same, false otherwise.
-	bool opEquals(const ref Date other) const { return date_ == other.date_; }
 
 	/// Return internal `std.datetime.date.Date`.
 	auto opCast(T : sd.Date)() const { return date_; }
@@ -58,7 +53,7 @@ static private sd.Date epoch_ = sd.Date(1970, 1, 1);
 
 unittest {
 	import sd = std.datetime.date;
-	auto now = Date(sd.Date(2021, 10, 24));
+	immutable now = Date(sd.Date(2021, 10, 24));
 	assert(now.toString == "2021-Oct-24");
 	assert(now.toISOExtString == "2021-10-24");
 	assert(now.toISOString == "20211024");
