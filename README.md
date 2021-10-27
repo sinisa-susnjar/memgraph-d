@@ -64,7 +64,11 @@ To run the examples or the unit tests, a local Docker installation is required. 
 
 Then start a local memgraph container with e.g.:
 
-    docker run -p 7687:7687 memgraph/memgraph --also-log-to-stderr --log-level=DEBUG
+    docker run -p 7687:7687 --name memgraph memgraph/memgraph --also-log-to-stderr --log-level=DEBUG
+
+	subsequently:
+
+	docker start memgraph
 
 ## Building the library
 
@@ -92,3 +96,11 @@ This package contains two examples that were adapted from the examples contained
 ## Run unittests and generate coverage data
 
     dub test -b unittest-cov
+
+## Some useful commands
+
+### Start mgconsole via docker
+
+    IP=`docker inspect --format='{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' memgraph`
+    docker run -it --entrypoint=mgconsole memgraph/memgraph --host $IP --use-ssl=False
+
