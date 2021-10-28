@@ -1,3 +1,0 @@
-[submodule "memgraph-d/mgclient"]
-	path = mgclient
-	url = https://github.com/memgraph/mgclient.git
