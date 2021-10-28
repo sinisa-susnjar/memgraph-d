@@ -1022,6 +1022,10 @@ extern (C) {
 	/// Destroys the given local time.
 	@safe @nogc void mg_local_time_destroy(mg_local_time *local_time) pure nothrow;
 
+	/// Creates a `mg_date_time` from the given `seconds`, `nanoseconds` and `tz_offset_minutes`.
+	/// Return: A pointer to a mg_date_time or `null` if an error occurred.
+	@safe @nogc mg_date_time *mg_date_time_make(long seconds, long nanoseconds, long tz_offset_minutes);
+
 	/// Returns seconds since Unix epoch.
 	long mg_date_time_seconds(const mg_date_time *date_time);
 
