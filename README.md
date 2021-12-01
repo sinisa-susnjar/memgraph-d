@@ -66,9 +66,9 @@ Then start a local memgraph container with e.g.:
 
     docker run -p 7687:7687 --name memgraph memgraph/memgraph --also-log-to-stderr --log-level=DEBUG
 
-	subsequently:
+subsequently:
 
-	docker start memgraph
+    docker start memgraph
 
 ## Building the library
 
