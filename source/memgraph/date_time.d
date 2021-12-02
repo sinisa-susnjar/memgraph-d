@@ -22,12 +22,19 @@ struct DateTime {
   /// Create a date time from a Value.
   this(inout ref Value value) {
     assert(value.type == Type.DateTime);
-    auto tzOffsetMinutes = ct.minutes(mg_date_time_tz_offset_minutes(mg_value_date_time(value.ptr)));
-    auto nsecsSinceMidnight = ct.nsecs(mg_date_time_nanoseconds(mg_value_date_time(value.ptr)));
-    auto secondsSinceEpoch = sd.unixTimeToStdTime(mg_date_time_seconds(mg_value_date_time(value.ptr)));
+
+    auto dateTime = mg_value_date_time(value.ptr);
+
+    auto tzOffsetMinutes = ct.minutes(mg_date_time_tz_offset_minutes(dateTime));
+    auto nsecsSinceMidnight = ct.nsecs(mg_date_time_nanoseconds(dateTime));
+    auto secondsSinceEpoch = sd.unixTimeToStdTime(mg_date_time_seconds(dateTime));
+
+    // TODO: add nsecsSinceMidnight
+
     import std.conv : to;
+
     dateTime_ = sd.SysTime(to!(sdd.DateTime)(sd.SysTime(secondsSinceEpoch)),
-              to!(sd.TimeZone)(new sd.SimpleTimeZone(tzOffsetMinutes)));
+                           to!(sd.TimeZone)(new sd.SimpleTimeZone(tzOffsetMinutes)));
   }
 
   /// Return a printable string representation of this date time.
@@ -46,17 +53,22 @@ package:
   /// Create a DateTime using the given `mg_date_time`.
   this(inout mg_date_time *ptr) {
     assert(ptr != null);
+
     auto tzOffsetMinutes = ct.minutes(mg_date_time_tz_offset_minutes(ptr));
     auto nsecsSinceMidnight = ct.nsecs(mg_date_time_nanoseconds(ptr));
     auto secondsSinceEpoch = sd.unixTimeToStdTime(mg_date_time_seconds(ptr));
+
+    // TODO: add nsecsSinceMidnight
+
     import std.conv : to;
+
     dateTime_ = sd.SysTime(to!(sdd.DateTime)(sd.SysTime(secondsSinceEpoch)),
-              to!(sd.TimeZone)(new sd.SimpleTimeZone(tzOffsetMinutes)));
+                           to!(sd.TimeZone)(new sd.SimpleTimeZone(tzOffsetMinutes)));
   }
 
   /// Returns the internal `mg_date_time` pointer.
   const (mg_date_time *) ptr() const {
-    // TODO
+    // TODO: replace 0 with nanoseconds since midnight
     auto ptr = mg_date_time_make(dateTime_.toUnixTime, 0, dateTime_.utcOffset.total!"minutes");
     assert(ptr != null);
     return ptr;
