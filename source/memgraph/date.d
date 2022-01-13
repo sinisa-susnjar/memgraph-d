@@ -27,7 +27,7 @@ struct Date {
   }
 
   /// Return the hash code for this date.
-  @nogc ulong toHash() const {
+  size_t toHash() const nothrow @safe {
     return cast(ulong)ptr_;
   }
 

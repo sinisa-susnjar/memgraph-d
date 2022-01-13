@@ -36,7 +36,7 @@ struct Map {
   }
 
   /// Return the hash code for this map.
-  @nogc ulong toHash() const {
+  size_t toHash() const nothrow @safe {
     return cast(ulong)ptr_;
   }
 

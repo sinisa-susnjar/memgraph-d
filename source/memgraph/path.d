@@ -56,7 +56,7 @@ struct Path {
   }
 
   /// Return the hash code for this path.
-  @nogc ulong toHash() const {
+  size_t toHash() const nothrow @safe {
     return cast(ulong)ptr_;
   }
 

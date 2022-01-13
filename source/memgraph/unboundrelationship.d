@@ -38,7 +38,7 @@ struct UnboundRelationship {
   }
 
   /// Return the hash code for this unbound relationship.
-  @nogc ulong toHash() const {
+  size_t toHash() const nothrow @safe {
     return cast(ulong)ptr_;
   }
 

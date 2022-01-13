@@ -42,7 +42,7 @@ struct Relationship {
   }
 
   /// Return the hash code for this relationship.
-  @nogc ulong toHash() const {
+  size_t toHash() const nothrow @safe {
     return cast(ulong)ptr_;
   }
 

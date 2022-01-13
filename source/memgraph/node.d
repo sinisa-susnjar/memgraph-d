@@ -50,7 +50,7 @@ struct Node {
     }
 
     /// Return the hash code for this label.
-    @nogc ulong toHash() const {
+    size_t toHash() const nothrow @safe {
       return cast(ulong)node_;
     }
 
@@ -101,7 +101,7 @@ struct Node {
   }
 
   /// Return the hash code for this node.
-  @nogc ulong toHash() const {
+  size_t toHash() const nothrow @safe {
     return cast(ulong)ptr_;
   }
 

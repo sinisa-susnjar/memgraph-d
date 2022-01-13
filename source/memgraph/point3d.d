@@ -31,7 +31,7 @@ struct Point3d {
   }
 
   /// Return the hash code for this point 3d.
-  @nogc ulong toHash() const {
+  size_t toHash() const nothrow @safe {
     return cast(ulong)ptr_;
   }
 

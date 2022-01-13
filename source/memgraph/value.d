@@ -58,7 +58,7 @@ struct Value {
   }
 
   /// Return the hash code for this value.
-  @nogc ulong toHash() const {
+  size_t toHash() const nothrow @safe {
     return cast(ulong)ptr_;
   }
 
