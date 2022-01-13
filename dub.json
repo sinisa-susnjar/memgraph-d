@@ -1,6 +1,6 @@
 {
   "authors": [ "Sinisa Susnjar" ],
-  "copyright": "Copyright © 2021, Sinisa Susnjar",
+  "copyright": "Copyright © 2022, Sinisa Susnjar",
   "description": "D bindings for the memgraph DB",
   "license": "MIT",
   "name": "memgraph-d",

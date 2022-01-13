@@ -1,6 +1,6 @@
 {
   "authors": [ "Sinisa Susnjar" ],
-  "copyright": "Copyright © 2021, Sinisa Susnjar",
+  "copyright": "Copyright © 2022, Sinisa Susnjar",
   "description": "Advanced D interface example for memgraph-d",
   "license": "MIT",
   "name": "advanced",
