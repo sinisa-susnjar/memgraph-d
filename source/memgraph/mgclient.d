@@ -1074,6 +1074,12 @@ extern (C) {
   /// Destroy the given local date and time.
   @safe @nogc void mg_local_date_time_destroy(mg_local_date_time *local_date_time) pure nothrow;
 
+  /// Creates a `mg_duration` from the given months, days, seconds and nanoseconds.
+  /// Return: A pointer to a newly allocated `mg_duration` or `null` if an error occurred.
+  @safe @nogc mg_duration *mg_duration_make(long months, long days,
+                                              long seconds,
+                                              long nanoseconds);
+
   /// Returns the months part of the temporal amount.
   long mg_duration_months(const mg_duration *duration);
 
