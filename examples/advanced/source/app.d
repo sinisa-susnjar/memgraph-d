@@ -53,7 +53,7 @@ int main(string[] args) {
     }
     resultCount++;
   }
-  writefln("Summary: {%s}", results.summary.map!(p => p.key ~ ":" ~ to!string(p.value)).join(" "));
+  writefln("Summary: %s", results.summary);
   writefln("Columns: %s", results.columns);
   writefln("Number of results: %s", resultCount);
 
