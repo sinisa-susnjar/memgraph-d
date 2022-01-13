@@ -16,116 +16,108 @@ import std.conv;
 struct Node {
   /// View of the node's labels.
   struct Labels {
-    /// Returns the number of labels of node `node`.
-    size_t size() const {
-      assert(node_ != null);
+    /// Returns the number of labels in the node.
+    @nogc size_t size() const {
       return mg_node_label_count(node_);
     }
 
     /// Return node's label at the `index` position.
-    string opIndex(int index) const {
-      assert(node_ != null);
+    @nogc string opIndex(int index) const {
       return Detail.convertString(mg_node_label_at(node_, index));
     }
 
     /// Checks if the range is empty.
-    bool empty() const {
-      return idx_ >= size();
-    }
+    @nogc bool empty() const { return idx_ >= size(); }
 
     /// Returns the next element in the range.
-    auto front() const {
+    @nogc auto front() const {
       assert(idx_ < size());
       return Detail.convertString(mg_node_label_at(node_, idx_));
     }
 
     /// Move to the next element in the range.
-    void popFront() {
-      idx_++;
-    }
+    @nogc void popFront() { idx_++; }
 
-    bool opEquals(const string[] labels) const {
+    @nogc bool opEquals(const string[] labels) const {
       if (labels.length != size())
         return false;
-      foreach (idx, label; labels) {
-        if (label != Detail.convertString(mg_node_label_at(node_, to!uint(idx))))
+      // Note: having @nogc is more important than the implicit conversion warning here
+      foreach (uint idx, label; labels) {
+        if (label != Detail.convertString(mg_node_label_at(node_, idx)))
           return false;
       }
       return true;
     }
 
+    /// Return the hash code for this label.
+    @nogc ulong toHash() const {
+      return cast(ulong)node_;
+    }
+
   private:
-    this(const mg_node *node) {
+    @nogc this(const mg_node *node) {
       assert(node != null);
       node_ = node;
     }
     const mg_node *node_;
     uint idx_;
-  }
+  } // struct Labels
 
   /// Return a printable string representation of this node.
-  const (string) toString() const {
-    import std.range : join;
-    return labels.join(":") ~ " " ~ to!string(properties());
+  string toString() const {
+    import std.array : appender;
+    auto str = appender!string;
+    str.put(to!string(labels));
+    str.put(" ");
+    str.put(to!string(properties));
+    return str.data;
   }
 
-  this(this) {
-    if (ptr_)
-      ptr_ = mg_node_copy(ptr_);
-  }
-
-  /// Create a copy of the given `node`.
-  this(inout ref Node other) {
-    this(mg_node_copy(other.ptr_));
+  /// Create a shallow copy of the given `node`.
+  @nogc this(inout ref Node other) {
+    this(other.ptr_);
   }
 
   /// Create a node from a Value.
-  this(inout ref Value value) {
+  @nogc this(inout ref Value value) {
     assert(value.type == Type.Node);
-    this(mg_node_copy(mg_value_node(value.ptr)));
+    this(mg_value_node(value.ptr));
   }
 
   /// Returns the ID of this node.
-  long id() const {
-    assert(ptr_ != null);
+  @nogc auto id() inout {
     return mg_node_id(ptr_);
   }
 
   /// Returns the labels belonging to this node.
-  auto labels() inout { return Labels(ptr_); }
+  @nogc auto labels() inout { return Labels(ptr_); }
 
   /// Returns the property map belonging to this node.
-  auto properties() inout { return Map(mg_node_properties(ptr_)); }
+  @nogc auto properties() inout { return Map(mg_node_properties(ptr_)); }
 
   /// Comparison operator.
-  bool opEquals(const ref Node other) const {
+  @nogc bool opEquals(const ref Node other) const {
     return Detail.areNodesEqual(ptr_, other.ptr_);
   }
 
-  ~this() {
-    if (ptr_)
-      mg_node_destroy(ptr_);
+  /// Return the hash code for this node.
+  @nogc ulong toHash() const {
+    return cast(ulong)ptr_;
   }
 
 package:
-  /// Create a Node using the given `mg_node`.
-  this(mg_node *p) {
+  /// Create a Node from a copy of the given `mg_node`.
+  @nogc this(const mg_node *p) {
     assert(p != null);
     ptr_ = p;
   }
 
-  /// Create a Node from a copy of the given `mg_node`.
-  this(const mg_node *p) {
-    assert(p != null);
-    this(mg_node_copy(p));
-  }
-
-  const (mg_node *) ptr() const { return ptr_; }
+  @nogc auto ptr() inout { return ptr_; }
 
 private:
   /// Pointer to `mg_node` instance.
-  mg_node *ptr_;
-}
+  const mg_node *ptr_;
+} // struct Node
 
 unittest {
   import testutils : startContainer;
@@ -136,6 +128,8 @@ unittest {
   import testutils;
   import memgraph;
   import std.algorithm, std.conv, std.range;
+
+  import std.stdio;
 
   auto client = connectContainer();
   assert(client);
@@ -149,10 +143,11 @@ unittest {
   auto result = client.execute("MATCH (n) RETURN n;");
   assert(result, client.error);
   assert(!result.empty());
+  // TODO: this invalidates the result set
+  // assert(result.count == 5);
   auto value = result.front;
-  assert(result.count == 5);
 
-  assert(value[0].type() == Type.Node);
+  assert(value[0].type() == Type.Node, to!string(value[0].type()));
 
   auto node = to!Node(value[0]);
 
@@ -171,7 +166,9 @@ unittest {
   assert(expectedLabels == labels);
   assert(expectedLabels.join(":") == labels.join(":"));
 
-  auto other = Node(node);
+  assert(cast(ulong)node.ptr == labels.toHash);
+
+  const other = Node(node);
   assert(other == node);
 
   const auto props = node.properties();
@@ -182,7 +179,8 @@ unittest {
   assert(props["isStudent"] == false);
   assert(props["score"] == 5.0);
 
-  assert(to!string(node) == labels.join(":") ~ " " ~ to!string(props));
+  assert(to!string(node) == `["Person", "Entrepreneur"] {age:40, id:0, isStudent:false, name:John, score:5}`,
+            to!string(node));
 
   const otherProps = props;
   assert(otherProps == props);
@@ -190,11 +188,5 @@ unittest {
   // this is a package internal method
   assert(node.ptr != null);
 
-  const v = Value(node);
-  assert(v.type == Type.Node);
-  assert(v == node);
-  assert(node == v);
-
-  const v2 = Value(node);
-  assert(v == v2);
+  assert(cast(ulong)node.ptr == node.toHash);
 }

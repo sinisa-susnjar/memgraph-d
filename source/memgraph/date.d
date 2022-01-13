@@ -1,4 +1,4 @@
-/// Provides a wrapper around a `mg_date`.
+/// Provides a wrapper for a `mg_date`. Uses `std.datetime.date.Date` internally.
 module memgraph.date;
 
 import memgraph.mgclient, memgraph.detail, memgraph.value, memgraph.enums;
@@ -9,55 +9,54 @@ import ct = core.time;
 /// Date is defined with number of days since the Unix epoch.
 /// Uses a `std.datetime.date.Date` internally.
 struct Date {
-  /// Create a copy of `other` Date.
-  this(Date other) { date_ = other.date_; }
-
-  /// Create a copy of `other` std.datetime.date.Date.
-  this(sd.Date other) { date_ = other; }
+  /// Create a shallow copy of `other` Date.
+  @nogc this(inout ref Date other) {
+    this(other.ptr_);
+  }
 
   /// Create a date from a Value.
-  this(inout ref Value value) {
+  @nogc this(inout ref Value value) {
     assert(value.type == Type.Date);
-    date_ = epoch_ + ct.days(mg_date_days(mg_value_date(value.ptr)));
+    this(mg_value_date(value.ptr));
+  }
+
+  /// Compares this date with `other`.
+  /// Return: true if same, false otherwise.
+  @nogc auto opEquals(const ref Date other) const {
+    return Detail.areDatesEqual(ptr_, other.ptr_);
+  }
+
+  /// Return the hash code for this date.
+  @nogc ulong toHash() const {
+    return cast(ulong)ptr_;
   }
 
   /// Return a printable string representation of this date.
-  const (string) toString() const { return date_.toString; }
-
-  /// Return internal `std.datetime.date.Date`.
-  auto opCast(T : sd.Date)() const { return date_; }
+  string toString() const { return date_.toString; }
 
   /// Returns days since Unix epoch.
-  const (long) days() const { return (date_ - epoch_).total!"days"; }
+  @nogc auto days() const { return (date_ - epoch_).total!"days"; }
 
 package:
-  /// Create a Date using the given `mg_date`.
-  this(inout mg_date *ptr) {
+  /// Create a Date using the given `mg_date` pointer.
+  @nogc this(const mg_date *ptr) {
     assert(ptr != null);
+    ptr_ = ptr;
     date_ = epoch_ + ct.days(mg_date_days(ptr));
   }
 
-  /// Returns the internal `mg_date` pointer.
-  const (mg_date *) ptr() const {
-    auto ptr = mg_date_make((date_ - epoch_).total!"days");
-    assert(ptr != null);
-    return ptr;
+  /// Return pointer to internal `mg_date`.
+  @nogc auto ptr() inout {
+    return ptr_;
   }
 
 private:
+  const mg_date *ptr_;
   sd.Date date_;
   alias date_ this;
-}
+} // struct Date
 
 static private sd.Date epoch_ = sd.Date(1970, 1, 1);
-
-unittest {
-  import sd = std.datetime.date;
-  immutable now = Date(sd.Date(2021, 10, 24));
-  assert(now.toString == "2021-Oct-24");
-  assert(now.toISOExtString == "2021-10-24");
-  assert(now.toISOString == "20211024");
-}
 
 unittest {
   import testutils : connectContainer;
@@ -67,12 +66,43 @@ unittest {
   auto client = connectContainer();
   assert(client);
 
-  auto result = client.execute(`RETURN date("2038-01-20");`);
+  auto result = client.execute(`return date('2021-02-12') as a, date('2022-11-12') as b, date('2038-01-20') as c;`);
   assert(result, client.error);
   foreach (r; result) {
-    assert(r.length == 1);
+    assert(r.length == 3);
+
     assert(r[0].type() == Type.Date);
-    assert(to!Date(r[0]).toISOExtString == "2038-01-20");
+    const d1 = to!Date(r[0]);
+    assert(d1.days == 18_670, to!string(d1.days));
+    assert(d1.toISOExtString == "2021-02-12");
+    assert(d1.toISOString == "20210212");
+    assert(d1.toString == "2021-Feb-12");
+    const sd.Date D1 = d1;
+    assert(D1.toISOExtString == "2021-02-12");
+    assert(D1.toISOString == "20210212");
+    assert(D1.toString == "2021-Feb-12");
+
+    assert(r[1].type() == Type.Date);
+    const d2 = to!Date(r[1]);
+    assert(d2.days == 19_308, to!string(d2.days));
+    assert(d2.toISOExtString == "2022-11-12");
+    assert(d2.toISOString == "20221112");
+    assert(d2.toString == "2022-Nov-12");
+    const sd.Date D2 = d2;
+    assert(D2.toISOExtString == "2022-11-12");
+    assert(D2.toISOString == "20221112");
+    assert(D2.toString == "2022-Nov-12");
+
+    assert(r[2].type() == Type.Date);
+    const d3 = to!Date(r[2]);
+    assert(d3.days == 24_856, to!string(d3.days));
+    assert(d3.toISOExtString == "2038-01-20");
+    assert(d3.toISOString == "20380120");
+    assert(d3.toString == "2038-Jan-20");
+    const sd.Date D3 = d3;
+    assert(D3.toISOExtString == "2038-01-20");
+    assert(D3.toISOString == "20380120");
+    assert(D3.toString == "2038-Jan-20");
   }
 }
 
@@ -97,22 +127,11 @@ unittest {
   const d3 = Date(d2);
   assert(d3 == d);
 
-  const v = Value(d);
-  const d4 = Date(v);
-  assert(d4 == d);
-  assert(v == d);
-  assert(to!string(v) == to!string(d));
-
-  d2 = d;
-  assert(d2 == d);
-
-  const v1 = Value(d2);
-  assert(v1.type == Type.Date);
-  const v2 = Value(d2);
-  assert(v2.type == Type.Date);
-
-  assert(v1 == v2);
-
   const d5 = Date(d3);
   assert(d5 == d3);
+
+  auto v = Value(mg_value_make_date(dt));
+  assert(to!string(v) == "1970-Feb-12", to!string(v));
+
+  assert(cast(ulong)d.ptr == d.toHash);
 }

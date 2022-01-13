@@ -3,11 +3,11 @@ module testutils;
 version (unittest) {
   import memgraph;
 
-  // Port where the memgraph container is listening.
+  // Port where memgraph is listening (running inside the docker container).
   enum MEMGRAPH_PORT = 7688;
 
   bool canConnect() {
-    import std.string, std.conv, std.stdio;
+    import std.string, std.conv;
     auto params = mg_session_params_make();
     assert(params != null);
 
@@ -15,6 +15,9 @@ version (unittest) {
     mg_session_params_set_port(params, to!ushort(MEMGRAPH_PORT));
     mg_session_params_set_sslmode(params, mg_sslmode.MG_SSLMODE_DISABLE);
 
+    // The mg_connect() will cause "mg_raw_transport_recv: Connection reset by peer" to be
+    // printed to stderr if the test docker container is not running. Maybe use freopen()
+    // to redirect stderr to /dev/null?
     mg_session *session = null;
     immutable status = mg_connect(params, &session);
     mg_session_params_destroy(params);
@@ -24,13 +27,26 @@ version (unittest) {
     return status == 0;
   }  // canConnect()
 
+  // Stop a unit testing memgraph container if it is running.
+  // Read the container id from $TMP/memgraph-d.container.
+  void stopContainer() {
+    import std.process, std.stdio, std.file, std.string;
+
+    auto containerIdFileName = environment.get("TMP", "/tmp") ~ "/memgraph-d.container";
+    if (exists(containerIdFileName)) {
+      // Read container id from temp storage.
+      auto containerIdFile = File(containerIdFileName, "r");
+      auto containerId = containerIdFile.readln();
+      containerIdFile.close();
+      execute(["docker", "kill", containerId.chomp]);
+    }
+  }
+
   // Start a memgraph container for unit testing if it is not already running.
   // Store the container id in $TMP/memgraph-d.container so it can be used in
   // other tests without having to start a new container each time.
   void startContainer() {
     import std.process, std.stdio, std.file, std.string;
-
-    import std.conv;
 
     auto containerIdFileName = environment.get("TMP", "/tmp") ~ "/memgraph-d.container";
 
@@ -111,7 +127,7 @@ version (unittest) {
       "CREATE (:Person:Entrepreneur {id: 3, age: 30, name: 'Ray', " ~
         "isStudent: false, score: 9.0});"), client.error);
     assert(client.run(
-      "CREATE (:Person:Entrepreneur {id: 4, age: 25, name: 'Olaf', " ~
+      "CREATE (:Person:Entrepreneur {id: 4, age: 25, name: 'Oløf', " ~
         "isStudent: true, score: 10.0});"), client.error);
 
     // Create some relationships.
@@ -122,8 +138,15 @@ version (unittest) {
       "MATCH (a:Person), (b:Person) WHERE a.name = 'Peter' AND b.name = 'Valery' " ~
         "CREATE (a)-[r:IS_MANAGER]->(b);"), client.error);
     assert(client.run(
-      "MATCH (a:Person), (b:Person) WHERE a.name = 'Valery' AND b.name = 'Olaf' " ~
+      "MATCH (a:Person), (b:Person) WHERE a.name = 'Valery' AND b.name = 'Oløf' " ~
         "CREATE (a)-[r:IS_MANAGER]->(b);"), client.error);
   }  // createTestData()
 
+}
+
+unittest {
+  stopContainer();
+  assert(canConnect() == false);
+  startContainer();
+  assert(canConnect() == true);
 }

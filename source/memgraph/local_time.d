@@ -1,90 +1,106 @@
-/// Provides a wrapper around a `mg_local_time`.
+/// Provides a wrapper around a `mg_local_time`. Uses `std.datetime.systime.SysTime` internally.
 module memgraph.local_time;
 
 import memgraph.mgclient, memgraph.detail, memgraph.value, memgraph.enums;
+import st = std.datetime.systime;
+import sd = std.datetime.date;
+import ct = core.time;
 
-/// Represents local time.
-///
+/// Represents a local time.
 /// Time is defined with nanoseconds since midnight.
 struct LocalTime {
-  /// Create a copy of `other` local time.
+  /// Create a shallow copy of `other` LocalTime.
   this(inout ref LocalTime other) {
-    this(mg_local_time_copy(other.ptr));
+    this(other.ptr);
   }
 
   /// Create a local time from a Value.
   this(inout ref Value value) {
     assert(value.type == Type.LocalTime);
-    this(mg_local_time_copy(mg_value_local_time(value.ptr)));
-  }
-
-  /// Assigns a local time to another. The target of the assignment gets detached from
-  /// whatever local time it was attached to, and attaches itself to the new local time.
-  ref LocalTime opAssign(LocalTime rhs) @safe return {
-    import std.algorithm.mutation : swap;
-    swap(this, rhs);
-    return this;
-  }
-
-  /// Return a printable string representation of this local time.
-  const (string) toString() const {
-    import std.conv : to;
-    return to!string(nanoseconds);
+    this(mg_value_local_time(value.ptr));
   }
 
   /// Compares this local time with `other`.
   /// Return: true if same, false otherwise.
-  bool opEquals(const ref LocalTime other) const {
-    return Detail.areLocalTimesEqual(ptr_, other.ptr);
+  @nogc auto opEquals(const ref LocalTime other) const {
+    return Detail.areLocalTimesEqual(ptr_, other.ptr_);
+  }
+
+  /// Return a printable string representation of this local time.
+  string toString() const {
+    import std.format;
+    return format!("%02d:%02d:%02d.%09d")(localTime_.hour, localTime_.minute, localTime_.second,
+                  localTime_.fracSecs.total!"nsecs");
+  }
+
+  /// Return the hash code for this local time.
+  @nogc ulong toHash() const {
+    return cast(ulong)ptr_;
   }
 
   /// Returns nanoseconds since midnight.
-  const (long) nanoseconds() const { return mg_local_time_nanoseconds(ptr_); }
-
-  this(this) {
-    if (ptr_)
-      ptr_ = mg_local_time_copy(ptr_);
-  }
-
-  @safe @nogc ~this() {
-    if (ptr_)
-      mg_local_time_destroy(ptr_);
-  }
+  @nogc auto nanoseconds() const { return nanoSeconds_; }
 
 package:
-  /// Create a LocalTime using the given `mg_local_time`.
-  this(mg_local_time *ptr) @trusted {
+  /// Create a LocalTime using the given `mg_local_time` pointer.
+  this(inout mg_local_time *ptr) {
     assert(ptr != null);
     ptr_ = ptr;
+    nanoSeconds_ = mg_local_time_nanoseconds(ptr);
+    immutable auto now = st.Clock.currTime();
+    localTime_ = st.SysTime(sd.DateTime(now.year, now.month, now.day, 0, 0, 0));
+    localTime_ += ct.nsecs(nanoSeconds_);
   }
 
-  /// Create a LocalTime from a copy of the given `mg_local_time`.
-  this(const mg_local_time *ptr) {
-    assert(ptr != null);
-    this(mg_local_time_copy(ptr));
+  /// Returns the internal `mg_local_time` pointer.
+  @nogc auto ptr() inout {
+    return ptr_;
   }
-
-  const (mg_local_time *) ptr() const { return ptr_; }
 
 private:
-  mg_local_time *ptr_;
+  const mg_local_time *ptr_;
+  st.SysTime localTime_;
+  long nanoSeconds_;
+  alias localTime_ this;
+} // struct LocalTime
+
+unittest {
+  import testutils : connectContainer;
+  import std.conv : to;
+
+  auto client = connectContainer();
+  assert(client);
+
+  auto result = client.execute(`return localtime('12:34:56.100');`);
+  assert(result, client.error);
+  foreach (r; result) {
+    assert(r.length == 1);
+    assert(r[0].type() == Type.LocalTime);
+    const t = to!LocalTime(r[0]);
+    assert(t.toString == "12:34:56.100000000", t.toString);
+    assert(t.nanoseconds == 45_296_100_000_000);
+  }
 }
 
 unittest {
   import std.conv : to;
-  import memgraph.enums;
 
-  auto tm = mg_local_time_alloc(&mg_system_allocator);
+  auto tm = mg_local_time_make(45_296_100_000_000);
   assert(tm != null);
-  tm.nanoseconds = 42;
 
   auto t = LocalTime(tm);
-  assert(t.nanoseconds == 42);
+  assert(t.nanoseconds == 45_296_100_000_000);
 
   const t1 = t;
   assert(t1 == t);
 
-  assert(to!string(t) == "42");
+  assert(to!string(t) == "12:34:56.100000000");
+  assert(t.toString == "12:34:56.100000000");
+
+  st.SysTime st = t;
+  import std.format;
+  assert(format!("%02d:%02d:%02d.%09d")(st.hour, st.minute, st.second,
+                st.fracSecs.total!"nsecs") == t.toString);
 
   auto t2 = LocalTime(t.ptr);
   assert(t2 == t);
@@ -92,22 +108,11 @@ unittest {
   const t3 = LocalTime(t2);
   assert(t3 == t);
 
-  const v = Value(t);
-  const t4 = LocalTime(v);
-  assert(t4 == t);
-  assert(v == t);
-  assert(to!string(v) == to!string(t));
-
-  t2 = t;
-  assert(t2 == t);
-
-  const v1 = Value(t2);
-  assert(v1.type == Type.LocalTime);
-  const v2 = Value(t2);
-  assert(v2.type == Type.LocalTime);
-
-  assert(v1 == v2);
-
   const t5 = LocalTime(t3);
   assert(t5 == t3);
+
+  auto v = Value(mg_value_make_local_time(tm));
+  assert(to!string(v) == "12:34:56.100000000", to!string(v));
+
+  assert(cast(ulong)t.ptr == t.toHash);
 }

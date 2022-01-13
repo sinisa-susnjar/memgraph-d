@@ -30,23 +30,9 @@ enum Type {
   Path,
   /// Date is defined with number of days since the Unix epoch.
   Date,
-  /// Represents time with its time zone.
-  /// Time is defined with nanoseconds since midnight.
-  /// Timezone is defined with seconds from UTC.
-  Time,
   /// Represents local time.
   /// Time is defined with nanoseconds since midnight.
   LocalTime,
-  /// Represents date and time with its time zone.
-  /// Date is defined with seconds since the adjusted Unix epoch.
-  /// Time is defined with nanoseconds since midnight.
-  /// Time zone is defined with minutes from UTC.
-  DateTime,
-  /// Represents date and time with its time zone.
-  /// Date is defined with seconds since the adjusted Unix epoch.
-  /// Time is defined with nanoseconds since midnight.
-  /// Timezone is defined with an identifier for a specific time zone.
-  DateTimeZoneId,
   /// Represents date and time without its time zone.
   /// Date is defined with seconds since the Unix epoch.
   /// Time is defined with nanoseconds since midnight.

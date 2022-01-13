@@ -1,131 +1,109 @@
-/// Provides a wrapper around a `mg_duration`.
+/// Provides a wrapper for a `mg_duration`. Uses `core.time.Duration` internally.
 module memgraph.duration;
 
 import memgraph.mgclient, memgraph.detail, memgraph.value, memgraph.enums;
 
+import ct = core.time;
+
 /// Represents a temporal amount which captures the difference in time
 /// between two instants.
-///
 /// Duration is defined with months, days, seconds, and nanoseconds.
 /// Note: Duration can be negative.
+/// Uses a `core.time.Duration` internally.
 struct Duration {
-
-  /// Create a copy of `other` duration.
-  this(inout ref Duration other) {
-    this(mg_duration_copy(other.ptr));
+  /// Create a shallow copy of `other` Duration.
+  @nogc this(inout ref Duration other) {
+    this(other.ptr);
   }
 
   /// Create a duration from a Value.
-  this(inout ref Value value) {
+  @nogc this(inout ref Value value) {
     assert(value.type == Type.Duration);
-    this(mg_duration_copy(mg_value_duration(value.ptr)));
-  }
-
-  /// Assigns a duration to another. The target of the assignment gets detached from
-  /// whatever duration it was attached to, and attaches itself to the new duration.
-  ref Duration opAssign(Duration rhs) @safe return {
-    import std.algorithm.mutation : swap;
-    swap(this, rhs);
-    return this;
+    this(mg_value_duration(value.ptr));
   }
 
   /// Return a printable string representation of this duration.
-  const (string) toString() const {
-    import std.conv : to;
-    return to!string(months) ~ " " ~ to!string(days) ~ " " ~ to!string(seconds) ~ " " ~ to!string(nanoseconds);
-  }
-
-  /// Compares this duration with `other`.
-  /// Return: true if same, false otherwise.
-  bool opEquals(const ref Duration other) const {
-    return Detail.areDurationsEqual(ptr_, other.ptr);
-  }
+  string toString() const { return duration_.toString; }
 
   /// Returns the months part of the temporal amount.
-  const (long) months() const { return mg_duration_months(ptr_); }
+  @nogc auto months() const { return 0; } // See note in ctor.
 
   /// Returns the days part of the temporal amount.
-  const (long) days() const { return mg_duration_days(ptr_); }
+  @nogc auto days() const { return duration_.total!"days"; }
 
   /// Returns the seconds part of the temporal amount.
-  const (long) seconds() const { return mg_duration_seconds(ptr_); }
+  @nogc auto seconds() const { return (duration_ - ct.days(duration_.total!"days")).total!"seconds"; }
 
   /// Returns the nanoseconds part of the temporal amount.
-  const (long) nanoseconds() const { return mg_duration_nanoseconds(ptr_); }
-
-  this(this) {
-    if (ptr_)
-      ptr_ = mg_duration_copy(ptr_);
-  }
-
-  @safe @nogc ~this() {
-    if (ptr_)
-      mg_duration_destroy(ptr_);
-  }
+  @nogc auto nanoseconds() const { return (duration_ - ct.seconds(duration_.total!"seconds")).total!"nsecs"; }
 
 package:
   /// Create a Duration using the given `mg_duration`.
-  this(mg_duration *ptr) @trusted {
+  @nogc this(const mg_duration *ptr) {
     assert(ptr != null);
     ptr_ = ptr;
+    // Note: there is no "months" duration in core.time because months have variable number of days
+    assert(mg_duration_months(ptr) == 0);
+    duration_ = ct.days(mg_duration_days(ptr)) +
+                ct.seconds(mg_duration_seconds(ptr)) +
+                ct.nsecs(mg_duration_nanoseconds(ptr));
   }
 
-  /// Create a Duration from a copy of the given `mg_duration`.
-  this(const mg_duration *ptr) {
-    assert(ptr != null);
-    this(mg_duration_copy(ptr));
+  /// Return pointer to internal `mg_duration`.
+  @nogc auto ptr() inout {
+    return ptr_;
   }
-
-  const (mg_duration *) ptr() const { return ptr_; }
 
 private:
-  mg_duration *ptr_;
+  const mg_duration *ptr_;
+  ct.Duration duration_;
+  alias duration_ this;
+} // struct Duration
+
+unittest {
+  import testutils : connectContainer;
+  import std.algorithm : count;
+  import std.conv : to;
+
+  auto client = connectContainer();
+  assert(client);
+
+  auto result = client.execute(`return duration('P9DT11H23M7S');`);
+  assert(result, client.error);
+  foreach (r; result) {
+    assert(r.length == 1);
+    assert(r[0].type() == Type.Duration);
+    const d = to!Duration(r[0]);
+    assert(d.toString == "1 week, 2 days, 11 hours, 23 minutes, and 7 secs", d.toString);
+    assert(d.months == 0);
+    assert(d.days == 9);
+    assert(d.seconds == 11*60*60+23*60+7);
+    assert(d.nanoseconds == 0);
+  }
 }
 
 unittest {
   import std.conv : to;
   import memgraph.enums;
 
-  auto tm = mg_duration_alloc(&mg_system_allocator);
-  assert(tm != null);
-  tm.months = 3;
-  tm.days = 10;
-  tm.seconds = 42;
-  tm.nanoseconds = 23;
+  auto du = mg_duration_make(0, 5, 42, 230_000);
+  assert(du != null);
 
-  auto t = Duration(tm);
-  assert(t.months == 3);
-  assert(t.days == 10);
-  assert(t.seconds == 42);
-  assert(t.nanoseconds == 23);
+  auto d = Duration(du);
+  assert(d.months == 0);
+  assert(d.days == 5);
+  assert(d.seconds == 42);
+  assert(d.nanoseconds == 230_000);
 
-  const t1 = t;
-  assert(t1 == t);
+  const d1 = d;
+  assert(d1 == d);
 
-  assert(to!string(t) == "3 10 42 23");
+  assert(to!string(d) == "5 days, 42 secs, and 230 μs", to!string(d));
+  assert(d.toString == "5 days, 42 secs, and 230 μs", to!string(d));
 
-  auto t2 = Duration(t.ptr);
-  assert(t2 == t);
+  const ct.Duration dur = d;
+  assert(dur.toString == "5 days, 42 secs, and 230 μs", to!string(d));
 
-  const t3 = Duration(t2);
-  assert(t3 == t);
-
-  const v = Value(t);
-  const t4 = Duration(v);
-  assert(t4 == t);
-  assert(v == t);
-  assert(to!string(v) == to!string(t));
-
-  t2 = t;
-  assert(t2 == t);
-
-  const v1 = Value(t2);
-  assert(v1.type == Type.Duration);
-  const v2 = Value(t2);
-  assert(v2.type == Type.Duration);
-
-  assert(v1 == v2);
-
-  const t5 = Duration(t3);
-  assert(t5 == t3);
+  auto v = Value(mg_value_make_duration(du));
+  assert(to!string(v) == "5 days, 42 secs, and 230 μs", to!string(v));
 }

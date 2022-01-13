@@ -56,13 +56,32 @@ struct Params {
   void *sslTrustData;
 
   /// Destructor, destroys the internal session parameters.
-  ~this() {
+  @nogc ~this() {
     if (ptr_)
       mg_session_params_destroy(ptr_);
   }
 
+  /// Post-blit takes care of copied pointer so that the new instance
+  /// will create its own `mg_session_params` if required.
+  @nogc this(this) {
+    ptr_ = null;
+  }
+
+  /// Compares the struct members that go into the session parameters.
+  /// Return: `true` if both are identical, `false` otherwise.
+  @nogc auto opEquals(const ref Params rhs) const {
+    return host == rhs.host && port == rhs.port && address == rhs.address &&
+           username == rhs.username && password == rhs.password &&
+           sslMode == rhs.sslMode && sslCert == rhs.sslCert && sslKey == rhs.sslKey &&
+           userAgent == rhs.userAgent &&
+           sslTrustCallback == rhs.sslTrustCallback && sslTrustData == rhs.sslTrustData;
+  }
+
 package:
-  const (mg_session_params *) ptr() {
+  /// Creates a new internal `mg_session_params` instance on the first call and
+  /// returns a pointer to it. Transfers the session parameters from the struct
+  /// members into the session using the appropriate set function calls.
+  auto ptr() {
     if (!ptr_)
       ptr_ = mg_session_params_make();
     if (host.length)
@@ -98,15 +117,17 @@ private:
   /// Pointer to private `mg_session_params` instance that
   /// contains all parameters for this `Params` structure.
   mg_session_params *ptr_;
-}
+} // struct Params
 
 unittest {
   Params p;
 
+  // Check defaults.
   assert(p.host == "127.0.0.1");
   assert(p.port == 7687);
   assert(p.sslMode == mg_sslmode.MG_SSLMODE_DISABLE);
 
+  // Set some parameters.
   p.address = "127.0.0.1";
   p.username = "sini";
   p.password = "whatever";
@@ -118,5 +139,28 @@ unittest {
   p.sslTrustData = cast(void*)trustData;
   p.sslTrustCallback = (hostname, ip_address, key_type, fingerprint, trust_data) { return 0; };
 
-  assert(p.ptr() != null);
+  // This call will internally create a `mg_session_params` instance
+  // and return a pointer to it.
+  assert(p.ptr != null);
+
+  // Make sure the internal pointer reflects the above parameter settings.
+  auto ptr = p.ptr;
+  assert(p.host == fromStringz(mg_session_params_get_host(ptr)));
+  assert(p.port == mg_session_params_get_port(ptr));
+  assert(p.sslMode == mg_session_params_get_sslmode(ptr));
+  assert(p.address == fromStringz(mg_session_params_get_address(ptr)));
+  assert(p.username == fromStringz(mg_session_params_get_username(ptr)));
+  assert(p.password == fromStringz(mg_session_params_get_password(ptr)));
+  assert(p.sslCert == fromStringz(mg_session_params_get_sslcert(ptr)));
+  assert(p.sslKey == fromStringz(mg_session_params_get_sslkey(ptr)));
+  assert(fromStringz(cast(char*)p.sslTrustData) == fromStringz(cast(char*)mg_session_params_get_trust_data(ptr)));
+  assert(p.sslTrustCallback == mg_session_params_get_trust_callback(ptr));
+
+  // Exercise post-blit and make sure returned pointers point to different `mg_session_params`.
+  Params p2 = p;
+  assert(p2.ptr != null);
+  assert(p2.ptr != p.ptr);
+
+  // Both parameter structs should contain the same parameters and should thus be equal.
+  assert(p2 == p);
 }

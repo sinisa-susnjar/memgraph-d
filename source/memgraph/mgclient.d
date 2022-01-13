@@ -119,16 +119,16 @@ static ~this() {
 extern (C) {
   /// Client software version.
   /// Return: Client version in the major.minor.patch format.
-  const (char) *mg_client_version();
+  @safe @nogc const (char) *mg_client_version() pure nothrow;
 
   /// Initializes the client (the whole process).
   /// Should be called at the beginning of each process using the client.
   /// Return: Zero if initialization was successful.
-  mg_error mg_init();
+  @safe @nogc mg_error mg_init() pure nothrow;
 
   /// Finalizes the client (the whole process).
   /// Should be called at the end of each process using the client.
-  void mg_finalize();
+  @safe @nogc void mg_finalize() pure nothrow;
 
   /// An enum listing all the types as specified by Bolt protocol.
   enum mg_value_type {
@@ -546,122 +546,121 @@ extern (C) {
   @safe @nogc mg_value *mg_value_make_point_3d(mg_point_3d *point_3d) pure nothrow;
 
   /// Returns the type of the given `mg_value`.
-  mg_value_type mg_value_get_type(const mg_value *val);
+  @safe @nogc mg_value_type mg_value_get_type(const mg_value *val) pure nothrow;
 
   /// Returns non-zero value if value contains true, zero otherwise.
   ///
   /// Type check should be made first. Accessing the wrong value results in
   /// undefined behavior.
-  /// TODO: check if this is really ok, as the original return type was int !!!
-  bool mg_value_bool(const mg_value *val);
+  @safe @nogc bool mg_value_bool(const mg_value *val) pure nothrow;
 
   /// Returns the underlying integer value.
   ///
   /// Type check should be made first. Accessing the wrong value results in
   /// undefined behavior.
-  long mg_value_integer(const mg_value *val);
+  @safe @nogc long mg_value_integer(const mg_value *val) pure nothrow;
 
   /// Returns the underlying float value.
   ///
   /// Type check should be made first. Accessing the wrong value results in
   /// undefined behavior.
-  double mg_value_float(const mg_value *val);
+  @safe @nogc double mg_value_float(const mg_value *val) pure nothrow;
 
   /// Returns the underlying `mg_string` value.
   ///
   /// Type check should be made first. Accessing the wrong value results in
   /// undefined behavior.
-  const (mg_string) *mg_value_string(const mg_value *val);
+  @safe @nogc const (mg_string) *mg_value_string(const mg_value *val) pure nothrow;
 
   /// Returns the underlying `mg_list` value.
   ///
   /// Type check should be made first. Accessing the wrong value results in
   /// undefined behavior.
-  const (mg_list) *mg_value_list(const mg_value *val);
+  @safe @nogc const (mg_list) *mg_value_list(const mg_value *val) pure nothrow;
 
   /// Returns the underlying `mg_map` value.
   ///
   /// Type check should be made first. Accessing the wrong value results in
   /// undefined behavior.
-  const (mg_map) *mg_value_map(const mg_value *val);
+  @safe @nogc const (mg_map) *mg_value_map(const mg_value *val) pure nothrow;
 
   /// Returns the underlying `mg_node` value.
   ///
   /// Type check should be made first. Accessing the wrong value results in
   /// undefined behavior.
-  const (mg_node) *mg_value_node(const mg_value *val);
+  @safe @nogc const (mg_node) *mg_value_node(const mg_value *val) pure nothrow;
 
   /// Returns the underlying `mg_relationship` value.
   ///
   /// Type check should be made first. Accessing the wrong value results in
   /// undefined behavior.
-  const (mg_relationship) *mg_value_relationship(const mg_value *val);
+  @safe @nogc const (mg_relationship) *mg_value_relationship(const mg_value *val) pure nothrow;
 
   /// Returns the underlying `mg_unbound_relationship` value.
   ///
   /// Type check should be made first. Accessing the wrong value results in
   /// undefined behavior.
-  const (mg_unbound_relationship) *mg_value_unbound_relationship(const mg_value *val);
+  @safe @nogc const (mg_unbound_relationship) *mg_value_unbound_relationship(const mg_value *val) pure nothrow;
 
   /// Returns the underlying `mg_path` value.
   ///
   /// Type check should be made first. Accessing the wrong value results in
   /// undefined behavior.
-  const (mg_path) *mg_value_path(const mg_value *val);
+  @safe @nogc const (mg_path) *mg_value_path(const mg_value *val) pure nothrow;
 
   /// Returns the underlying `mg_date` value.
   ///
   /// Type check should be made first. Accessing the wrong value results in
   /// undefined behavior.
-  const (mg_date) *mg_value_date(const mg_value *val);
+  @safe @nogc const (mg_date) *mg_value_date(const mg_value *val) pure nothrow;
 
   /// Returns the underlying `mg_time` value.
   ///
   /// Type check should be made first. Accessing the wrong value results in
   /// undefined behavior.
-  const (mg_time) *mg_value_time(const mg_value *val);
+  @safe @nogc const (mg_time) *mg_value_time(const mg_value *val) pure nothrow;
 
   /// Returns the underlying `mg_local_time` value.
   ///
   /// Type check should be made first. Accessing the wrong value results in
   /// undefined behavior.
-  const (mg_local_time) *mg_value_local_time(const mg_value *val);
+  @safe @nogc const (mg_local_time) *mg_value_local_time(const mg_value *val) pure nothrow;
 
   /// Returns the underlying `mg_date_time` value.
   ///
   /// Type check should be made first. Accessing the wrong value results in
   /// undefined behavior.
-  const (mg_date_time) *mg_value_date_time(const mg_value *val);
+  @safe @nogc const (mg_date_time) *mg_value_date_time(const mg_value *val) pure nothrow;
 
   /// Returns the underlying `mg_date_time_zone_id` value.
   ///
   /// Type check should be made first. Accessing the wrong value results in
   /// undefined behavior.
-  const (mg_date_time_zone_id) *mg_value_date_time_zone_id(const mg_value *val);
+  @safe @nogc const (mg_date_time_zone_id) *mg_value_date_time_zone_id(const mg_value *val) pure nothrow;
 
   /// Returns the underlying `mg_local_date_time` value.
   ///
   /// Type check should be made first. Accessing the wrong value results in
   /// undefined behavior.
-  const (mg_local_date_time) *mg_value_local_date_time(const mg_value *val);
+  @safe @nogc const (mg_local_date_time) *mg_value_local_date_time(const mg_value *val) pure nothrow;
 
   /// Returns the underlying `mg_duration` value.
   ///
   /// Type check should be made first. Accessing the wrong value results in
   /// undefined behavior.
-  const (mg_duration) *mg_value_duration(const mg_value *val);
+  @safe @nogc const (mg_duration) *mg_value_duration(const mg_value *val) pure nothrow;
 
   /// Returns the underlying `mg_point_2d` value.
   ///
   /// Type check should be made first. Accessing the wrong value results in
   /// undefined behavior.
-  const (mg_point_2d) *mg_value_point_2d(const mg_value *val);
+  @safe @nogc const (mg_point_2d) *mg_value_point_2d(const mg_value *val) pure nothrow;
 
   /// Returns the underlying `mg_point_3d` value.
   ///
   /// Type check should be made first. Accessing the wrong value results in
   /// undefined behavior.
-  const (mg_point_3d) *mg_value_point_3d(const mg_value *val);
+  @safe @nogc const (mg_point_3d) *mg_value_point_3d(const mg_value *val) pure nothrow;
 
   /// Creates a copy of the given value.
   ///
@@ -694,10 +693,10 @@ extern (C) {
   @safe @nogc mg_string *mg_string_make2(uint len, const char *data) pure nothrow;
 
   /// Returns a pointer to the beginning of data buffer of string `str`.
-  const (char) *mg_string_data(const mg_string *str);
+  @safe @nogc const (char) *mg_string_data(const mg_string *str) pure nothrow;
 
   /// Returns the length (in bytes) of string `str`.
-  uint mg_string_size(const mg_string *str);
+  @safe @nogc uint mg_string_size(const mg_string *str) pure nothrow;
 
   /// Creates a copy of the given string.
   ///
@@ -728,16 +727,16 @@ extern (C) {
   ///
   /// Return: The function returns non-zero value if insertion failed, zero
   ///         otherwise.
-  mg_error mg_list_append(mg_list *list, mg_value *value);
+  @safe @nogc mg_error mg_list_append(mg_list *list, mg_value *value) pure nothrow;
 
   /// Returns the number of elements in list `list`.
-  uint mg_list_size(const mg_list *list);
+  @safe @nogc uint mg_list_size(const mg_list *list) pure nothrow;
 
   /// Retrieves the element at position `pos` in list `list`.
   ///
   /// Return: A pointer to required list element. If `pos` is outside of list
   ///         bounds, NULL is returned.
-  const (mg_value) *mg_list_at(const mg_list *list, uint pos);
+  @safe @nogc const (mg_value) *mg_list_at(const mg_list *list, uint pos) pure nothrow;
 
   /// Creates a copy of the given list.
   ///
@@ -778,7 +777,7 @@ extern (C) {
   ///
   /// Return: The function returns non-zero value if insertion failed, zero
   ///         otherwise.
-  mg_error mg_map_insert(mg_map *map, const char *key_str, mg_value *value);
+  @safe @nogc mg_error mg_map_insert(mg_map *map, const char *key_str, mg_value *value) pure nothrow;
 
   /// Inserts the given key-value pair into the map.
   ///
@@ -798,7 +797,7 @@ extern (C) {
   ///
   /// Return: The function returns non-zero value if insertion failed, zero
   ///         otherwise.
-  int mg_map_insert2(mg_map *map, mg_string *key, mg_value *value);
+  @safe @nogc int mg_map_insert2(mg_map *map, mg_string *key, mg_value *value) pure nothrow;
 
   /// Inserts the given key-value pair into the map.
   ///
@@ -818,7 +817,7 @@ extern (C) {
   ///
   /// Return: The function returns non-zero value if insertion failed, zero
   ///         otherwise.
-  @safe @nogc int mg_map_insert_unsafe(mg_map *map, const char *key_str, mg_value *value);
+  @safe @nogc int mg_map_insert_unsafe(mg_map *map, const char *key_str, mg_value *value) pure nothrow;
 
   /// Inserts the given key-value pair into the map.
   ///
@@ -836,7 +835,7 @@ extern (C) {
   ///
   /// Return: The function returns non-zero value if insertion failed, zero
   ///         otherwise.
-  @safe @nogc int mg_map_insert_unsafe2(mg_map *map, mg_string *key, mg_value *value);
+  @safe @nogc int mg_map_insert_unsafe2(mg_map *map, mg_string *key, mg_value *value) pure nothrow;
 
   /// Looks up a map value with the given key.
   ///
@@ -846,7 +845,7 @@ extern (C) {
   ///
   /// Return: If the key is found in the map, the pointer to the corresponding
   ///         `mg_value` is returned. Otherwise, NULL is returned.
-  const (mg_value) *mg_map_at(const mg_map *map, const char *key_str);
+  @safe @nogc const (mg_value) *mg_map_at(const mg_map *map, const char *key_str) pure nothrow;
 
   /// Looks up a map value with the given key.
   ///
@@ -857,22 +856,22 @@ extern (C) {
   ///
   /// Return: If the key is found in the map, the pointer to the corresponding
   ///         `mg_value` is returned. Otherwise, NULL is returned.
-  const (mg_value) *mg_map_at2(const mg_map *map, uint key_size, const char *key_data);
+  @safe @nogc const (mg_value) *mg_map_at2(const mg_map *map, uint key_size, const char *key_data) pure nothrow;
 
   /// Returns the number of key-value pairs in map `map`.
-  uint mg_map_size(const mg_map *map);
+  @safe @nogc uint mg_map_size(const mg_map *map) pure nothrow;
 
   /// Retrieves the key at position `pos` in map `map`.
   ///
   /// Return: A pointer to required key. If `pos` is outside of map bounds,
   ///         NULL is returned.
-  const (mg_string) *mg_map_key_at(const mg_map *, uint pos);
+  @safe @nogc const (mg_string) *mg_map_key_at(const mg_map *, uint pos) pure nothrow;
 
   /// Retrieves the value at position `pos` in map `map`.
   ///
   /// Return: A pointer to required value. If `pos` is outside of map bounds,
   ///         NULL is returned.
-  const (mg_value) *mg_map_value_at(const mg_map *, uint pos);
+  @safe @nogc const (mg_value) *mg_map_value_at(const mg_map *, uint pos) pure nothrow;
 
   /// Creates a copy of the given map.
   ///
@@ -882,20 +881,25 @@ extern (C) {
   /// Destroys the given map.
   @safe @nogc void mg_map_destroy(mg_map *map) pure nothrow;
 
+  /// Constructs a new mg_node with node id `id`, and `labelCount` labels given in `labels`.
+  /// Note: the new node takes ownership of the `properties` mg_map.
+  /// Return: A pointer to the new node or null if an error occurred.
+  @safe @nogc mg_node *mg_node_make(int id, uint labelCount, mg_string **labels, mg_map *properties) pure nothrow;
+
   /// Returns the ID of node `node`.
-  long mg_node_id(const mg_node *node);
+  @safe @nogc long mg_node_id(const mg_node *node) pure nothrow;
 
   /// Returns the number of labels of node `node`.
-  uint mg_node_label_count(const mg_node *node);
+  @safe @nogc uint mg_node_label_count(const mg_node *node) pure nothrow;
 
   /// Returns the label at position `pos` in node `node`'s label list.
   ///
   /// Return: A pointer to the required label. If `pos` is outside of label list
   ///         bounds, NULL is returned.
-  const (mg_string) *mg_node_label_at(const mg_node *node, uint pos);
+  @safe @nogc const (mg_string) *mg_node_label_at(const mg_node *node, uint pos) pure nothrow;
 
   /// Returns property map of node `node`.
-  const (mg_map) *mg_node_properties(const mg_node *node);
+  @safe @nogc const (mg_map) *mg_node_properties(const mg_node *node) pure nothrow;
 
   /// Creates a copy of the given node.
   ///
@@ -905,20 +909,25 @@ extern (C) {
   /// Destroys the given node.
   @safe @nogc void mg_node_destroy(mg_node *node) pure nothrow;
 
+  /// Creates a new relationship with the given parameters.
+  @safe @nogc mg_relationship *mg_relationship_make(long id, long start_id,
+                                      long end_id, mg_string *type,
+                                      mg_map *properties) pure nothrow;
+
   /// Returns the ID of the relationship `rel`.
-  long mg_relationship_id(const mg_relationship *rel);
+  @safe @nogc long mg_relationship_id(const mg_relationship *rel) pure nothrow;
 
   /// Returns the ID of the start node of relationship `rel`.
-  long mg_relationship_start_id(const mg_relationship *rel);
+  @safe @nogc long mg_relationship_start_id(const mg_relationship *rel) pure nothrow;
 
   /// Returns the ID of the end node of relationship `rel`.
-  long mg_relationship_end_id(const mg_relationship *rel);
+  @safe @nogc long mg_relationship_end_id(const mg_relationship *rel) pure nothrow;
 
   /// Returns the type of the relationship `rel`.
-  const (mg_string) *mg_relationship_type(const mg_relationship *rel);
+  @safe @nogc const (mg_string) *mg_relationship_type(const mg_relationship *rel) pure nothrow;
 
   /// Returns the property map of the relationship `rel`.
-  const (mg_map) *mg_relationship_properties(const mg_relationship *rel);
+  @safe @nogc const (mg_map) *mg_relationship_properties(const mg_relationship *rel) pure nothrow;
 
   /// Creates a copy of the given relationship.
   ///
@@ -928,14 +937,19 @@ extern (C) {
   /// Destroys the given relationship.
   @safe @nogc void mg_relationship_destroy(mg_relationship *rel) pure nothrow;
 
+  /// Creates a new unbound relationship with the given parameters.
+  @safe @nogc mg_unbound_relationship *mg_unbound_relationship_make(long id,
+                                                      mg_string *type,
+                                                      mg_map *properties) pure nothrow;
+
   /// Returns the ID of the unbound relationship `rel`.
-  long mg_unbound_relationship_id(const mg_unbound_relationship *rel);
+  @safe @nogc long mg_unbound_relationship_id(const mg_unbound_relationship *rel) pure nothrow;
 
   /// Returns the type of the unbound relationship `rel`.
-  const (mg_string) *mg_unbound_relationship_type(const mg_unbound_relationship *rel);
+  @safe @nogc const (mg_string) *mg_unbound_relationship_type(const mg_unbound_relationship *rel) pure nothrow;
 
   /// Returns the property map of the unbound relationship `rel`.
-  const (mg_map) *mg_unbound_relationship_properties(const mg_unbound_relationship *rel);
+  @safe @nogc const (mg_map) *mg_unbound_relationship_properties(const mg_unbound_relationship *rel) pure nothrow;
 
   /// Creates a copy of the given unbound relationship.
   ///
@@ -945,8 +959,14 @@ extern (C) {
   /// Destroys the given unbound relationship.
   @safe @nogc void mg_unbound_relationship_destroy(mg_unbound_relationship *rel) pure nothrow;
 
+  /// Create a new mg_path from the given parameters.
+  @safe @nogc mg_path *mg_path_make(uint node_count, mg_node **nodes,
+                                    uint relationship_count,
+                                    mg_unbound_relationship **relationships,
+                                    uint sequence_length, const long *sequence) pure nothrow;
+
   /// Returns the length (the number of edges) of path `path`.
-  uint mg_path_length(const mg_path *path);
+  @safe @nogc uint mg_path_length(const mg_path *path) pure nothrow;
 
   /// Returns the node at position `pos` in the traversal of path `path`.
   ///
@@ -954,7 +974,7 @@ extern (C) {
   ///
   /// Return: A pointer to the required node. If `pos` is out of path bounds,
   ///         NULL is returned.
-  const (mg_node) *mg_path_node_at(const mg_path *path, uint pos);
+  @safe @nogc const (mg_node) *mg_path_node_at(const mg_path *path, uint pos) pure nothrow;
 
   /// Returns the relationship at position `pos` in traversal of path `path`.
   ///
@@ -962,7 +982,7 @@ extern (C) {
   ///
   /// Return: A pointer to the required relationship. If `pos` is outside of
   ///         path bounds, NULL is returned.
-  const (mg_unbound_relationship) *mg_path_relationship_at(const mg_path *path, uint pos);
+  @safe @nogc const (mg_unbound_relationship) *mg_path_relationship_at(const mg_path *path, uint pos) pure nothrow;
 
   /// Checks if the relationship at position `pos` in traversal of path `path`
   /// is reversed.
@@ -973,7 +993,7 @@ extern (C) {
   ///         underlying relationship in the data graph, and 1 if it is traversed
   ///         in the opposite direction. If `pos` is outside of path bounds, -1
   ///         is returned.
-  int mg_path_relationship_reversed_at(const mg_path *path, uint pos);
+  @safe @nogc int mg_path_relationship_reversed_at(const mg_path *path, uint pos) pure nothrow;
 
   /// Creates a copy of the given path.
   ///
@@ -985,10 +1005,10 @@ extern (C) {
 
   /// Creates a `mg_date` from the given number of days since the Unix epoch.
   /// Return: A pointer to a newly allocated mg_date or `null` if an error occurred.
-  @safe @nogc mg_date *mg_date_make(long days);
+  @safe @nogc mg_date *mg_date_make(long days) pure nothrow;
 
   /// Returns days since the Unix epoch.
-  long mg_date_days(const mg_date *date);
+  @safe @nogc long mg_date_days(const mg_date *date) pure nothrow;
 
   /// Creates a copy of the given date.
   /// Return: A pointer to the copy or NULL if an error occured.
@@ -998,10 +1018,10 @@ extern (C) {
   @safe @nogc void mg_date_destroy(mg_date *date) pure nothrow;
 
   /// Returns nanoseconds since midnight.
-  long mg_time_nanoseconds(const mg_time *time);
+  @safe @nogc long mg_time_nanoseconds(const mg_time *time) pure nothrow;
 
   /// Returns time zone offset in seconds from UTC.
-  long mg_time_tz_offset_seconds(const mg_time *time);
+  @safe @nogc long mg_time_tz_offset_seconds(const mg_time *time) pure nothrow;
 
   /// Creates a copy of the given time.
   ///
@@ -1011,8 +1031,12 @@ extern (C) {
   /// Destroys the given time.
   @safe @nogc void mg_time_destroy(mg_time *time) pure nothrow;
 
+  /// Creates a `mg_local_time` from nanoseconds.
+  /// Return: A pointer to `mg_local_time` or `null` if an error occurred.
+  @safe @nogc mg_local_time *mg_local_time_make(long nanoseconds) pure nothrow;
+
   /// Returns nanoseconds since midnight.
-  long mg_local_time_nanoseconds(const mg_local_time *local_time);
+  @safe @nogc long mg_local_time_nanoseconds(const mg_local_time *local_time) pure nothrow;
 
   /// Creates a copy of the given local time.
   ///
@@ -1024,16 +1048,16 @@ extern (C) {
 
   /// Creates a `mg_date_time` from the given `seconds`, `nanoseconds` and `tz_offset_minutes`.
   /// Return: A pointer to a mg_date_time or `null` if an error occurred.
-  @safe @nogc mg_date_time *mg_date_time_make(long seconds, long nanoseconds, long tz_offset_minutes);
+  @safe @nogc mg_date_time *mg_date_time_make(long seconds, long nanoseconds, long tz_offset_minutes) pure nothrow;
 
   /// Returns seconds since Unix epoch.
-  long mg_date_time_seconds(const mg_date_time *date_time);
+  @safe @nogc long mg_date_time_seconds(const mg_date_time *date_time) pure nothrow;
 
   /// Returns nanoseconds since midnight.
-  long mg_date_time_nanoseconds(const mg_date_time *date_time);
+  @safe @nogc long mg_date_time_nanoseconds(const mg_date_time *date_time) pure nothrow;
 
   /// Returns time zone offset in minutes from UTC.
-  long mg_date_time_tz_offset_minutes(const mg_date_time *date_time);
+  @safe @nogc long mg_date_time_tz_offset_minutes(const mg_date_time *date_time) pure nothrow;
 
   /// Creates a copy of the given date and time.
   ///
@@ -1044,27 +1068,32 @@ extern (C) {
   @safe @nogc void mg_date_time_destroy(mg_date_time *date_time) pure nothrow;
 
   /// Returns seconds since Unix epoch.
-  long mg_date_time_zone_id_seconds(const mg_date_time_zone_id *date_time_zone_id);
+  @safe @nogc long mg_date_time_zone_id_seconds(const mg_date_time_zone_id *date_time_zone_id) pure nothrow;
 
   /// Returns nanoseconds since midnight.
-  long mg_date_time_zone_id_nanoseconds(const mg_date_time_zone_id *date_time_zone_id);
+  @safe @nogc long mg_date_time_zone_id_nanoseconds(const mg_date_time_zone_id *date_time_zone_id) pure nothrow;
 
   /// Returns time zone represented by the identifier.
-  long mg_date_time_zone_id_tz_id(const mg_date_time_zone_id *date_time_zone_id);
+  @safe @nogc long mg_date_time_zone_id_tz_id(const mg_date_time_zone_id *date_time_zone_id) pure nothrow;
 
   /// Creates a copy of the given date and time.
   ///
   /// Return: A pointer to the copy or NULL if an error occured.
-  @safe @nogc mg_date_time_zone_id *mg_date_time_zone_id_copy(const mg_date_time_zone_id *date_time_zone_id) pure nothrow;
+  @safe @nogc mg_date_time_zone_id *mg_date_time_zone_id_copy(const mg_date_time_zone_id *date_time_zone_id)
+                          pure nothrow;
 
   /// Destroys the given date and time.
   @safe @nogc void mg_date_time_zone_id_destroy(mg_date_time_zone_id *date_time_zone_id) pure nothrow;
 
+  /// Creates a `mg_local_date_time` from seconds and nanoseconds.
+  /// Return: A pointer to `mg_local_date_time` or `null` if an error occurred.
+  @safe @nogc mg_local_date_time *mg_local_date_time_make(long seconds, long nanoseconds) pure nothrow;
+
   /// Returns seconds since Unix epoch.
-  long mg_local_date_time_seconds(const mg_local_date_time *local_date_time);
+  @safe @nogc long mg_local_date_time_seconds(const mg_local_date_time *local_date_time) pure nothrow;
 
   /// Returns nanoseconds since midnight.
-  long mg_local_date_time_nanoseconds(const mg_local_date_time *local_date_time);
+  @safe @nogc long mg_local_date_time_nanoseconds(const mg_local_date_time *local_date_time) pure nothrow;
 
   /// Creates a copy of the given local date and time.
   ///
@@ -1078,19 +1107,19 @@ extern (C) {
   /// Return: A pointer to a newly allocated `mg_duration` or `null` if an error occurred.
   @safe @nogc mg_duration *mg_duration_make(long months, long days,
                                               long seconds,
-                                              long nanoseconds);
+                                              long nanoseconds) pure nothrow;
 
   /// Returns the months part of the temporal amount.
-  long mg_duration_months(const mg_duration *duration);
+  @safe @nogc long mg_duration_months(const mg_duration *duration) pure nothrow;
 
   /// Returns the days part of the temporal amount.
-  long mg_duration_days(const mg_duration *duration);
+  @safe @nogc long mg_duration_days(const mg_duration *duration) pure nothrow;
 
   /// Returns the seconds part of the temporal amount.
-  long mg_duration_seconds(const mg_duration *duration);
+  @safe @nogc long mg_duration_seconds(const mg_duration *duration) pure nothrow;
 
   /// Returns the nanoseconds part of the temporal amount.
-  long mg_duration_nanoseconds(const mg_duration *duration);
+  @safe @nogc long mg_duration_nanoseconds(const mg_duration *duration) pure nothrow;
 
   /// Creates a copy of the given duration.
   ///
@@ -1101,13 +1130,13 @@ extern (C) {
   @safe @nogc void mg_duration_destroy(mg_duration *duration) pure nothrow;
 
   /// Returns SRID of the 2D point.
-  long mg_point_2d_srid(const mg_point_2d *point_2d);
+  @safe @nogc long mg_point_2d_srid(const mg_point_2d *point_2d) pure nothrow;
 
   /// Returns the x coordinate of the 2D point.
-  double mg_point_2d_x(const mg_point_2d *point_2d);
+  @safe @nogc double mg_point_2d_x(const mg_point_2d *point_2d) pure nothrow;
 
   /// Returns the y coordinate of the 2D point.
-  double mg_point_2d_y(const mg_point_2d *point_2d);
+  @safe @nogc double mg_point_2d_y(const mg_point_2d *point_2d) pure nothrow;
 
   /// Creates a copy of the given 2D point.
   ///
@@ -1118,16 +1147,16 @@ extern (C) {
   @safe @nogc void mg_point_2d_destroy(mg_point_2d *point_2d) pure nothrow;
 
   /// Returns SRID of the 3D point.
-  long mg_point_3d_srid(const mg_point_3d *point_3d);
+  @safe @nogc long mg_point_3d_srid(const mg_point_3d *point_3d) pure nothrow;
 
   /// Returns the x coordinate of the 3D point.
-  double mg_point_3d_x(const mg_point_3d *point_3d);
+  @safe @nogc double mg_point_3d_x(const mg_point_3d *point_3d) pure nothrow;
 
   /// Returns the y coordinate of the 3D point.
-  double mg_point_3d_y(const mg_point_3d *point_3d);
+  @safe @nogc double mg_point_3d_y(const mg_point_3d *point_3d) pure nothrow;
 
   /// Returns the z coordinate of the 3D point.
-  double mg_point_3d_z(const mg_point_3d *point_3d);
+  @safe @nogc double mg_point_3d_z(const mg_point_3d *point_3d) pure nothrow;
 
   /// Creates a copy of the given 3D point.
   ///
@@ -1298,28 +1327,29 @@ extern (C) {
   @safe @nogc void mg_session_params_destroy(mg_session_params *) pure nothrow;
 
   /// Getters and setters for `mg_session_params` values.
-  void mg_session_params_set_address(mg_session_params *, const char *address);
-  void mg_session_params_set_host(mg_session_params *, const char *host);
-  void mg_session_params_set_port(mg_session_params *, ushort port);
-  void mg_session_params_set_username(mg_session_params *, const char *username);
-  void mg_session_params_set_password(mg_session_params *, const char *password);
-  void mg_session_params_set_user_agent(mg_session_params *, const char *user_agent);
-  void mg_session_params_set_sslmode(mg_session_params *, mg_sslmode sslmode);
-  void mg_session_params_set_sslcert(mg_session_params *, const char *sslcert);
-  void mg_session_params_set_sslkey(mg_session_params *, const char *sslkey);
-  void mg_session_params_set_trust_callback(mg_session_params *, mg_trust_callback_type trust_callback);
-  void mg_session_params_set_trust_data(mg_session_params *, void *trust_data);
-  const (char) *mg_session_params_get_address(const mg_session_params *);
-  const (char) *mg_session_params_get_host(const mg_session_params *);
-  ushort mg_session_params_get_port(const mg_session_params *);
-  const (char) *mg_session_params_get_username(const mg_session_params *);
-  const (char) *mg_session_params_get_password(const mg_session_params *);
-  const (char) *mg_session_params_get_user_agent(const mg_session_params *);
-  mg_sslmode mg_session_params_get_sslmode(const mg_session_params *);
-  const (char) *mg_session_params_get_sslcert(const mg_session_params *);
-  const (char) *mg_session_params_get_sslkey(const mg_session_params *);
-  mg_trust_callback_type mg_session_params_get_trust_callback(const mg_session_params *params);
-  void *mg_session_params_get_trust_data(const mg_session_params *);
+  @safe @nogc void mg_session_params_set_address(mg_session_params *, const char *address) pure nothrow;
+  @safe @nogc void mg_session_params_set_host(mg_session_params *, const char *host) pure nothrow;
+  @safe @nogc void mg_session_params_set_port(mg_session_params *, ushort port) pure nothrow;
+  @safe @nogc void mg_session_params_set_username(mg_session_params *, const char *username) pure nothrow;
+  @safe @nogc void mg_session_params_set_password(mg_session_params *, const char *password) pure nothrow;
+  @safe @nogc void mg_session_params_set_user_agent(mg_session_params *, const char *user_agent) pure nothrow;
+  @safe @nogc void mg_session_params_set_sslmode(mg_session_params *, mg_sslmode sslmode) pure nothrow;
+  @safe @nogc void mg_session_params_set_sslcert(mg_session_params *, const char *sslcert) pure nothrow;
+  @safe @nogc void mg_session_params_set_sslkey(mg_session_params *, const char *sslkey) pure nothrow;
+  @safe @nogc void mg_session_params_set_trust_callback(mg_session_params *,
+                                    mg_trust_callback_type trust_callback) pure nothrow;
+  @safe @nogc void mg_session_params_set_trust_data(mg_session_params *, void *trust_data) pure nothrow;
+  @safe @nogc const (char) *mg_session_params_get_address(const mg_session_params *) pure nothrow;
+  @safe @nogc const (char) *mg_session_params_get_host(const mg_session_params *) pure nothrow;
+  @safe @nogc ushort mg_session_params_get_port(const mg_session_params *) pure nothrow;
+  @safe @nogc const (char) *mg_session_params_get_username(const mg_session_params *) pure nothrow;
+  @safe @nogc const (char) *mg_session_params_get_password(const mg_session_params *) pure nothrow;
+  @safe @nogc const (char) *mg_session_params_get_user_agent(const mg_session_params *) pure nothrow;
+  @safe @nogc mg_sslmode mg_session_params_get_sslmode(const mg_session_params *) pure nothrow;
+  @safe @nogc const (char) *mg_session_params_get_sslcert(const mg_session_params *) pure nothrow;
+  @safe @nogc const (char) *mg_session_params_get_sslkey(const mg_session_params *) pure nothrow;
+  @safe @nogc mg_trust_callback_type mg_session_params_get_trust_callback(const mg_session_params *params) pure nothrow;
+  @safe @nogc void *mg_session_params_get_trust_data(const mg_session_params *) pure nothrow;
 
   /// Makes a new connection to the database server.
   ///
@@ -1335,15 +1365,15 @@ extern (C) {
   /// Return: Returns 0 if connected successfuly, otherwise returns a non-zero
   ///         error code. A more detailed error message can be obtained by using
   ///         `mg_session_error` on `session`, unless it is set to NULL.
-  int mg_connect(const mg_session_params *params, mg_session **session);
+  @safe @nogc int mg_connect(const mg_session_params *params, mg_session **session) pure nothrow;
 
   /// Returns the status of `mg_session`.
   ///
   /// Return: One of the session codes in `mg_session_code`.
-  mg_session_code mg_session_status(const mg_session *session);
+  @safe @nogc mg_session_code mg_session_status(const mg_session *session) pure nothrow;
 
   /// Obtains the error message stored in `mg_session` (if any).
-  const (char) *mg_session_error(mg_session *session);
+  @safe @nogc const (char) *mg_session_error(mg_session *session) pure nothrow;
 
   /// Destroys a `mg_session` and releases all of its resources.
   @safe @nogc void mg_session_destroy(mg_session *session) pure nothrow;
@@ -1392,7 +1422,8 @@ extern (C) {
   ///                               if an Explicit transaction was started.
   /// Return: Returns 0 if query was submitted for execution successfuly.
   ///         Otherwise, a non-zero error code is returned.
-  int mg_session_run(mg_session *session, const char *query, const mg_map *params, const mg_map *extra_run_information, const mg_list **columns, long *qid);
+  @safe @nogc mg_error mg_session_run(mg_session *session, const char *query, const mg_map *params,
+                            const mg_map *extra_run_information, const mg_list **columns, long *qid) pure nothrow;
 
   /// Starts an Explicit transaction on the server.
   ///
@@ -1420,7 +1451,8 @@ extern (C) {
   ///                               database.
   /// Return: Returns 0 if the transaction was started successfully.
   ///         Otherwise, a non-zero error code is returned.
-  int mg_session_begin_transaction(mg_session *session, const mg_map *extra_run_information);
+  @safe @nogc mg_error mg_session_begin_transaction(mg_session *session,
+                                            const mg_map *extra_run_information) pure nothrow;
 
   /// Commits current Explicit transaction.
   ///
@@ -1429,7 +1461,7 @@ extern (C) {
   ///                   if it was successful.
   /// Return: Returns 0 if the transaction was ended successfully.
   ///         Otherwise, a non-zero error code is returned.
-  int mg_session_commit_transaction(mg_session *session, mg_result **result);
+  @safe @nogc mg_error mg_session_commit_transaction(mg_session *session, mg_result **result) pure nothrow;
 
   /// Rollbacks current Explicit transaction.
   ///
@@ -1438,7 +1470,7 @@ extern (C) {
   ///                   if it was successful.
   /// Return: Returns 0 if the transaction was ended successfully.
   ///         Otherwise, a non-zero error code is returned.
-  int mg_session_rollback_transaction(mg_session *session, mg_result **result);
+  @safe @nogc mg_error mg_session_rollback_transaction(mg_session *session, mg_result **result) pure nothrow;
 
   /// Tries to fetch the next query result from `mg_session`.
   ///
@@ -1451,7 +1483,7 @@ extern (C) {
   ///         no more result rows and that the query execution summary was stored
   ///         in `result`. Its contents may be accessed using `mg_result_summary`.
   ///         On failure, a non-zero exit code is returned.
-  int mg_session_fetch(mg_session *session, mg_result **result);
+  @safe @nogc mg_error mg_session_fetch(mg_session *session, mg_result **result) pure nothrow;
 
   /// Tries to pull results of a statement.
   ///
@@ -1466,16 +1498,16 @@ extern (C) {
   ///                          is only for Explicit transactions.
   /// Return: Returns 0 if the result was pulled successfuly.
   ///         Otherwise, a non-zero error code is returned.
-  int mg_session_pull(mg_session *session, const mg_map *pull_information);
+  @safe @nogc mg_error mg_session_pull(mg_session *session, const mg_map *pull_information) pure nothrow;
 
   /// Returns names of columns output by the current query execution.
-  const (mg_list) *mg_result_columns(const mg_result *result);
+  @safe @nogc const (mg_list) *mg_result_columns(const mg_result *result) pure nothrow;
 
   /// Returns column values of current result row.
-  const (mg_list) *mg_result_row(const mg_result *result);
+  @safe @nogc const (mg_list) *mg_result_row(const mg_result *result) pure nothrow;
 
   /// Returns query execution summary.
-  const (mg_map) *mg_result_summary(const mg_result *result);
+  @safe @nogc const (mg_map) *mg_result_summary(const mg_result *result) pure nothrow;
 }
 
 version(unittest) {
@@ -1485,11 +1517,12 @@ version(unittest) {
     struct mg_allocator {}
     extern shared mg_allocator mg_system_allocator;
 
-    @safe @nogc mg_string *mg_string_alloc(uint size, mg_allocator *allocator);
-    @safe @nogc mg_list *mg_list_alloc(uint size, mg_allocator *allocator);
-    @safe @nogc mg_map *mg_map_alloc(uint size, mg_allocator *allocator);
-    @safe @nogc mg_node *mg_node_alloc(uint label_count, mg_allocator *allocator);
-    @safe @nogc mg_path *mg_path_alloc(uint node_count, uint relationship_count, uint sequence_length, mg_allocator *allocator);
+    @safe @nogc mg_string *mg_string_alloc(uint size, mg_allocator *allocator) pure nothrow;
+    @safe @nogc mg_list *mg_list_alloc(uint size, mg_allocator *allocator) pure nothrow;
+    @safe @nogc mg_map *mg_map_alloc(uint size, mg_allocator *allocator) pure nothrow;
+    @safe @nogc mg_node *mg_node_alloc(uint label_count, mg_allocator *allocator) pure nothrow;
+    @safe @nogc mg_path *mg_path_alloc(uint node_count, uint relationship_count, uint sequence_length,
+                                       mg_allocator *allocator) pure nothrow;
 
     @safe @nogc mg_date *mg_date_alloc(shared mg_allocator *alloc) pure nothrow;
     @safe @nogc mg_time *mg_time_alloc(shared mg_allocator *alloc) pure nothrow;
@@ -1524,7 +1557,7 @@ unittest {
   mg_session_params_set_sslmode(params, mg_sslmode.MG_SSLMODE_DISABLE);
 
   mg_session *session = null;
-  int status = mg_connect(params, &session);
+  const int status = mg_connect(params, &session);
   mg_session_params_destroy(params);
 
   assert(status == 0, fromStringz(mg_session_error(session)));
