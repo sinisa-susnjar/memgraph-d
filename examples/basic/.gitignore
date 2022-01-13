@@ -1,0 +1,15 @@
+.dub
+docs.json
+__dummy.html
+docs/
+/basic
+basic.so
+basic.dylib
+basic.dll
+basic.a
+basic.lib
+basic-test-*
+*.exe
+*.o
+*.obj
+*.lst

@@ -12,234 +12,130 @@ import memgraph.mgclient, memgraph.detail, memgraph.value, memgraph.enums;
 ///
 /// Maximum possible list length allowed by Bolt is `uint.max`.
 struct List {
-	/// List needs an initial capacity.
-	@disable this();
+  /// Create a shallow copy of `other` list.
+  @nogc this(inout ref List other) {
+    this(other.ptr_);
+  }
 
-	/// Construct a new list from an array of values.
-	this(const Value[] valueArray) {
-		this(mg_list_make_empty(to!uint(valueArray.length)));
-		foreach (ref value; valueArray) {
-			immutable rc = mg_list_append(ptr_, mg_value_copy(value.ptr));
-			assert(rc == mg_error.MG_SUCCESS);
-		}
-	}
+  /// Create a shallow list copy from a Value.
+  @nogc this(inout ref Value value) {
+    assert(value.type == Type.List);
+    this(mg_value_list(value.ptr));
+  }
 
-	/// Constructs a list that can hold at most `capacity` elements.
-	/// Params: capacity = The maximum number of elements that the newly constructed
-	///                    list can hold.
-	this(uint capacity) {
-		this(mg_list_make_empty(capacity));
-	}
+  /// Compares this list with `other`.
+  /// Return: true if same, false otherwise.
+  @nogc auto opEquals(const ref List other) const {
+    return Detail.areListsEqual(ptr_, other.ptr_);
+  }
 
-	/// Create a copy of `other` list.
-	this(inout ref List other) {
-		this(mg_list_copy(other.ptr));
-	}
+  /// Return the hash code for this list.
+  @nogc ulong toHash() const {
+    return cast(ulong)ptr_;
+  }
 
-	/// Create a list from a Value.
-	this(inout ref Value value) {
-		assert(value.type == Type.List);
-		this(mg_list_copy(mg_value_list(value.ptr)));
-	}
+  /// Return value at position `idx` of this list.
+  @nogc auto opIndex(uint idx) const {
+    assert(idx < length);
+    return Value(mg_list_at(ptr_, idx));
+  }
 
-	/// Compares this list with `other`.
-	/// Return: true if same, false otherwise.
-	bool opEquals(const ref List other) const {
-		return Detail.areListsEqual(ptr_, other.ptr_);
-	}
+  /// Returns the number of values in this list.
+  @nogc @property uint length() const { return mg_list_size(ptr_); }
 
-	/// Compares this list with an array of values.
-	/// Return: true if same, false otherwise.
-	bool opEquals(const ref Value[] valueArray) const {
-		auto other = List(valueArray);
-		return Detail.areListsEqual(ptr_, other.ptr_);
-	}
+  /// Return a printable string representation of this list.
+  string toString() const {
+    import std.array : appender;
+    auto str = appender!string;
+    str.put("[");
+    immutable len = length;
+    for (uint i = 0; i < len; i++) {
+      str.put(to!string(Value(mg_list_at(ptr_, i))));
+      if (i < len-1)
+        str.put(", ");
+    }
+    str.put("]");
+    return str.data;
+  }
 
-	/// Append `value` to this list.
-	ref List opOpAssign(string op: "~")(const Value value) {
-		immutable rc = mg_list_append(ptr_, mg_value_copy(value.ptr));
-		assert(rc == mg_error.MG_SUCCESS);
-		return this;
-	}
+  /// Checks if the list as range is empty.
+  @nogc @property bool empty() const { return idx_ >= length; }
 
-	/// Return value at position `idx` of this list.
-	auto opIndex(size_t idx) const {
-		assert(ptr_ != null);
-		assert(idx < mg_list_size(ptr_));
-		return Value(mg_list_at(ptr_, to!uint(idx)));
-	}
+  /// Returns the next element in the list range.
+  @nogc @property auto front() const {
+    import std.typecons : Tuple;
+    assert(idx_ < length);
+    return Tuple!(uint, "index", Value, "value")(idx_, Value(mg_list_at(ptr_, idx_)));
+  }
 
-	/// Return a printable string representation of this list.
-	const (string) toString() const {
-		assert(ptr_);
-		immutable len = length;
-		string ret = "[";
-		for (uint i = 0; i < len; i++) {
-			ret ~= to!string(Value(mg_list_at(ptr_, i)));
-			if (i < len-1)
-				ret ~= ",";
-		}
-		ret ~= "]";
-		return ret;
-	}
-
-	/// Returns the number of values in this list.
-	@property uint length() const {
-		assert(ptr_ != null);
-		return mg_list_size(ptr_);
-	}
-
-	/// Checks if the list as range is empty.
-	@property bool empty() const { return idx_ >= length; }
-
-	/// Returns the next element in the list range.
-	auto front() const {
-		import std.typecons : Tuple;
-		assert(idx_ < length);
-		return Tuple!(uint, "index", Value, "value")(idx_, Value(mg_list_at(ptr_, idx_)));
-	}
-
-	/// Move to the next element in the list range.
-	void popFront() { idx_++; }
-
-	this(this) {
-		if (ptr_)
-			ptr_ = mg_list_copy(ptr_);
-	}
-
-	~this() {
-		if (ptr_)
-			mg_list_destroy(ptr_);
-	}
+  /// Move to the next element in the list range.
+  @nogc void popFront() { idx_++; }
 
 package:
-	/// Create a List using the given `mg_list`.
-	this(mg_list *ptr) @trusted {
-		assert(ptr != null);
-		ptr_ = ptr;
-	}
+  /// Create a List using the given `mg_list` pointer.
+  @nogc this(const mg_list *ptr) {
+    assert(ptr != null);
+    ptr_ = ptr;
+  }
 
-	/// Create a List from a copy of the given `mg_list`.
-	this(const mg_list *ptr) {
-		assert(ptr != null);
-		this(mg_list_copy(ptr));
-	}
-
-	/// Return pointer to internal mg_list.
-	const (mg_list *) ptr() const { return ptr_; }
+  /// Return pointer to internal `mg_list`.
+  @nogc auto ptr() inout { return ptr_; }
 
 private:
-	mg_list *ptr_;
-	uint idx_;
+  const mg_list *ptr_;
+  uint idx_;
+} // struct List
+
+unittest {
+  import std.range.primitives : isInputRange;
+  assert(isInputRange!List);
 }
 
 unittest {
-	import std.range.primitives : isInputRange;
-	assert(isInputRange!List);
-}
+  import testutils : connectContainer;
+  import std.algorithm : count;
+  import std.conv : to;
+  import memgraph.local_date_time;
 
-unittest {
-	auto l = List(42);
+  auto client = connectContainer();
+  assert(client);
 
-	l ~= Value(42);
-	l ~= Value(23L);
-	l ~= Value(5.43210);
-	l ~= Value(true);
-	l ~= Value("Hi");
-	assert(l.length == 5);
+  auto result = client.execute(`return [1, 2, 3, 4.56, true, "Hello", localdatetime('2021-12-13T12:34:56.100')];`);
+  assert(result, client.error);
+  foreach (r; result) {
+    assert(r.length == 1);
+    assert(r[0].type() == Type.List);
+    auto list = to!List(r[0]);
+    assert(list.length == 7);
 
-	assert(l == l);
+    assert(list[0].type() == Type.Int);
+    assert(list[1].type() == Type.Int);
+    assert(list[2].type() == Type.Int);
+    assert(list[3].type() == Type.Double);
+    assert(list[4].type() == Type.Bool);
+    assert(list[5].type() == Type.String);
+    assert(list[6].type() == Type.LocalDateTime);
 
-	assert(l[0].type == Type.Int);
-	assert(l[0] == 42);
-	assert(l[1].type == Type.Int);
-	assert(l[1] == 23L);
-	assert(l[2].type == Type.Double);
-	assert(l[2] == 5.43210);
-	assert(l[3].type == Type.Bool);
-	assert(l[3] == true);
-	assert(l[4].type == Type.String);
-	assert(l[4] == "Hi");
+    assert(to!int(list[0]) == 1);
+    assert(to!int(list[1]) == 2);
+    assert(to!int(list[2]) == 3);
+    assert(to!double(list[3]) == 4.56);
+    assert(to!bool(list[4]) == true);
+    assert(to!string(list[5]) == "Hello");
+    assert(to!LocalDateTime(list[6]).toString == "2021-Dec-13 12:34:56.1");
 
-	assert(l.ptr != null);
+    assert(to!string(list) == "[1, 2, 3, 4.56, true, Hello, 2021-Dec-13 12:34:56.1]", to!string(list));
 
-	assert(to!string(l) == "[42,23,5.4321,true,Hi]");
+    const otherList = list;
+    assert(otherList == list);
 
-	const List l2 = l;
+    foreach (ref idx, ref value; list) {
+      assert(value == list[idx]);
+    }
 
-	assert(l2 == l);
+    assert(list.ptr != null);
+    assert(list.ptr == otherList.ptr);
 
-	assert(l2.ptr != null);
-
-	const List l3 = List(l2.ptr);
-
-	assert(l3 == l);
-
-	l ~= Value(123_456);
-	l ~= Value("Bok!");
-	l ~= Value(true);
-
-	assert(l.length == 8);
-	assert(to!string(l) == "[42,23,5.4321,true,Hi,123456,Bok!,true]");
-
-	auto v = Value(l);
-	assert(v == l);
-	assert(to!string(v) == to!string(l));
-	assert(v == v);
-
-	const l4 = List(l);
-	assert(l4.ptr != null);
-	assert(l4.ptr != l.ptr);
-	assert(l4.length == 8);
-	assert(to!string(l4) == "[42,23,5.4321,true,Hi,123456,Bok!,true]");
-
-	l ~= Value("another entry");
-	assert(l.length == 9);
-	assert(to!string(l) == "[42,23,5.4321,true,Hi,123456,Bok!,true,another entry]");
-	v = Value(l);
-
-	auto v2 = Value(l4);
-	assert(v2 == l4);
-	assert(to!string(v2) == to!string(l4));
-
-	assert(v != v2);
-}
-
-unittest {
-	auto l1 = List(5);
-	l1 ~= Value(123);
-	l1 ~= Value("Hello");
-	l1 ~= Value(true);
-	l1 ~= Value(5.5);
-
-	auto l2 = List(5);
-	l2 ~= Value(123);
-	l2 ~= Value("Hello");
-	l2 ~= Value(true);
-	l2 ~= Value(5.5);
-
-	assert(l1 == l2);
-
-	l1 ~= Value("new");
-	l2 ~= Value("novo");
-
-	assert(l1 != l2);
-}
-
-unittest {
-	Value[] vl;
-	vl ~= Value(42);
-	vl ~= Value(23L);
-	vl ~= Value(5.43210);
-	vl ~= Value(true);
-	vl ~= Value("Hi");
-	assert(vl.length == 5);
-
-	auto l = List(vl);
-	foreach (i, ref v; vl)
-		assert(v == l[i]);
-	foreach (i, ref v; l)
-		assert(v == vl[i]);
-
-	assert(l == vl);
+    assert(cast(ulong)list.ptr == list.toHash);
+  }
 }

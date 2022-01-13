@@ -1,9 +1,9 @@
 {
   "authors": [ "Sinisa Susnjar" ],
   "copyright": "Copyright © 2022, Sinisa Susnjar",
-  "description": "Advanced D interface example for memgraph-d",
+  "description": "Basic interface example for memgraph-d",
   "license": "MIT",
-  "name": "advanced",
+  "name": "basic",
   "dependencies": {
     "memgraph-d": { "path": "../../" }
   }

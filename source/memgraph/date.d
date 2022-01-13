@@ -1,117 +1,137 @@
-/// Provides a wrapper around a `mg_date`.
+/// Provides a wrapper for a `mg_date`. Uses `std.datetime.date.Date` internally.
 module memgraph.date;
 
 import memgraph.mgclient, memgraph.detail, memgraph.value, memgraph.enums;
+import sd = std.datetime.date;
+import ct = core.time;
 
 /// Represents a date.
-///
 /// Date is defined with number of days since the Unix epoch.
+/// Uses a `std.datetime.date.Date` internally.
 struct Date {
-	/// Create a copy of the internal `mg_date`.
-	this(this) {
-		if (ptr_)
-			ptr_ = mg_date_copy(ptr_);
-	}
+  /// Create a shallow copy of `other` Date.
+  @nogc this(inout ref Date other) {
+    this(other.ptr_);
+  }
 
-	/// Create a copy of `other` date.
-	this(inout ref Date other) {
-		this(mg_date_copy(other.ptr));
-	}
+  /// Create a date from a Value.
+  @nogc this(inout ref Value value) {
+    assert(value.type == Type.Date);
+    this(mg_value_date(value.ptr));
+  }
 
-	/// Create a date from a Value.
-	this(inout ref Value value) {
-		assert(value.type == Type.Date);
-		this(mg_date_copy(mg_value_date(value.ptr)));
-	}
+  /// Compares this date with `other`.
+  /// Return: true if same, false otherwise.
+  @nogc auto opEquals(const ref Date other) const {
+    return Detail.areDatesEqual(ptr_, other.ptr_);
+  }
 
-	/// Assigns a date to another. The target of the assignment gets detached from
-	/// whatever date it was attached to, and attaches itself to the new date.
-	ref Date opAssign(Date rhs) @safe return {
-		import std.algorithm.mutation : swap;
-		swap(this, rhs);
-		return this;
-	}
+  /// Return the hash code for this date.
+  @nogc ulong toHash() const {
+    return cast(ulong)ptr_;
+  }
 
-	/// Return a printable string representation of this date.
-	const (string) toString() const {
-		import std.conv : to;
-		return to!string(days);
-	}
+  /// Return a printable string representation of this date.
+  string toString() const { return date_.toString; }
 
-	/// Compares this date with `other`.
-	/// Return: true if same, false otherwise.
-	bool opEquals(const ref Date other) const {
-		return Detail.areDatesEqual(ptr_, other.ptr_);
-	}
-
-	/// Returns days since Unix epoch.
-	const (long) days() const { return mg_date_days(ptr_); }
-
-	/// Destroys the internal `mg_date`.
-	@safe @nogc ~this() {
-		if (ptr_)
-			mg_date_destroy(ptr_);
-	}
+  /// Returns days since Unix epoch.
+  @nogc auto days() const { return (date_ - epoch_).total!"days"; }
 
 package:
-	/// Create a Date using the given `mg_date`.
-	this(mg_date *ptr) {
-		assert(ptr != null);
-		ptr_ = ptr;
-	}
+  /// Create a Date using the given `mg_date` pointer.
+  @nogc this(const mg_date *ptr) {
+    assert(ptr != null);
+    ptr_ = ptr;
+    date_ = epoch_ + ct.days(mg_date_days(ptr));
+  }
 
-	/// Create a Date from a copy of the given `mg_date`.
-	this(const mg_date *ptr) {
-		assert(ptr != null);
-		this(mg_date_copy(ptr));
-	}
-
-	/// Returns the internal `mg_date` pointer.
-	const (mg_date *) ptr() const { return ptr_; }
+  /// Return pointer to internal `mg_date`.
+  @nogc auto ptr() inout {
+    return ptr_;
+  }
 
 private:
-	mg_date *ptr_;
+  const mg_date *ptr_;
+  sd.Date date_;
+  alias date_ this;
+} // struct Date
+
+static private sd.Date epoch_ = sd.Date(1970, 1, 1);
+
+unittest {
+  import testutils : connectContainer;
+  import std.algorithm : count;
+  import std.conv : to;
+
+  auto client = connectContainer();
+  assert(client);
+
+  auto result = client.execute(`return date('2021-02-12') as a, date('2022-11-12') as b, date('2038-01-20') as c;`);
+  assert(result, client.error);
+  foreach (r; result) {
+    assert(r.length == 3);
+
+    assert(r[0].type() == Type.Date);
+    const d1 = to!Date(r[0]);
+    assert(d1.days == 18_670, to!string(d1.days));
+    assert(d1.toISOExtString == "2021-02-12");
+    assert(d1.toISOString == "20210212");
+    assert(d1.toString == "2021-Feb-12");
+    const sd.Date D1 = d1;
+    assert(D1.toISOExtString == "2021-02-12");
+    assert(D1.toISOString == "20210212");
+    assert(D1.toString == "2021-Feb-12");
+
+    assert(r[1].type() == Type.Date);
+    const d2 = to!Date(r[1]);
+    assert(d2.days == 19_308, to!string(d2.days));
+    assert(d2.toISOExtString == "2022-11-12");
+    assert(d2.toISOString == "20221112");
+    assert(d2.toString == "2022-Nov-12");
+    const sd.Date D2 = d2;
+    assert(D2.toISOExtString == "2022-11-12");
+    assert(D2.toISOString == "20221112");
+    assert(D2.toString == "2022-Nov-12");
+
+    assert(r[2].type() == Type.Date);
+    const d3 = to!Date(r[2]);
+    assert(d3.days == 24_856, to!string(d3.days));
+    assert(d3.toISOExtString == "2038-01-20");
+    assert(d3.toISOString == "20380120");
+    assert(d3.toString == "2038-Jan-20");
+    const sd.Date D3 = d3;
+    assert(D3.toISOExtString == "2038-01-20");
+    assert(D3.toISOString == "20380120");
+    assert(D3.toString == "2038-Jan-20");
+  }
 }
 
 unittest {
-	import std.conv : to;
-	import memgraph.enums;
+  import memgraph.enums : Type;
+  import std.conv : to;
 
-	auto dt = mg_date_alloc(&mg_system_allocator);
-	assert(dt != null);
-	dt.days = 42;
+  auto dt = mg_date_make(42);
+  assert(dt != null);
 
-	auto d = Date(dt);
-	assert(d.days == 42);
-	assert(d.ptr == dt);
+  auto d = Date(dt);
+  assert(d.days == 42);
 
-	const d1 = d;
-	assert(d1 == d);
+  const d1 = d;
+  assert(d1 == d);
 
-	assert(to!string(d) == "42");
+  assert(to!string(d) == "1970-Feb-12", to!string(d));
 
-	auto d2 = Date(mg_date_copy(d.ptr));
-	assert(d2 == d);
+  auto d2 = Date(mg_date_copy(d.ptr));
+  assert(d2 == d);
 
-	const d3 = Date(d2);
-	assert(d3 == d);
+  const d3 = Date(d2);
+  assert(d3 == d);
 
-	const v = Value(d);
-	const d4 = Date(v);
-	assert(d4 == d);
-	assert(v == d);
-	assert(to!string(v) == to!string(d));
+  const d5 = Date(d3);
+  assert(d5 == d3);
 
-	d2 = d;
-	assert(d2 == d);
+  auto v = Value(mg_value_make_date(dt));
+  assert(to!string(v) == "1970-Feb-12", to!string(v));
 
-	const v1 = Value(d2);
-	assert(v1.type == Type.Date);
-	const v2 = Value(d2);
-	assert(v2.type == Type.Date);
-
-	assert(v1 == v2);
-
-	const d5 = Date(d3);
-	assert(d5 == d3);
+  assert(cast(ulong)d.ptr == d.toHash);
 }
