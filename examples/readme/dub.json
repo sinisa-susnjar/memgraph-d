@@ -1,0 +1,10 @@
+{
+  "authors": [ "Sinisa Susnjar" ],
+  "copyright": "Copyright © 2022, Sinisa Susnjar",
+  "description": "Example from the README.md for memgraph-d",
+  "license": "MIT",
+  "name": "readme",
+  "dependencies": {
+    "memgraph-d": { "path": "../../" }
+  }
+}

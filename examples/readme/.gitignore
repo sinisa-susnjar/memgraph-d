@@ -1,0 +1,15 @@
+.dub
+docs.json
+__dummy.html
+docs/
+/readme
+readme.so
+readme.dylib
+readme.dll
+readme.a
+readme.lib
+readme-test-*
+*.exe
+*.o
+*.obj
+*.lst
