@@ -6,45 +6,40 @@ D bindings for the memgraph DB
 
 Memgraph DB is &copy; Memgraph Ltd., see https://memgraph.com
 
+Please note that all structs are only thin wrappers around the native mg_\* types and
+that no copying or allocations are being made.
+
 ## Example
 ```d
-import std.stdio, std.conv, std.algorithm, std.range;
+import std.stdio, std.conv;
 import memgraph;
 
 int main() {
-    auto client = Client.connect();
-    if (!client) {
-        writefln("Failed to connect: %s", client.status);
-        return 1;
-    }
+  auto client = Client.connect();
+  if (!client) {
+    writefln("Failed to connect: %s", client.status);
+    return 1;
+  }
 
-    if (!client.run("CREATE INDEX ON :Person(id);")) {
-        writefln("Failed to create index: %s %s", client.status, client.error);
-        return 1;
-    }
+  if (!client.run("CREATE INDEX ON :Person(id);")) {
+    writefln("Failed to create index: %s %s", client.status, client.error);
+    return 1;
+  }
 
-    if (!client.run("CREATE (:Person:Entrepreneur {id: 0, age: 40, name: 'John', " ~
-                    "isStudent: false, score: 5.0});")) {
-        writefln("Failed to add data: %s %s", client.status, client.error);
-        return 1;
-    }
+  if (!client.run("CREATE (:Person:Entrepreneur {id: 0, age: 40, name: 'John', " ~
+                  "isStudent: false, score: 5.0});")) {
+    writefln("Failed to add data: %s %s", client.status, client.error);
+    return 1;
+  }
 
-    auto results = client.execute("MATCH (n) RETURN n;");
-    foreach (r; results) {
-        assert(r.length == 1);
-        if (r[0].type == Type.Node) {
-            const auto node = to!Node(r[0]);
-            writefln("%s {%s}", node.labels.join(":"),
-                     node.properties.map!(
-                         p => p.key ~ ":" ~ to!string(p.value)).join(" "));
-        }
-    }
-    writefln("Summary: {%s}",
-             results.summary.map!(
-                 p => p.key ~ ":" ~ to!string(p.value)).join(" "));
-    writefln("Columns: %s", results.columns);
+  auto results = client.execute("MATCH (n) RETURN n;");
+  foreach (r; results)
+    writefln("%s", r[0]);
 
-    return 0;
+  writefln("Summary: %s", results.summary);
+  writefln("Columns: %s", results.columns);
+
+  return 0;
 }
 ```
 
@@ -81,7 +76,7 @@ Please refer to https://github.com/memgraph/mgclient for the build requirements.
 
 This package contains two examples that were adapted from the examples contained in the `mgclient` C interface library.
 
-    cd examples/basic_c
+    cd examples/basic
     dub build
     ./run.sh
 
@@ -104,3 +99,11 @@ This package contains two examples that were adapted from the examples contained
     IP=`docker inspect --format='{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' memgraph`
     docker run -it --entrypoint=mgconsole memgraph/memgraph --host $IP --use-ssl=False
 
+### Use mgconsole to run a cypher script
+
+    docker run -i --entrypoint=mgconsole memgraph/memgraph --host $IP --use-ssl=False -output_format=csv < script.cql
+
+# History
+
+* v0.0.5 Reduced number of memory allocations by ~95%, added proper pagination when fetching results,
+         using native D temporal types, @nogc where possible and many more small improvements.
