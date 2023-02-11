@@ -9,6 +9,7 @@ basic.dll
 basic.a
 basic.lib
 basic-test-*
+*.pdb
 *.exe
 *.o
 *.obj

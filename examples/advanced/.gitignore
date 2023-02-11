@@ -9,6 +9,7 @@ advanced.dll
 advanced.a
 advanced.lib
 advanced-test-*
+*.pdb
 *.exe
 *.o
 *.obj

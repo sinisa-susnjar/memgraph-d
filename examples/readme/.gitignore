@@ -9,6 +9,7 @@ readme.dll
 readme.a
 readme.lib
 readme-test-*
+*.pdb
 *.exe
 *.o
 *.obj
