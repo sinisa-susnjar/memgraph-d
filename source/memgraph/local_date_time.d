@@ -40,6 +40,12 @@ package:
     nanos_ = mg_local_date_time_nanoseconds(ptr);
     dateTime_ = st.SysTime(st.unixTimeToStdTime(epoch_));
     dateTime_ += ct.nsecs(nanos_);
+    // TODO: This is a baaaad hack, but it is necessary. The situation is the following:
+    // The memgraph server runs inside a docker container in the UTC timezone. As long
+    // as the client also runs in UTC, everything is fine - but when the client is in a
+    // different timezone, e.g. CET, the local date time will have an offset.
+    // Note: this will bomb if the server does *not* run in UTC.
+    dateTime_ -= dateTime_.utcOffset();
   }
 
   /// Return pointer to internal `mg_local_date_time`.
