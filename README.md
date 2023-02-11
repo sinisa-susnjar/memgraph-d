@@ -105,5 +105,7 @@ This package contains two examples that were adapted from the examples contained
 
 # History
 
+* v0.0.6 Use mgclient version to v1.4.0.
+         Temporary fix for LocalDateTime UTC issue.
 * v0.0.5 Reduced number of memory allocations by ~95%, added proper pagination when fetching results,
          using native D temporal types, @nogc where possible and many more small improvements.
