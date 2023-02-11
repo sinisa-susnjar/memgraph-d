@@ -122,7 +122,7 @@ unittest {
     assert(to!double(list[3]) == 4.56);
     assert(to!bool(list[4]) == true);
     assert(to!string(list[5]) == "Hello");
-    assert(to!LocalDateTime(list[6]).toString == "2021-Dec-13 12:34:56.1");
+    assert(to!LocalDateTime(list[6]).toString == "2021-Dec-13 12:34:56.1", to!LocalDateTime(list[6]).toString);
 
     assert(to!string(list) == "[1, 2, 3, 4.56, true, Hello, 2021-Dec-13 12:34:56.1]", to!string(list));
 
